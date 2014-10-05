@@ -1,11 +1,9 @@
-////////////////////////////////////////////////////////////////////////////////
-//
-// (C) Andy Thomason 2012-2014
-//
-// Modular Framework for OpenGLES2 rendering on multiple platforms.
-//
-// Text overlay
-//
+///
+/// @file main.cpp
+/// @author Juanmi Huertas Delgado 
+/// @brief This is the main class for the example_openGEX 
+
+///
 
 #include "../../octet.h"
 
