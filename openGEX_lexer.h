@@ -17,6 +17,9 @@ namespace octet
     public:
       openGEX_lexer(){}
 
+      void lexerFile(){
+
+      }
     };
   }
 }

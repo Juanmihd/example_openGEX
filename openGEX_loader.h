@@ -23,7 +23,11 @@ namespace octet { namespace loaders {
       /// Loads the file with the "name" name of file. First it test if it exists
       bool loadFile(const char * name){
         app_utils::get_url(buffer, name);
-        //Test file
+        //Process the file (lexer) (return false if there was any problem)
+
+        //Import the file into octet (return false if there was any problem)
+
+        //If it has arrived there, it was ok! so return true
         return true;
       }
 
