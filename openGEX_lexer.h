@@ -15,30 +15,43 @@ namespace octet
       dynarray<uint8_t> buffer;
       // This are the current character and the last character to test if it's the end of the file
       uint8_t * currentChar;
-      uint8_t * lastChar;
+      int bufferSize;
       ///This function returns true if the pointer is at the end of the file
       bool is_end_file(){
-        return currentChar == lastChar;
+        return bufferSize == 0;
       }
+
+      /// This function will get a new token position
+      void get_next_token(){
+        ++currentChar;
+        --bufferSize;
+      }
+
 
       /// This function will process the currentChar to look for the next token and study it
       void process_token(){
         //THIS IS JUST A TEST FOR NOW. I just want to be sure that this is working
-        printf("%s ", currentChar);
+        printf("MAC: %02x:%02x:%02x:%02x:%02x:%02x\n",
+          currentChar[0] & 0xff, currentChar[1] & 0xff, currentChar[2] & 0xff,
+          currentChar[3] & 0xff, currentChar[4] & 0xff, currentChar[5] & 0xff);
       }
 
     public:
       openGEX_lexer(){}
 
       ///This will be the function that creates de process of the lexer receiving as parameter the array of characters
-      void lexer_file(){
+      void lexer_file(dynarray<uint8_t> file){
+        buffer = file;
+        currentChar = &buffer[0];
+        bufferSize = buffer.size();
+        printf("The size of the buffer is %i\n", buffer.size());
         // It's starting to process all the array of characters starting with the first
         // Will do this until the end of the file
         while (!is_end_file()){ //It will test if it's the last token
           //Process token
           process_token();
           //get new token
-          ++currentChar;
+          get_next_token();
         }
       }
     };
