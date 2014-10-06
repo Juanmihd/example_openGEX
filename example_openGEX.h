@@ -10,7 +10,7 @@ namespace octet {
   class example_openGEX : public app {
     // scene for drawing duck
     ref<visual_scene> app_scene;
-
+    openGEX_loader coolLoader;
     collada_builder loader;
   public:
     /// this is called when we construct the class before everything is initialised.
@@ -22,6 +22,11 @@ namespace octet {
       app_scene = new visual_scene();
 
       resource_dict dict;
+
+      if (!coolLoader.loadFile("assets/openGEX/cubeGEX.txt")){
+        printf("It did not work!!");
+      }
+
       if (!loader.load_xml("assets/duck_triangulate.dae")) {
         // failed to load file
         return;

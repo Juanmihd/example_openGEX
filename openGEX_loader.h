@@ -11,28 +11,16 @@ namespace octet { namespace loaders {
     class openGEX_loader {
       /// Source for the image for reloads
       string url;
-      /// Document that has the file
-      TiXmlDocument doc;
+      /// Buffer of the file to process
+      dynarray<uint8_t> buffer;
     public:
       /// Constructor of the openGEX_loader class
-      openGEX_loader();
+      openGEX_loader(){
+      }
 
       /// Loads the file with the "name" name of file. First it test if it exists
       bool loadFile(const char * name){
-        url = name;
-        url.truncate(url.filename_pos());
-        const char *path = app_utils::get_path(url);
-        char buf[256];
-        getcwd(buf, sizeof(buf));
-        doc.LoadFile(path);
-
-        TiXmlElement *top = doc.RootElement();
-
-        //Test if the file exists
-        if (!top){
-          printf("file %s not found\n", path);
-          return false;
-        }
+        app_utils::get_url(buffer, name);
         //Test file
         return true;
       }
