@@ -21,9 +21,10 @@ namespace octet
         return currentChar == lastChar;
       }
 
-
+      /// This function will process the currentChar to look for the next token and study it
       void process_token(){
-
+        //THIS IS JUST A TEST FOR NOW. I just want to be sure that this is working
+        printf("%s ", currentChar);
       }
 
     public:
@@ -32,7 +33,6 @@ namespace octet
       ///This will be the function that creates de process of the lexer receiving as parameter the array of characters
       void lexer_file(){
         // It's starting to process all the array of characters starting with the first
-        //Get first token
         // Will do this until the end of the file
         while (!is_end_file()){ //It will test if it's the last token
           //Process token
