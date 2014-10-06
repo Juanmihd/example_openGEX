@@ -9,7 +9,7 @@
 /// @brief This class is the openGEX lexer, it will read the array of characters and get tokes
 namespace octet
 {
-  namespace openGEX{
+  namespace loaders{
     class openGEX_lexer {
       /// url file
       /// int8 pointer to the text
