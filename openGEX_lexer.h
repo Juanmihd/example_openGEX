@@ -11,14 +11,35 @@ namespace octet
 {
   namespace loaders{
     class openGEX_lexer {
-      /// url file
-      /// int8 pointer to the text
+      // This is the current buffer with the characters in UTF8
+      dynarray<uint8_t> buffer;
+      // This are the current character and the last character to test if it's the end of the file
+      uint8_t * currentChar;
+      uint8_t * lastChar;
+      ///This function returns true if the pointer is at the end of the file
+      bool is_end_file(){
+        return currentChar == lastChar;
+      }
+
+
+      void process_token(){
+
+      }
 
     public:
       openGEX_lexer(){}
 
-      void lexerFile(){
-
+      ///This will be the function that creates de process of the lexer receiving as parameter the array of characters
+      void lexer_file(){
+        // It's starting to process all the array of characters starting with the first
+        //Get first token
+        // Will do this until the end of the file
+        while (!is_end_file()){ //It will test if it's the last token
+          //Process token
+          process_token();
+          //get new token
+          ++currentChar;
+        }
       }
     };
   }
