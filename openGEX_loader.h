@@ -13,6 +13,8 @@ namespace octet { namespace loaders {
       string url;
       /// Buffer of the file to process
       dynarray<uint8_t> buffer;
+      /// This is the lexer that decodes each block of text from the buffer
+      openGEX_lexer lexer;
     public:
       /// Constructor of the openGEX_loader class
       openGEX_loader(){
@@ -24,6 +26,7 @@ namespace octet { namespace loaders {
         //Test file
         return true;
       }
+
     };
   }
 }

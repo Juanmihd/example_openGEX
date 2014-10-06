@@ -15,9 +15,8 @@ namespace octet
       /// int8 pointer to the text
 
     public:
-       openGEX_lexer();
+      openGEX_lexer(){}
 
-       void loadFile();
     };
   }
 }
