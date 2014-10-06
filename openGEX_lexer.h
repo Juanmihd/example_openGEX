@@ -31,9 +31,7 @@ namespace octet
       /// This function will process the currentChar to look for the next token and study it
       void process_token(){
         //THIS IS JUST A TEST FOR NOW. I just want to be sure that this is working
-        printf("MAC: %02x:%02x:%02x:%02x:%02x:%02x\n",
-          currentChar[0] & 0xff, currentChar[1] & 0xff, currentChar[2] & 0xff,
-          currentChar[3] & 0xff, currentChar[4] & 0xff, currentChar[5] & 0xff);
+        printf("%x ", currentChar[0]);
       }
 
     public:
