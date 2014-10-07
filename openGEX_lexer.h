@@ -65,22 +65,22 @@ namespace octet
         // check if it's distance, angle, time or up
         switch (currentChar[0]){
         case 0x64: // 0x64 = d  this is suppose to start a distance Metric structure
-          if (char_word_is("distance\")")){
+          if (char_word_is("distance\") {")){
             printf("distance!\n");
           }
           break;
         case 0x61: // 0x61 = a this is suppose to start a angle Metric structure
-          if (char_word_is("angle\")")){
+          if (char_word_is("angle\") {")){
             printf("angle!\n");
           }
           break;
         case 0x74: // 0x74= t this is suppose to start a time Metric structure
-          if (char_word_is("time\")")){
+          if (char_word_is("time\") {")){
             printf("time!\n");
           }
           break;
         case 0x75: // 0x75 = u this is suppose to start a up Metric structure
-          if (char_word_is("up\")")){
+          if (char_word_is("up\") {")){
             printf("up!\n");
           }
           break;
