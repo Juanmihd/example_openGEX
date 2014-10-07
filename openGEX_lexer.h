@@ -98,10 +98,6 @@ namespace octet
       }
       */
 
-      /// @brief  This function will test if the current token is going to be a comment (// or /*)
-      bool is_comment(){ //0x2f = /  and  0x2A = *
-        return currentChar[0] == 0x2F && (currentChar[1] == 0x2f || currentChar[1] == 0x2A); 
-      }
 
       /// @brief  This will lexer a comment with /* */or // and break line
       void lex_comment(){
@@ -135,7 +131,7 @@ namespace octet
       void process_structure(){
         //printf("%x ", currentChar[0]);
         // first thing is to check if it's a comment
-        if (is_comment()) 
+        if (is_comment(currentChar)) 
           lex_comment(); //if it's a comment analyze it
         else if (is_dataType()){
 

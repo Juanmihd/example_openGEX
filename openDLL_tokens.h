@@ -52,6 +52,11 @@ namespace octet{
         return character <= 0x20;
       }
 
+      /// @brief  This function will test if the current token is going to be a comment (// or /*)
+       bool is_comment(unsigned char * character){ //0x2f = /  and  0x2A = *
+         return character[0] == 0x2F && (character[1] == 0x2f || character[1] == 0x2A);
+       }
+
     };
   }
 }
