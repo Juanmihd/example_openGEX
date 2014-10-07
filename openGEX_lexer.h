@@ -132,7 +132,7 @@ namespace octet
         //printf("%x ", currentChar[0]);
         // first thing is to check if it's a comment
         if (is_comment(currentChar)) 
-          lex_comment(); //if it's a comment analyze it
+          lex_comment(); //if it's a comment analyze it (that means, ignore it)
         else if (is_dataType()){
 
         }
