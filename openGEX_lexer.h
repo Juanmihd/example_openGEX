@@ -70,8 +70,23 @@ namespace octet
 
       /// @brief  This will lexer the word "Metric" and will decide the next lexer to analize
       void lex_Metric(){
-        //get_next_char();
-        printf("Works!\n");
+        // Jump to the next 15th position, after 'Metric (key ="' has been readed
+        currentChar += 15;
+        bufferSize -= 15;
+        // check if it's distance, angle, time or up
+        switch (currentChar[0]){
+        case 0x64: // 0x64 = d  this is suppose to start a distance Metric structure
+          break;
+        case 0x61: // 0x61 = a this is suppose to start a angle Metric structure
+          break;
+        case 0x74: // 0x74= t this is suppose to start a time Metric structure
+          break;
+        case 0x75: // 0x75 = u this is suppose to start a up Metric structure
+          break;
+        default: // ERROR!!!!!
+          break;
+        }
+        printf("%x ", currentChar[0]);
       }
 
       /// @brief  This function will process the currentChar to look for the next token and study it
