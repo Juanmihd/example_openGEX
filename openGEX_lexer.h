@@ -48,6 +48,12 @@ namespace octet
         }
       }
 
+      /// @brief Jumps the char "pos" positions
+      inline void char_jump(int pos){
+        currentChar += pos;
+        bufferSize -= pos;
+      }
+
       /// @brief This will check if the current char is equal the string
       /// This will check the whole string, if it matches with the begining of currentChar
       bool char_word_is(string word){
@@ -57,11 +63,13 @@ namespace octet
         return sizeRead == word.size();
       }
 
+      /// @brief This will lexer the type of the next element
+      void lex_dataType(){
+
+      }
+
       /// @brief  This will lexer the word "Metric" and will decide the next lexer to analize
       void lex_Metric(){
-        // Jump to the next 15th position, after 'Metric (key ="' has been readed
-        currentChar += 15;
-        bufferSize -= 15;
         // check if it's distance, angle, time or up
         switch (currentChar[0]){
         case 0x64: // 0x64 = d  this is suppose to start a distance Metric structure
@@ -103,6 +111,8 @@ namespace octet
             break;
           case 0x4D: // 0x4d = M  this might be for a Metric or other thing
             if (char_word_is("Metric (key = \"")){
+              // Jump to the next 15th position, after 'Metric (key ="' has been readed
+              char_jump(15);
               lex_Metric();  //if is Metric, keep on, if not, it's only an 'M' so next case
               break;
             }
