@@ -119,29 +119,35 @@ namespace octet
         }
       }
 
+      /// @brief  This function will test if the current token is going to be a comment (// or /*)
+      inline bool is_comment(){ //0x2f = /  and  0x2A = *
+        return currentChar[0] == 0x2F && (currentChar[1] == 0x2f || currentChar[1] == 0x2A); 
+      }
+
+
+      /// @brief  This function will test if the current token is a whitespace (less than 0x20 character)
+      inline bool is_whiteSpace(){ // everything less or equal than 0x20 is a whitespace
+        return currentChar[0] <= 0x20; 
+      }
+
       /// @brief  This function will process the currentChar to look for the next token and study it
+      /// openDDL is divided into structures
       void process_token(){
-        //THIS IS JUST A TEST FOR NOW. I just want to be sure that this is working
-        //printf("%x < %x", currentChar[0], 0x20);
         //printf("%x ", currentChar[0]);
-        //printf((currentChar[0] < 0x20) ? "true" : "false");
-        if (currentChar[0] > 0x20){ // less than 0x20 it's a whitespace so, ignore it
-          switch (currentChar[0]){
-          case 0x2F: // 0x2f = /  this is suppose to start a comment
-            lex_comment();
-            break;
-          case 0x4D: // 0x4d = M  this might be for a Metric or other thing
-            if (char_word_is("Metric (key = \"")){
-              // Jump to the next 15th position, after 'Metric (key ="' has been readed
-              char_jump(sizeRead);
-              lex_Metric();  //if is Metric, keep on, if not, it's only an 'M' so next case
-              break;
-            }
-          default:
-            //printf("%x", currentChar[0]);
-            break;
-          }
+        // first thing is to check if it's a comment
+        if (is_comment()) 
+          lex_comment(); //if it's a comment analyze it
+        else if (is_dataType()){
+
         }
+        else if (is_identifier()){
+
+        }
+        else if (is_symbol()){
+
+        }
+        else
+          printf("ERROR!");
       }
 
     public:
@@ -157,8 +163,8 @@ namespace octet
         // It's starting to process all the array of characters starting with the first
         // Will do this until the end of the file
         while (!is_end_file()){
-          //Process token
-          process_token();
+          //Process token when you find it (when it's not a whiteSpace
+          if(!is_whiteSpace()) process_token();
           //get new token
           get_next_char();
         }
