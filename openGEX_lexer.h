@@ -63,16 +63,7 @@ namespace octet
         return sizeRead == word.size();
       }
 
-      /// @brief This will lexer the type of the next element
-      void lex_dataType(){
-
-      }
-
-      /// @brief This will lexer the literal of a variable (value, or string, or boolean, or intenger...)
-      void lex_literal(){
-
-      }
-
+      /*
       /// @brief  This will lexer the word "Metric" and will decide the next lexer to analize
       void lex_Metric(){
         // check if it's distance, angle, time or up
@@ -118,6 +109,7 @@ namespace octet
           break;
         }
       }
+      */
 
       /// @brief  This function will test if the current token is going to be a comment (// or /*)
       inline bool is_comment(){ //0x2f = /  and  0x2A = *
@@ -130,9 +122,24 @@ namespace octet
         return currentChar[0] <= 0x20; 
       }
 
+      /// @brief  This function will test if the current token is a dataType
+      inline bool is_dataType(){
+
+      }
+
+      /// @brief  This function will test if the current token is a identifier
+      inline bool is_identifier(){
+
+      }
+
+      /// @brief  This function will test if the current token is a symbol
+      inline bool is_symbol(){
+
+      }
+
       /// @brief  This function will process the currentChar to look for the next token and study it
       /// openDDL is divided into structures
-      void process_token(){
+      void process_structure(){
         //printf("%x ", currentChar[0]);
         // first thing is to check if it's a comment
         if (is_comment()) 
@@ -142,11 +149,7 @@ namespace octet
         }
         else if (is_identifier()){
 
-        }
-        else if (is_symbol()){
-
-        }
-        else
+        }else //if it's nothing of the above is an error
           printf("ERROR!");
       }
 
@@ -163,8 +166,8 @@ namespace octet
         // It's starting to process all the array of characters starting with the first
         // Will do this until the end of the file
         while (!is_end_file()){
-          //Process token when you find it (when it's not a whiteSpace
-          if(!is_whiteSpace()) process_token();
+          //Process token (in openDDL is a structure) when you find it (when it's not a whiteSpace)
+          if(!is_whiteSpace()) process_structure();
           //get new token
           get_next_char();
         }
