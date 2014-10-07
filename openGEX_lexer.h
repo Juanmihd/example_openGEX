@@ -21,12 +21,12 @@ namespace octet
       int sizeRead;
 
       /// @brief  This function returns true if the pointer is at the end of the file
-      bool is_end_file(){
+      inline bool is_end_file(){
         return bufferSize == 0;
       }
 
       /// @brief  This function will get a new token position
-      void get_next_char(){
+      inline void get_next_char(){
         ++currentChar;
         --bufferSize;
       }
@@ -56,7 +56,7 @@ namespace octet
 
       /// @brief This will check if the current char is equal the string
       /// This will check the whole string, if it matches with the begining of currentChar
-      bool char_word_is(string word){
+      inline bool char_word_is(string word){
         sizeRead = 0;
         while ((sizeRead < word.size()) && (currentChar[sizeRead] == (uint8_t)word[sizeRead]))
           ++sizeRead;
@@ -68,6 +68,11 @@ namespace octet
 
       }
 
+      /// @brief This will lexer the literal of a variable (value, or string, or boolean, or intenger...)
+      void lex_literal(){
+
+      }
+
       /// @brief  This will lexer the word "Metric" and will decide the next lexer to analize
       void lex_Metric(){
         // check if it's distance, angle, time or up
@@ -75,21 +80,37 @@ namespace octet
         case 0x64: // 0x64 = d  this is suppose to start a distance Metric structure
           if (char_word_is("distance\") {")){
             printf("distance!\n");
+            char_jump(sizeRead);
+            lex_dataType();
+            // There must be something in here to read the { or other simbols
+            lex_literal();
           }
           break;
         case 0x61: // 0x61 = a this is suppose to start a angle Metric structure
           if (char_word_is("angle\") {")){
             printf("angle!\n");
+            char_jump(sizeRead);
+            lex_dataType();
+            // There must be something in here to read the { or other simbols
+            lex_literal();
           }
           break;
         case 0x74: // 0x74= t this is suppose to start a time Metric structure
           if (char_word_is("time\") {")){
             printf("time!\n");
+            char_jump(sizeRead);
+            lex_dataType();
+            // There must be something in here to read the { or other simbols
+            lex_literal();
           }
           break;
         case 0x75: // 0x75 = u this is suppose to start a up Metric structure
           if (char_word_is("up\") {")){
             printf("up!\n");
+            char_jump(sizeRead);
+            lex_dataType();
+            // There must be something in here to read the { or other simbols
+            lex_literal();
           }
           break;
         default: // ERROR!!!!!
@@ -112,7 +133,7 @@ namespace octet
           case 0x4D: // 0x4d = M  this might be for a Metric or other thing
             if (char_word_is("Metric (key = \"")){
               // Jump to the next 15th position, after 'Metric (key ="' has been readed
-              char_jump(15);
+              char_jump(sizeRead);
               lex_Metric();  //if is Metric, keep on, if not, it's only an 'M' so next case
               break;
             }
@@ -128,7 +149,7 @@ namespace octet
       openGEX_lexer(){}
 
       /// @brief This will be the function that creates de process of the lexer receiving as parameter the array of characters
-      void lexer_file(dynarray<uint8_t> file){
+      bool lexer_file(dynarray<uint8_t> file){
         sizeRead = 0;
         buffer = file;
         currentChar = &buffer[0];
@@ -141,6 +162,8 @@ namespace octet
           //get new token
           get_next_char();
         }
+
+        return true;
       }
     };
   }

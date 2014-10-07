@@ -25,7 +25,10 @@ namespace octet { namespace loaders {
         app_utils::get_url(buffer, name);
         //Process the file (lexer) (return false if there was any problem)
         printf("About to start the lexer process\n");
-        lexer.lexer_file(buffer);
+        if (!lexer.lexer_file(buffer)){
+          printf("Error loading the openGEX file!\n");
+          return false;
+        }
         //Import the file into octet (return false if there was any problem)
 
         printf("\n\nThe lexer process has finished!\n");
