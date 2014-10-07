@@ -5,11 +5,16 @@
 ///
 ////////////////////////////////////////////////////////////////////////////////
 
+#include "openDLL_tokens.h"
+
 /// @brief This class is the openGEX lexer, it will read the array of characters and get tokes
 namespace octet
 {
   namespace loaders{
     class openGEX_lexer {
+      // Dictionary of data-type
+      dictionary<int> data_type_;
+
       // This is the current buffer with the characters in UTF8
       dynarray<uint8_t> buffer;
       // This are the current character and the next character after the token
