@@ -31,23 +31,6 @@ namespace octet
         --bufferSize;
       }
 
-      /// @brief  This will lexer a comment with /* */or // and break line
-      void lex_comment(){
-        get_next_char();
-        switch (currentChar[0]){
-        case 0x2F: // 0x2f = /  as it comes from another / that means that it's a // comment
-          while (currentChar[0] != 0x0D)
-            get_next_char();
-          break;
-        case 0x2A: // 0x2a = * as it comes from another / that means that it's a /* comment
-          get_next_char();
-          while (currentChar[0] != 0x2A && currentChar[1] != 0x2f){ // until next characters are * and / 
-            get_next_char();
-            get_next_char();
-          }
-        }
-      }
-
       /// @brief Jumps the char "pos" positions
       inline void char_jump(int pos){
         currentChar += pos;
@@ -116,6 +99,22 @@ namespace octet
         return currentChar[0] == 0x2F && (currentChar[1] == 0x2f || currentChar[1] == 0x2A); 
       }
 
+      /// @brief  This will lexer a comment with /* */or // and break line
+      void lex_comment(){
+        get_next_char();
+        switch (currentChar[0]){
+        case 0x2F: // 0x2f = /  as it comes from another / that means that it's a // comment
+          while (currentChar[0] != 0x0D)
+            get_next_char();
+          break;
+        case 0x2A: // 0x2a = * as it comes from another / that means that it's a /* comment
+          get_next_char();
+          while (currentChar[0] != 0x2A && currentChar[1] != 0x2f){ // until next characters are * and / 
+            get_next_char();
+            get_next_char();
+          }
+        }
+      }
 
       /// @brief  This function will test if the current token is a whitespace (less than 0x20 character)
       inline bool is_whiteSpace(){ // everything less or equal than 0x20 is a whitespace
