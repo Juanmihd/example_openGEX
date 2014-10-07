@@ -5,7 +5,6 @@
 ///
 ////////////////////////////////////////////////////////////////////////////////
 
-
 /// @brief This class is the openGEX lexer, it will read the array of characters and get tokes
 namespace octet
 {
@@ -19,7 +18,7 @@ namespace octet
       // The number of characters till the end of the file
       int bufferSize;
       // The size of the token
-      int tokenSize;
+      int sizeRead;
 
       /// @brief  This function returns true if the pointer is at the end of the file
       bool is_end_file(){
@@ -49,23 +48,13 @@ namespace octet
         }
       }
 
-      /// @brief This will check the current position of char, to see if it's a Metric structure and it 
-      /// it will return true if the next chars are "etric (key ="" (it has to come from a 'M')
-      bool is_Metric(){  // currentChar[0] is already M
-        return (currentChar[1]  == 0x65 &&   // e
-                currentChar[2]  == 0x74 &&   // t
-                currentChar[3]  == 0x72 &&   // r
-                currentChar[4]  == 0x69 &&   // i
-                currentChar[5]  == 0x63 &&   // c
-                currentChar[6]  == 0x20 &&   // SP
-                currentChar[7]  == 0x28 &&   // (
-                currentChar[8]  == 0x6B &&   // k
-                currentChar[9]  == 0x65 &&   // e
-                currentChar[10] == 0x79 &&   // y
-                currentChar[11] == 0x20 &&   // SP
-                currentChar[12] == 0x3D &&   // =
-                currentChar[13] == 0x20 &&   // SP
-                currentChar[14] == 0x22);    // "
+      /// @brief This will check if the current char is equal the string
+      /// This will check the whole string, if it matches with the begining of currentChar
+      bool char_word_is(string word){
+        sizeRead = 0;
+        while ((sizeRead < word.size()) && (currentChar[sizeRead] == (uint8_t)word[sizeRead]))
+          ++sizeRead;
+        return sizeRead == word.size();
       }
 
       /// @brief  This will lexer the word "Metric" and will decide the next lexer to analize
@@ -86,7 +75,6 @@ namespace octet
         default: // ERROR!!!!!
           break;
         }
-        printf("%x ", currentChar[0]);
       }
 
       /// @brief  This function will process the currentChar to look for the next token and study it
@@ -101,7 +89,7 @@ namespace octet
             lex_comment();
             break;
           case 0x4D: // 0x4d = M  this might be for a Metric or other thing
-            if (is_Metric()){
+            if (char_word_is("Metric (key = \"")){
               lex_Metric();  //if is Metric, keep on, if not, it's only an 'M' so next case
               break;
             }
