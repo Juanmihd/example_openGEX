@@ -11,9 +11,9 @@
 namespace octet
 {
   namespace loaders{
-    class openGEX_lexer {
-      // Dictionary of data-type
-      dictionary<int> data_type_;
+    class openGEX_lexer : ddl_token{
+      // Dictionary of identifiers
+      dictionary<int> identifiers_;
 
       // This is the current buffer with the characters in UTF8
       dynarray<uint8_t> buffer;
@@ -25,25 +25,24 @@ namespace octet
       // The size of the token
       int sizeRead;
 
-      /// @brief  This function returns true if the pointer is at the end of the file
+
+      // Some small functions to make easier the testing
+            /// @brief  This function returns true if the pointer is at the end of the file
       inline bool is_end_file(){
         return bufferSize == 0;
       }
-
-      /// @brief  This function will get a new token position
+            /// @brief  This function will get a new token position
       inline void get_next_char(){
         ++currentChar;
         --bufferSize;
       }
-
-      /// @brief Jumps the char "pos" positions
+            /// @brief Jumps the char "pos" positions
       inline void char_jump(int pos){
         currentChar += pos;
         bufferSize -= pos;
       }
-
-      /// @brief This will check if the current char is equal the string
-      /// This will check the whole string, if it matches with the begining of currentChar
+            /// @brief This will check if the current char is equal the string
+            /// This will check the whole string, if it matches with the begining of currentChar
       inline bool char_word_is(string word){
         sizeRead = 0;
         while ((sizeRead < word.size()) && (currentChar[sizeRead] == (uint8_t)word[sizeRead]))
@@ -100,7 +99,7 @@ namespace octet
       */
 
       /// @brief  This function will test if the current token is going to be a comment (// or /*)
-      inline bool is_comment(){ //0x2f = /  and  0x2A = *
+      bool is_comment(){ //0x2f = /  and  0x2A = *
         return currentChar[0] == 0x2F && (currentChar[1] == 0x2f || currentChar[1] == 0x2A); 
       }
 
@@ -121,23 +120,13 @@ namespace octet
         }
       }
 
-      /// @brief  This function will test if the current token is a whitespace (less than 0x20 character)
-      inline bool is_whiteSpace(){ // everything less or equal than 0x20 is a whitespace
-        return currentChar[0] <= 0x20; 
-      }
-
       /// @brief  This function will test if the current token is a dataType
-      inline bool is_dataType(){
+      bool is_dataType(){
 
       }
 
       /// @brief  This function will test if the current token is a identifier
-      inline bool is_identifier(){
-
-      }
-
-      /// @brief  This function will test if the current token is a symbol
-      inline bool is_symbol(){
+      bool is_identifier(){
 
       }
 
@@ -171,7 +160,7 @@ namespace octet
         // Will do this until the end of the file
         while (!is_end_file()){
           //Process token (in openDDL is a structure) when you find it (when it's not a whiteSpace)
-          if(!is_whiteSpace()) process_structure();
+          if(!is_whiteSpace(currentChar[0])) process_structure();
           //get new token
           get_next_char();
         }
