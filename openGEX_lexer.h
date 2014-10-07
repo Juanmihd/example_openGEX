@@ -21,18 +21,18 @@ namespace octet
       // The size of the token
       int tokenSize;
 
-      ///This function returns true if the pointer is at the end of the file
+      /// @brief  This function returns true if the pointer is at the end of the file
       bool is_end_file(){
         return bufferSize == 0;
       }
 
-      /// This function will get a new token position
+      /// @brief  This function will get a new token position
       void get_next_char(){
         ++currentChar;
         --bufferSize;
       }
 
-      /// This will lexer a comment with /* */or // and break line
+      /// @brief  This will lexer a comment with /* */or // and break line
       void lex_comment(){
         get_next_char();
         switch (currentChar[0]){
@@ -49,28 +49,36 @@ namespace octet
         }
       }
 
-      /// This will check the current position of char, to see if it's a Metric
-      /// it will return true if the next chars are "etric" (it has to come from a 'M')
+      /// @brief This will check the current position of char, to see if it's a Metric structure and it 
+      /// it will return true if the next chars are "etric (key ="" (it has to come from a 'M')
       bool is_Metric(){  // currentChar[0] is already M
-        return (currentChar[1] == 0x65 &&   // e
-                currentChar[2] == 0x74 &&   // t
-                currentChar[3] == 0x72 &&   // r
-                currentChar[4] == 0x69 &&   // i
-                currentChar[5] == 0x63 &&   // c
-                );    // 
+        return (currentChar[1]  == 0x65 &&   // e
+                currentChar[2]  == 0x74 &&   // t
+                currentChar[3]  == 0x72 &&   // r
+                currentChar[4]  == 0x69 &&   // i
+                currentChar[5]  == 0x63 &&   // c
+                currentChar[6]  == 0x20 &&   // SP
+                currentChar[7]  == 0x28 &&   // (
+                currentChar[8]  == 0x6B &&   // k
+                currentChar[9]  == 0x65 &&   // e
+                currentChar[10] == 0x79 &&   // y
+                currentChar[11] == 0x20 &&   // SP
+                currentChar[12] == 0x3D &&   // =
+                currentChar[13] == 0x20 &&   // SP
+                currentChar[14] == 0x22);    // "
       }
 
-      /// This will lexer the word "Metric" and will decide the next lexer to analize
+      /// @brief  This will lexer the word "Metric" and will decide the next lexer to analize
       void lex_Metric(){
-        get_next_char();
-
+        //get_next_char();
+        printf("Works!\n");
       }
 
-      /// This function will process the currentChar to look for the next token and study it
+      /// @brief  This function will process the currentChar to look for the next token and study it
       void process_token(){
         //THIS IS JUST A TEST FOR NOW. I just want to be sure that this is working
         //printf("%x < %x", currentChar[0], 0x20);
-        printf("%x ", currentChar[0]);
+        //printf("%x ", currentChar[0]);
         //printf((currentChar[0] < 0x20) ? "true" : "false");
         if (currentChar[0] > 0x20){ // less than 0x20 it's a whitespace so, ignore it
           switch (currentChar[0]){
@@ -78,27 +86,30 @@ namespace octet
             lex_comment();
             break;
           case 0x4D: // 0x4d = M  this might be for a Metric or other thing
-            if (is_Metric()) lex_Metric();  //if is Metric, keep on, if not, it's only an 'M' so next case
+            if (is_Metric()){
+              lex_Metric();  //if is Metric, keep on, if not, it's only an 'M' so next case
+              break;
+            }
           default:
-            printf("%x", currentChar[0]);
+            //printf("%x", currentChar[0]);
             break;
           }
         }
       }
 
     public:
+      /// @brief Constructor of lexer
       openGEX_lexer(){}
 
-      ///This will be the function that creates de process of the lexer receiving as parameter the array of characters
+      /// @brief This will be the function that creates de process of the lexer receiving as parameter the array of characters
       void lexer_file(dynarray<uint8_t> file){
         tokenSize = 0;
         buffer = file;
-        nextChar = currentChar = &buffer[0];
+        currentChar = &buffer[0];
         bufferSize = buffer.size();
-        printf("The size of the buffer is %i\n", buffer.size());
         // It's starting to process all the array of characters starting with the first
         // Will do this until the end of the file
-        while (!is_end_file()){ //It will test if it's the last token
+        while (!is_end_file()){
           //Process token
           process_token();
           //get new token
