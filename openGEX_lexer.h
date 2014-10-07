@@ -15,7 +15,7 @@ namespace octet
       dynarray<uint8_t> buffer;
       // This are the current character and the next character after the token
       uint8_t * currentChar;
-      uint8_t * nextChar;
+      uint8_t * tempChar;
       // The number of characters till the end of the file
       int bufferSize;
       // The size of the token
@@ -49,16 +49,40 @@ namespace octet
         }
       }
 
+      /// This will check the current position of char, to see if it's a Metric
+      /// it will return true if the next chars are "etric" (it has to come from a 'M')
+      bool is_Metric(){  // currentChar[0] is already M
+        return (currentChar[1] == 0x65 &&   // e
+                currentChar[2] == 0x74 &&   // t
+                currentChar[3] == 0x72 &&   // r
+                currentChar[4] == 0x69 &&   // i
+                currentChar[5] == 0x63 &&   // c
+                );    // 
+      }
+
+      /// This will lexer the word "Metric" and will decide the next lexer to analize
+      void lex_Metric(){
+        get_next_char();
+
+      }
+
       /// This function will process the currentChar to look for the next token and study it
       void process_token(){
         //THIS IS JUST A TEST FOR NOW. I just want to be sure that this is working
+        //printf("%x < %x", currentChar[0], 0x20);
         printf("%x ", currentChar[0]);
-        switch (currentChar[0]){
-        case 0x2F: // 0x2f = /  this is suppose to start a comment
-          lex_comment();
-          break;
-        default:
-          printf("ECCO!\n");
+        //printf((currentChar[0] < 0x20) ? "true" : "false");
+        if (currentChar[0] > 0x20){ // less than 0x20 it's a whitespace so, ignore it
+          switch (currentChar[0]){
+          case 0x2F: // 0x2f = /  this is suppose to start a comment
+            lex_comment();
+            break;
+          case 0x4D: // 0x4d = M  this might be for a Metric or other thing
+            if (is_Metric()) lex_Metric();  //if is Metric, keep on, if not, it's only an 'M' so next case
+          default:
+            printf("%x", currentChar[0]);
+            break;
+          }
         }
       }
 
