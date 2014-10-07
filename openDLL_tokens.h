@@ -21,7 +21,7 @@ namespace octet{
       };
     };
 
-    /// @brief THis will be the class of ddl tokens
+    /// @brief This will be the class of ddl tokens
     class ddl_token : public ddl_token_enum
     {
     public:
@@ -48,15 +48,16 @@ namespace octet{
       }
 
       /// @brief  This function will test if the current token is a whitespace (less than 0x20 character)
-       bool is_whiteSpace(unsigned char character){ // everything less or equal than 0x20 is a whitespace
+      bool is_whiteSpace(unsigned char character){ // everything less or equal than 0x20 is a whitespace
         return character <= 0x20;
       }
 
       /// @brief  This function will test if the current token is going to be a comment (// or /*)
-       bool is_comment(unsigned char * character){ //0x2f = /  and  0x2A = *
+      bool is_comment(unsigned char * character){ //0x2f = /  and  0x2A = *
          return character[0] == 0x2F && (character[1] == 0x2f || character[1] == 0x2A);
-       }
+      }
 
+      
     };
   }
 }
