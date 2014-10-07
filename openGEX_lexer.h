@@ -118,7 +118,9 @@ namespace octet
 
       /// @brief  This function will test if the current token is a dataType
       bool is_dataType(){
+        switch (currentChar[0]){
 
+        }
       }
 
       /// @brief  This function will test if the current token is a identifier
