@@ -21,13 +21,11 @@ namespace octet{
       };
     };
 
-    // This are the current character and the next character after the token
-    uint8_t * currentChar;
-    uint8_t * tempChar;
 
     /// @brief This will be the class of ddl tokens
     class ddl_token : public ddl_token_enum
     {
+
     public:
       /// @brief This function will return the token_name of the given token identifier
       static const char *token_name(token_type t){
@@ -36,8 +34,8 @@ namespace octet{
           "tr", "fa",
           "{", "}", "[", "]", "(", ")", ",", "=",
         };
-        // It will be an error if we try to call a token biger than our current token list!
-        assert((unsigned)t < tok_last);
+        // It will be an error if we try to call a token bigger than our current token list!
+        assert(((unsigned)t < tok_last) && "Calling a token bigger than the token list!");
         return token_names[(int)t];
       }
 
@@ -49,26 +47,6 @@ namespace octet{
       /// @brief This will return the enum token_type equal, that it's the last symbol of the enum
       token_type last_symbol(){
         return tok_equal;
-      }
-
-      /// @brief  This function will test if the current token is a whitespace (less than 0x20 character)
-      bool is_whiteSpace(){ // everything less or equal than 0x20 is a whitespace
-        return currentChar[0] <= 0x20;
-      }
-
-      /// @brief  This function will test if the current token is going to be a comment (// or /*)
-      bool is_comment(){ //0x2f = /  and  0x2A = *
-        return currentChar[0] == 0x2F && (currentChar[1] == 0x2f || currentChar[1] == 0x2A);
-      }
-
-      /// @brief  This function will test if the current token is a dataType
-      bool is_dataType(){
-        return true;
-      }
-
-      /// @brief  This function will test if the current token is a identifier
-      bool is_identifier(){
-        return true;
       }
     };
   }

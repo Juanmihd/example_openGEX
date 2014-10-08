@@ -216,6 +216,7 @@
     <ClInclude Include="..\..\shaders\shaders.h" />
     <ClInclude Include="..\..\shaders\texture_shader.h" />
     <ClInclude Include="example_openGEX.h" />
+    <ClInclude Include="openDDL_lexer.h" />
     <ClInclude Include="openDDL_tokens.h" />
     <ClInclude Include="openGEX_lexer.h" />
     <ClInclude Include="openGEX_loader.h" />
