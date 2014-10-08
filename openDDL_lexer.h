@@ -13,6 +13,8 @@ namespace octet
   namespace loaders{
     class openDDL_lexer : ddl_token{
     protected:
+      // Dictionary of identifiers of openGEX
+      dictionary<int> identifiers_;
       // This are the current character and the next character after the token
       uint8_t * currentChar;
       uint8_t * tempChar;
@@ -92,16 +94,15 @@ namespace octet
       void process_structure(){
         //printf("%x ", currentChar[0]);
         // first thing is to check if it's a comment
-        if (is_comment())
-          ignore_comment(); //if it's a comment analyze it (that means, ignore it)
+        if (is_comment()) ignore_comment(); //if it's a comment analyze it (that means, ignore it)
         else if (is_dataType()){
          // process_structureData();
         }
         else if (is_identifier()){
-         // process_structureData();
+          // process_structureData();
         }
         else //if it's nothing of the above is an error
-          printf("ERROR!");
+          assert(0 && "It's not a proper structure");
       }
 
     public:

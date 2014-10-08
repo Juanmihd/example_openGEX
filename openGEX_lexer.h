@@ -12,8 +12,6 @@ namespace octet
 {
   namespace loaders{
     class openGEX_lexer : openDDL_lexer{
-      // Dictionary of identifiers of openGEX
-      dictionary<int> identifiers_;
 
 
     public:
