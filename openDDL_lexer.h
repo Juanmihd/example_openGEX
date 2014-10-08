@@ -15,6 +15,10 @@ namespace octet
     protected:
       // Dictionary of identifiers of openGEX
       dictionary<int> identifiers_;
+      // Dictionary of names
+      dictionary<int> names_;
+      // Dictionary of references
+      dictionary<int> references_;
       // This are the current character and the next character after the token
       uint8_t * currentChar;
       uint8_t * tempChar;
@@ -30,17 +34,20 @@ namespace octet
       bool is_end_file(){
         return bufferSize == 0;
       }
+
       /// @brief  This function will get a new token position
       void get_next_char(){
         ++currentChar;
         --bufferSize;
       }
+
       /// @brief Jumps the char "pos" positions
       inline void char_jump(int pos){
         currentChar += pos;
         assert(((bufferSize -= pos) < 0) && "The end of the file arrived before it was expected.");
 
       }
+
       /// @brief This will check if the current char is equal the string
       /// This will check the whole string, if it matches with the begining of currentChar
       bool char_word_is(string word){
