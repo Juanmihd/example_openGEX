@@ -17,9 +17,6 @@ namespace octet
 
       // This is the current buffer with the characters in UTF8
       dynarray<uint8_t> buffer;
-      // This are the current character and the next character after the token
-      uint8_t * currentChar;
-      uint8_t * tempChar;
       // The number of characters till the end of the file
       int bufferSize;
       // The size of the token
@@ -65,18 +62,6 @@ namespace octet
             get_next_char();
           }
         }
-      }
-
-      /// @brief  This function will test if the current token is a dataType
-      bool is_dataType(){
-        switch (currentChar[0]){
-//THIS HAS TO BE MOVED TO OPENDDL_TOKENS.H
-        }
-      }
-
-      /// @brief  This function will test if the current token is a identifier
-      bool is_identifier(){
-        //THIS HAS TO BE MOVED TO OPENDDL_TOKENS.H
       }
 
       /// @brief  This function will process the currentChar to look for the next token and study it
