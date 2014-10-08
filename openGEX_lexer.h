@@ -5,7 +5,7 @@
 ///
 ////////////////////////////////////////////////////////////////////////////////
 
-#include "openDLL_tokens.h"
+#include "openDDL_tokens.h"
 
 /// @brief This class is the openGEX lexer, it will read the array of characters and get tokes
 namespace octet
@@ -49,55 +49,6 @@ namespace octet
           ++sizeRead;
         return sizeRead == word.size();
       }
-
-      /*
-      /// @brief  This will lexer the word "Metric" and will decide the next lexer to analize
-      void lex_Metric(){
-        // check if it's distance, angle, time or up
-        switch (currentChar[0]){
-        case 0x64: // 0x64 = d  this is suppose to start a distance Metric structure
-          if (char_word_is("distance\") {")){
-            printf("distance!\n");
-            char_jump(sizeRead);
-            lex_dataType();
-            // There must be something in here to read the { or other simbols
-            lex_literal();
-          }
-          break;
-        case 0x61: // 0x61 = a this is suppose to start a angle Metric structure
-          if (char_word_is("angle\") {")){
-            printf("angle!\n");
-            char_jump(sizeRead);
-            lex_dataType();
-            // There must be something in here to read the { or other simbols
-            lex_literal();
-          }
-          break;
-        case 0x74: // 0x74= t this is suppose to start a time Metric structure
-          if (char_word_is("time\") {")){
-            printf("time!\n");
-            char_jump(sizeRead);
-            lex_dataType();
-            // There must be something in here to read the { or other simbols
-            lex_literal();
-          }
-          break;
-        case 0x75: // 0x75 = u this is suppose to start a up Metric structure
-          if (char_word_is("up\") {")){
-            printf("up!\n");
-            char_jump(sizeRead);
-            lex_dataType();
-            // There must be something in here to read the { or other simbols
-            lex_literal();
-          }
-          break;
-        default: // ERROR!!!!!
-          printf(">>>¡¡¡ERROR!!!<<<");
-          break;
-        }
-      }
-      */
-
 
       /// @brief  This will lexer a comment with /* */or // and break line
       void lex_comment(){
