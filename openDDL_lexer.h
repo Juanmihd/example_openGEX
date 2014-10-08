@@ -69,7 +69,7 @@ namespace octet
       }
 
       /// @brief  This will lexer a comment with /* */or // and break line
-      void lex_comment(){
+      void ignore_comment(){
         get_next_char();
         switch (currentChar[0]){
         case 0x2F: // 0x2f = /  as it comes from another / that means that it's a // comment
@@ -93,7 +93,7 @@ namespace octet
         //printf("%x ", currentChar[0]);
         // first thing is to check if it's a comment
         if (is_comment())
-          lex_comment(); //if it's a comment analyze it (that means, ignore it)
+          ignore_comment(); //if it's a comment analyze it (that means, ignore it)
         else if (is_dataType()){
          // process_structureData();
         }
