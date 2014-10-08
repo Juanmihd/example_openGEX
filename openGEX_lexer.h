@@ -24,11 +24,12 @@ namespace octet
         buffer = file;
         currentChar = &buffer[0];
         bufferSize = buffer.size();
+        bool keep_on = true;
         // It's starting to process all the array of characters starting with the first
         // Will do this until the end of the file
-        while (!is_end_file()){
+        while (!is_end_file() && keep_on){
           //Process token (in openDDL is a structure) when you find it (when it's not a whiteSpace)
-          process_structure();
+          keep_on = process_structure();
           //get new token
           get_next_char();
         }

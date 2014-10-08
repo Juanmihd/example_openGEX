@@ -37,14 +37,15 @@ namespace octet
 
       /// @brief  This function will get a new token position
       void get_next_char(){
-        ++currentChar;
         --bufferSize;
+        assert((bufferSize > 0) && "The end of the file arrived before expected");
+        ++currentChar;
       }
 
       /// @brief Jumps the char "pos" positions
       inline void char_jump(int pos){
-        currentChar += pos;
         assert(((bufferSize -= pos) < 0) && "The end of the file arrived before it was expected.");
+        currentChar += pos;
 
       }
 
@@ -64,7 +65,7 @@ namespace octet
 
       /// @brief  This function will test if the current token is going to be a comment (// or /*)
       bool is_comment(){ //0x2f = /  and  0x2A = *
-        return currentChar[0] == 0x2F && (currentChar[1] == 0x2f || currentChar[1] == 0x2A);
+        return currentChar[0] == 0x2F && (currentChar[1] == 0x2F || currentChar[1] == 0x2A);
       }
 
       /// @brief  This function will test if the current token is a dataType
@@ -89,10 +90,9 @@ namespace octet
           get_next_char();
           while (currentChar[0] != 0x2A && currentChar[1] != 0x2f){ // until next characters are * and / 
             get_next_char();
-            assert(!is_end_file() && "Some code is missing here! Text finished before */");
-            get_next_char();
-            assert(!is_end_file() && "Some code is missing here! Text finished before */");
           }
+          get_next_char();
+          break;
         }
       }
 
@@ -100,22 +100,30 @@ namespace octet
       /// It will start geting characters and return them as a word. It will stop when it finds the begining a comment or a whitespace
       string read_word(){
         int sizeWord = 0;
-        char * tempChar = (char*) currentChar;
-        string temp (tempChar, sizeWord);
+        tempChar = currentChar;
+        while (!is_whiteSpace() && !is_comment()){
+          ++sizeWord;
+          get_next_char();
+        }
+        if (is_comment()) ignore_comment();
+        string temp ((char*) (tempChar), sizeWord);
         return temp;
-        // WORK ON THIS VERY LINE!!!!!!
       }
 
       /// @brief  This function will process the currentChar to look for the next token and study it
       /// openDDL is divided into structures
-      void process_structure(){
+      bool process_structure(){
+        string word;
         //printf("%x ", currentChar[0]);
         // first thing is to check if it's a comment
         if (is_comment()) ignore_comment(); //if it's a comment analyze it (that means, ignore it)
-        else if (is_whiteSpace()){ // check if it's a whitespace, and then ignore all whitespaces
-          while (is_whiteSpace() && !is_end_file()) get_next_char();
-        }
+        else if (is_whiteSpace()); // check if it's a whitespace, and then ignore all whitespaces
+          
         else{
+          word = read_word();
+          printf("%s< Word readed\n", word);
+          if (word == "FINISH")
+            return false;
           //read word
           if (is_dataType()){
             // process_structureData();
@@ -126,6 +134,7 @@ namespace octet
           else //if it's nothing of the above is an error
             assert(0 && "It's not a proper structure");
         }
+        return true;
       }
 
     public:
