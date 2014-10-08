@@ -28,7 +28,7 @@ namespace octet
         // Will do this until the end of the file
         while (!is_end_file()){
           //Process token (in openDDL is a structure) when you find it (when it's not a whiteSpace)
-          if (!is_whiteSpace()) process_structure();
+          process_structure();
           //get new token
           get_next_char();
         }

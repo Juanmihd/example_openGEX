@@ -96,20 +96,36 @@ namespace octet
         }
       }
 
+      /// @brief It will read and return a word
+      /// It will start geting characters and return them as a word. It will stop when it finds the begining a comment or a whitespace
+      string read_word(){
+        int sizeWord = 0;
+        char * tempChar = (char*) currentChar;
+        string temp (tempChar, sizeWord);
+        return temp;
+        // WORK ON THIS VERY LINE!!!!!!
+      }
+
       /// @brief  This function will process the currentChar to look for the next token and study it
       /// openDDL is divided into structures
       void process_structure(){
         //printf("%x ", currentChar[0]);
         // first thing is to check if it's a comment
         if (is_comment()) ignore_comment(); //if it's a comment analyze it (that means, ignore it)
-        else if (is_dataType()){
-         // process_structureData();
+        else if (is_whiteSpace()){ // check if it's a whitespace, and then ignore all whitespaces
+          while (is_whiteSpace() && !is_end_file()) get_next_char();
         }
-        else if (is_identifier()){
-          // process_structureData();
+        else{
+          //read word
+          if (is_dataType()){
+            // process_structureData();
+          }
+          else if (is_identifier()){
+            // process_structureData();
+          }
+          else //if it's nothing of the above is an error
+            assert(0 && "It's not a proper structure");
         }
-        else //if it's nothing of the above is an error
-          assert(0 && "It's not a proper structure");
       }
 
     public:
