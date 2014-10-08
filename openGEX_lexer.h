@@ -69,7 +69,7 @@ namespace octet
       void process_structure(){
         //printf("%x ", currentChar[0]);
         // first thing is to check if it's a comment
-        if (is_comment(currentChar)) 
+        if (is_comment()) 
           lex_comment(); //if it's a comment analyze it (that means, ignore it)
         else if (is_dataType()){
 
@@ -94,7 +94,7 @@ namespace octet
         // Will do this until the end of the file
         while (!is_end_file()){
           //Process token (in openDDL is a structure) when you find it (when it's not a whiteSpace)
-          if(!is_whiteSpace(currentChar[0])) process_structure();
+          if(!is_whiteSpace()) process_structure();
           //get new token
           get_next_char();
         }
