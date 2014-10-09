@@ -32,21 +32,19 @@ namespace octet
       // Some small functions to make easier the testing
       /// @brief  This function returns true if the pointer is at the end of the file
       bool is_end_file(){
-        return bufferSize == 0;
+        return bufferSize <= 0;
       }
 
       /// @brief  This function will get a new token position
       void get_next_char(){
         --bufferSize;
-        assert((bufferSize > 0) && "The end of the file arrived before expected");
         ++currentChar;
       }
 
       /// @brief Jumps the char "pos" positions
-      inline void char_jump(int pos){
-        assert(((bufferSize -= pos) < 0) && "The end of the file arrived before it was expected.");
+      void char_jump(int pos){
+        bufferSize -= pos;
         currentChar += pos;
-
       }
 
       /// @brief This will check if the current char is equal the string
@@ -90,6 +88,7 @@ namespace octet
           get_next_char();
           while (currentChar[0] != 0x2A && currentChar[1] != 0x2f){ // until next characters are * and / 
             get_next_char();
+            if (is_end_file()) assert(0 && "It's missing the */ of a comment");
           }
           get_next_char();
           break;
@@ -117,8 +116,7 @@ namespace octet
         //printf("%x ", currentChar[0]);
         // first thing is to check if it's a comment
         if (is_comment()) ignore_comment(); //if it's a comment analyze it (that means, ignore it)
-        else if (is_whiteSpace()); // check if it's a whitespace, and then ignore all whitespaces
-          
+        else if (is_whiteSpace()) ; // check if it's a whitespace, do nothing (that's why there is a ;)
         else{
           word = read_word();
           printf("%s< Word readed\n", word);
