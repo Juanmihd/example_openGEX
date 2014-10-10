@@ -23,7 +23,7 @@ namespace octet {
 
       resource_dict dict;
 
-      if (!coolLoader.loadFile("assets/openGEX/cubeGEX_2.txt")){
+      if (!coolLoader.loadFile("assets/openGEX/Attack1.ogex")){
         printf("It did not work!!");
       }
 

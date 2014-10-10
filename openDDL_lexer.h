@@ -81,7 +81,7 @@ namespace octet
         get_next_char();
         switch (currentChar[0]){
         case 0x2F: // 0x2f = /  as it comes from another / that means that it's a // comment
-          while (currentChar[0] != 0x0D)
+          while (currentChar[0] != 0x0D && currentChar[0] != 0x0A)
             get_next_char();
           break;
         case 0x2A: // 0x2a = * as it comes from another / that means that it's a /* comment
