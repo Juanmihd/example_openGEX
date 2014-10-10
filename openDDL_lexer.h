@@ -117,20 +117,22 @@ namespace octet
         // first thing is to check if it's a comment
         if (is_comment()) ignore_comment(); //if it's a comment analyze it (that means, ignore it)
         else if (is_whiteSpace()) ; // check if it's a whitespace, do nothing (that's why there is a ;)
-        else{
+        else{ // It's a real structure! But it can be IDENTIFIER or DATATYPE
+          printf("Structure Started!\n");
           word = read_word();
-          printf("%s< Word readed\n", word);
+          printf("%s\n", word);
           if (word == "FINISH")
             return false;
           //read word
-          if (is_dataType()){
-            // process_structureData();
+          if (is_dataType()){ 
+            // process_structureData(); //As it's a Data type, now it can be single data list or data array list!
           }
-          else if (is_identifier()){
-            // process_structureData();
+          else if (is_identifier()){ 
+            // process_structureData(); //As it's a Identifier type, now check name? properties? and then { structure(s)? }
           }
           else //if it's nothing of the above is an error
             assert(0 && "It's not a proper structure");
+            printf("Structure ended!\n\n");
         }
         return true;
       }
