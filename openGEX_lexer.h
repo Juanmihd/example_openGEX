@@ -13,10 +13,15 @@ namespace octet
   namespace loaders{
     class openGEX_lexer : openDDL_lexer{
 
+      void init(){
+        
+      }
 
     public:
       /// @brief Constructor of lexer
-      openGEX_lexer(){}
+      openGEX_lexer(){
+        init();
+      }
 
       /// @brief This will be the function that creates de process of the lexer receiving as parameter the array of characters
       bool lexer_file(dynarray<uint8_t> file){

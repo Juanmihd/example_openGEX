@@ -68,12 +68,13 @@ namespace octet
 
       /// @brief  This function will test if the current token is a dataType
       bool is_dataType(){
-        return true;
+        return false;
       }
 
       /// @brief  This function will test if the current token is a identifier
-      bool is_identifier(){
-        return true;
+      bool is_identifier(string word){
+        int index = identifiers_.get_index(word.c_str());
+        return index >= 0;
       }
 
       /// @brief  This will lexer a comment with /* */or // and break line
@@ -121,17 +122,16 @@ namespace octet
           printf("Structure Started!\n");
           word = read_word();
           printf("%s\n", word);
-          if (word == "FINISH")
-            return false;
           //read word
           if (is_dataType()){ 
             // process_structureData(); //As it's a Data type, now it can be single data list or data array list!
           }
-          else if (is_identifier()){ 
+          else if (is_identifier(word)){
             // process_structureData(); //As it's a Identifier type, now check name? properties? and then { structure(s)? }
+            printf("\t----Is a identifier!!----\n");
           }
           else //if it's nothing of the above is an error
-            assert(0 && "It's not a proper structure");
+            ;//assert(0 && "It's not a proper structure");
             printf("Structure ended!\n\n");
         }
         return true;
