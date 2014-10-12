@@ -79,8 +79,9 @@ namespace octet
       }
 
       /// @brief  This function will test if the current token is a dataType
-      bool is_dataType(){
-        return false;
+      bool is_dataType(string word){
+        int index = types_.get_index(word.c_str());
+        return index >= 0;
       }
 
       /// @brief  This function will test if the current token is a identifier
@@ -124,8 +125,9 @@ namespace octet
 
       /// @brief This will initialize the dictionaries of the lexer
       void init(){
+        // Adding the types to the list of types
         for (int i = first_type(); i <= last_type(); ++i)
-          add_type(token_name(i).c_str,i);
+          add_type(token_name(i).c_str(),i);
       }
     public:
       /// @brief Constructor of lexer
