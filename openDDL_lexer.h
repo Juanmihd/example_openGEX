@@ -13,8 +13,10 @@ namespace octet
   namespace loaders{
     class openDDL_lexer : ddl_token{
     protected:
-      // Dictionary of identifiers of openGEX
+      // Dictionary of identifiers of the openDDL language we are using
       dictionary<int> identifiers_;
+      // Dictionary of types of openDDL
+      dictionary<int> types_;
       // Dictionary of names
       dictionary<int> names_;
       // Dictionary of references
@@ -29,8 +31,14 @@ namespace octet
       // The size of the token
       int sizeRead;
 
+      /// @brief  This function will add an identifiers to the dictionary
       void add_identifier(const char *id, int tok){
         identifiers_[id] = tok;
+      }
+
+      /// @brief  This function will add an identifiers to the dictionary
+      void add_type(const char *id, int tok){
+        types_[id] = tok;
       }
 
       // Some small functions to make easier the testing
@@ -114,7 +122,11 @@ namespace octet
         return temp;
       }
 
-
+      /// @brief This will initialize the dictionaries of the lexer
+      void init(){
+        for (int i = first_type(); i <= last_type(); ++i)
+          add_type(token_name(i).c_str,i);
+      }
     public:
       /// @brief Constructor of lexer
       openDDL_lexer(){}

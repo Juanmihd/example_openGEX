@@ -14,8 +14,10 @@ namespace octet
   namespace loaders{
     class openGEX_lexer : openDDL_lexer{
       typedef gex_ident::gex_ident_enum gex_ident_list;
-      gex_ident identList;
+
+      /// @brief This will initialize some structures of the lexer (dictionary of identifiers of openGEX)
       void init(){
+        gex_ident identList;
         //Load the identifiers of openGEX in identifeirs_ dictionary
         for (int i = gex_ident_list::id_Animation; i != gex_ident_list::ident_last; ++i)
           add_identifier(identList.ident_name(i).c_str(),i);
