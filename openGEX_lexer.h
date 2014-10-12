@@ -25,7 +25,12 @@ namespace octet
 
       /// @brief  This function will lexer the next words, considering to be a "structureData"
       void process_structureData(){
+        printf("\t----Is a Type!!----\n");
         //First step is remove whiteSpace and comments
+        while (is_comment() || is_whiteSpace()){
+          if (is_comment()) ignore_comment();
+          else get_next_char();
+        }
         //Then it will read the first character, to see if its a [, or {, or name
         //If its [ it will be a "array", so call to process_dataArray()
         //Else and { or name it is a only dataList, so call to process_dataList() and tell that function if has a name or not
@@ -34,7 +39,12 @@ namespace octet
 
       /// @brief  This function will lexer the next words, considering to be a "structureIdentifier"
       void process_structureIdentifier(){
+        printf("\t----Is a identifier!!----\n");
         //First step is remove whiteSpace and comments
+        while (is_comment() || is_whiteSpace()){
+          if (is_comment()) ignore_comment();
+          else get_next_char();
+        }
         //Then it will read the first character, to see if its a (, or name, or {
         //If its a name call to something to process name
         //Later, check if it's ( and call something to check properties - telling the function which structure is this one
@@ -57,11 +67,9 @@ namespace octet
           //read word
           if (is_dataType(word)){
             process_structureData(); //As it's a Data type, now it can be single data list or data array list!
-            printf("\t----Is a Type!!----\n");
           }
           else if (is_identifier(word)){
             process_structureIdentifier(); //As it's a Identifier type, now check name? properties? and then { structure(s)? }
-            printf("\t----Is a identifier!!----\n");
           }
           else //if it's nothing of the above is an error
             ;//assert(0 && "It's not a proper structure");
