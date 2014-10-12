@@ -29,6 +29,10 @@ namespace octet
       // The size of the token
       int sizeRead;
 
+      void add_identifier(const char *id, int tok){
+        identifiers_[id] = tok;
+      }
+
       // Some small functions to make easier the testing
       /// @brief  This function returns true if the pointer is at the end of the file
       bool is_end_file(){

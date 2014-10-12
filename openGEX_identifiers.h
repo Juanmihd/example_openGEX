@@ -37,7 +37,7 @@ namespace octet{
 
     public:
       /// @brief This function will return the token_name of the given token identifier
-      static const string *ident_name(ident_type t){
+      static const string ident_name(unsigned t){
         static const string ident_names[ident_last] = {
           "Animation",
           "Atten",
@@ -76,7 +76,7 @@ namespace octet{
           "VertexArray",
         };
         // It will be an error if we try to call a token bigger than our current token list!
-        assert(((unsigned)t < ident_last) && "Calling a token bigger than the token list!");
+        assert((t < ident_last) && "Calling a token bigger than the token list!");
         return ident_names[(int)t];
       }
     };

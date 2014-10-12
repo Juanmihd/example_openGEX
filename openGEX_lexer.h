@@ -6,15 +6,19 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #include "openDDL_lexer.h"
+#include "openGEX_identifiers.h"
 
 /// @brief This class is the openGEX lexer, it will read the array of characters and get tokes
 namespace octet
 {
   namespace loaders{
     class openGEX_lexer : openDDL_lexer{
-
+      typedef gex_ident::gex_ident_enum gex_ident_list;
+      gex_ident identList;
       void init(){
-        
+        //Load the identifiers of openGEX in identifeirs_ dictionary
+        for (int i = gex_ident_list::id_Animation; i != gex_ident_list::ident_last; ++i)
+          add_identifier(identList.ident_name(i).c_str(),i);
       }
 
     public:
