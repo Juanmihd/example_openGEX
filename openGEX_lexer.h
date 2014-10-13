@@ -32,8 +32,23 @@ namespace octet
           else get_next_char();
         }
         //Then it will read the first character, to see if its a [, or {, or name
-        //If its [ it will be a "array", so call to process_dataArray()
-        //Else and { or name it is a only dataList, so call to process_dataList() and tell that function if has a name or not
+        //if name it is a only dataList, so call to process_dataList() and tell that function if has a name or not
+        //if(is_name()) ; else
+        switch (currentChar[0]){
+          // [ it will be a "array"
+        case 0x5b: // 5b = [
+          //check integer-literal (for a data array list)
+          //it may receive a name (optional)
+          //expect a { (if not, error)
+          //check data-array-list
+          //expect a } (if not, error)
+          break;
+          // {  it is a only dataList, so call to process_dataList() and tell that function if has a name or not
+        case 0x7b: // 7b = {
+          //check data_list
+          //expect a } (if not, error)
+          break;
+        };
         //Else it's an error
       }
 
@@ -47,9 +62,20 @@ namespace octet
         }
         //Then it will read the first character, to see if its a (, or name, or {
         //If its a name call to something to process name
+        //if(is_name()) ; 
         //Later, check if it's ( and call something to check properties - telling the function which structure is this one
+        if (currentChar[0] == 0x28) // 28 = (
+          //call something to check properties
+          //expect a ) (if not, error)
+          ;
         //Later expect a {, if not return error, and check for a new structure inside this structure
-        //Later expect a }, if not return error
+        if (currentChar[0] != 0x7b) //7b = {
+          ; //return error
+        else{
+          ;//call to process structure
+          //Later expect a }, if not return error
+        }
+        
       }
 
       /// @brief  This function will process the currentChar to look for the next token and study it
