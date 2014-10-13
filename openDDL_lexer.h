@@ -19,6 +19,8 @@ namespace octet
       dictionary<int> types_;
       // Dictionary of names
       dictionary<int> names_;
+      // Dictionary of symbols
+      dictionary<int> symbols_;
       // Dictionary of references
       dictionary<int> references_;
       // This are the current character and the next character after the token
@@ -36,9 +38,14 @@ namespace octet
         identifiers_[id] = tok;
       }
 
-      /// @brief  This function will add an identifiers to the dictionary
+      /// @brief  This function will add an types to the dictionary
       void add_type(const char *id, int tok){
         types_[id] = tok;
+      }
+
+      /// @brief  This function will add an symbols to the dictionary
+      void add_symbol(const char *id, int tok){
+        symbols_[id] = tok;
       }
 
       // Some small functions to make easier the testing
@@ -96,14 +103,9 @@ namespace octet
       }
 
       /// @brief  This function will test if the current character is a symbol { } [ ] ( ) , =
-      bool is_symbol(char * character){
-        int i = first_symbol();
-        bool is_symbol = false;
-        do{
-          is_symbol = (character[0] == token_name(i).c_str()[0]);
-          ++i;
-        } while ( !is_symbol && i > last_symbol());
-        return is_symbol;
+      bool is_symbol(){
+        string character ((char*)currentChar,1);
+        return symbols_.contains(character.c_str());
       }
 
       /// @brief  This will lexer a comment with /* */or // and break line
@@ -128,22 +130,29 @@ namespace octet
       /// @brief It will read and return a word
       /// It will start geting characters and return them as a word. It will stop when it finds the begining a comment or a whitespace
       string read_word(){
-        int sizeWord = 0;
+        int sizeWord = 1;
         tempChar = currentChar;
-        while (!is_whiteSpace() && !is_comment() && !is_symbol((char*)currentChar)){
-          ++sizeWord;
+        if (is_symbol()) printf("Is a symbol, dude!");
+        while (!is_symbol() && !is_whiteSpace() && !is_comment()){
           get_next_char();
+          ++sizeWord;
         }
-        if (is_comment()) ignore_comment();
+        if (is_symbol()){
+          --sizeWord;
+
+        }
+        else if (is_comment()) ignore_comment();
         string temp ((char*) (tempChar), sizeWord);
         return temp;
       }
 
       /// @brief This will initialize the dictionaries of the lexer
-      void init_type(){
+      void init_ddl(){
         // Adding the types to the list of types
-        for (int i = first_type(); i <= last_type(); ++i)
+        for (int i = first_type(); i < first_symbol(); ++i)
           add_type(token_name(i).c_str(),i);
+        for (int i = first_symbol(); i <= last_symbol(); ++i)
+          add_symbol(token_name(i).c_str(), i);
       }
     public:
       /// @brief Constructor of lexer
