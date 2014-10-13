@@ -25,7 +25,7 @@ namespace octet
 
       /// @brief  This function will lexer the next words, considering to be a "structureData"
       void process_structureData(){
-        //printf("\t----Is a Type!!----\n");
+        printf("\t----Is a Type!!----\n");
         //First step is remove whiteSpace and comments
         while (is_comment() || is_whiteSpace()){
           if (is_comment()) ignore_comment();
@@ -34,24 +34,27 @@ namespace octet
         
         //Then it will read the first character, to see if its a [, or {, or name
         //if name it is a only dataList, so call to process_dataList() and tell that function if has a name or not
-        //if(is_name()) ; else
-        switch (currentChar[0]){
-          // [ it will be a "array"
-        case 0x5b: // 5b = [
-          printf("It's an data array list!\n");
-          //check integer-literal (for a data array list)
-          //it may receive a name (optional)
-          //expect a { (if not, error)
-          //check data-array-list
-          //expect a } (if not, error)
-          break;
+        if(is_name()) process_name(); 
+        else
+          switch (currentChar[0]){
           // {  it is a only dataList, so call to process_dataList() and tell that function if has a name or not
-        case 0x7b: // 7b = {
-          printf("It's a data list!\n");
-          //check data_list
-          //expect a } (if not, error)
-          break;
-        };
+          case 0x7b: // 7b = {
+            printf("It's a data list!\n");
+            process_data_list();
+            //expect a } (if not, error)
+            break;
+            // [ it will be a "array"
+          case 0x5b: // 5b = [
+            printf("It's an data array list!\n");
+            int arraySize = read_array_size();
+            printf("Test number %i\n", arraySize);
+            //check integer-literal (for a data array list)
+            //it may receive a name (optional)
+            //expect a { (if not, error)
+            //check data-array-list
+            //expect a } (if not, error)
+            break;
+          };
         //Else it's an error
       }
 
@@ -65,7 +68,7 @@ namespace octet
         }
         //Then it will read the first character, to see if its a (, or name, or {
         //If its a name call to something to process name
-        //if(is_name()) ; 
+        if (is_name()) process_name();
         //Later, check if it's ( and call something to check properties - telling the function which structure is this one
         if (currentChar[0] == 0x28) // 28 = (
           //call something to check properties

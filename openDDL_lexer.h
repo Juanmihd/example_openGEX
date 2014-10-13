@@ -104,14 +104,24 @@ namespace octet
       }
 
       /// @brief  This function will test if the current token is a identifier
-      bool is_name(string word){
-        return (word.c_str()[0] == '%') || (word.c_str()[0] == '$');
+      bool is_name(){
+        return (currentChar[0] == '%') || (currentChar[0] == '$');
       }
 
       /// @brief  This function will test if the current character is a symbol { } [ ] ( ) , =
       bool is_symbol(){
         string character ((char*)currentChar,1);
         return symbols_.contains(character.c_str());
+      }
+
+      /// @brief  This functions process the name, and add it to the application
+      void process_name(){
+
+      }
+
+      /// @brief  This function has to process the datalist
+      void process_data_list(){
+
       }
 
       /// @brief  This will lexer a comment with /* */or // and break line
@@ -131,6 +141,27 @@ namespace octet
           get_next_char();
           break;
         }
+      }
+
+      int stringToInt(string word){
+
+      }
+
+      /// @brief  This function will read and return an integer
+      int read_array_size(){
+        int sizeNumber = 0, number = 0, pow = 1;
+        tempChar = currentChar;
+        while (!is_whiteSpace() && !is_comment()){
+          get_next_char();
+          ++sizeNumber;
+        }
+        if (is_symbol()) get_previous_char();
+        if (is_comment()) ignore_comment();
+        for (int i = 0; i < sizeNumber; ++i){
+          number += pow*(int)tempChar[sizeNumber-i];
+          pow *= 10;
+        }
+        return 23;
       }
 
       /// @brief It will read and return a word
