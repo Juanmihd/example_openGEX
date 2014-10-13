@@ -90,6 +90,16 @@ namespace octet
         return index >= 0;
       }
 
+      /// @brief  This function will test if the current token is a identifier
+      bool is_name(string word){
+        return (word.c_str()[0] == '%') || (word.c_str()[0] == '$');
+      }
+
+      /// @brief  This function will test if the current character is a symbol ( ) { } [ ] , _ 
+      bool is_symbol(char character){
+
+      }
+
       /// @brief  This will lexer a comment with /* */or // and break line
       void ignore_comment(){
         get_next_char();
@@ -114,7 +124,7 @@ namespace octet
       string read_word(){
         int sizeWord = 0;
         tempChar = currentChar;
-        while (!is_whiteSpace() && !is_comment()){
+        while (!is_whiteSpace() && !is_comment() && !is_symbol()){
           ++sizeWord;
           get_next_char();
         }
