@@ -25,18 +25,20 @@ namespace octet
 
       /// @brief  This function will lexer the next words, considering to be a "structureData"
       void process_structureData(){
-        printf("\t----Is a Type!!----\n");
+        //printf("\t----Is a Type!!----\n");
         //First step is remove whiteSpace and comments
         while (is_comment() || is_whiteSpace()){
           if (is_comment()) ignore_comment();
           else get_next_char();
         }
+        
         //Then it will read the first character, to see if its a [, or {, or name
         //if name it is a only dataList, so call to process_dataList() and tell that function if has a name or not
         //if(is_name()) ; else
         switch (currentChar[0]){
           // [ it will be a "array"
         case 0x5b: // 5b = [
+          printf("It's an data array list!\n");
           //check integer-literal (for a data array list)
           //it may receive a name (optional)
           //expect a { (if not, error)
@@ -45,6 +47,7 @@ namespace octet
           break;
           // {  it is a only dataList, so call to process_dataList() and tell that function if has a name or not
         case 0x7b: // 7b = {
+          printf("It's a data list!\n");
           //check data_list
           //expect a } (if not, error)
           break;
@@ -54,7 +57,7 @@ namespace octet
 
       /// @brief  This function will lexer the next words, considering to be a "structureIdentifier"
       void process_structureIdentifier(){
-        printf("\t----Is a identifier!!----\n");
+        //printf("\t----Is a identifier!!----\n");
         //First step is remove whiteSpace and comments
         while (is_comment() || is_whiteSpace()){
           if (is_comment()) ignore_comment();
@@ -87,7 +90,7 @@ namespace octet
         if (is_comment()) ignore_comment(); //if it's a comment analyze it (that means, ignore it)
         else if (is_whiteSpace()); // check if it's a whitespace, do nothing (that's why there is a ;)
         else{ // It's a real structure! But it can be IDENTIFIER or DATATYPE
-          printf("Structure Started!\n");
+          //printf("Structure Started!\n");
           word = read_word();
           printf("%s\n", word);
           //read word
@@ -99,7 +102,7 @@ namespace octet
           }
           else //if it's nothing of the above is an error
             ;//assert(0 && "It's not a proper structure");
-          printf("Structure ended!\n\n");
+          //printf("Structure ended!\n\n");
         }
         return true;
       }

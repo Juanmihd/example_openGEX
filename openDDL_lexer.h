@@ -54,10 +54,16 @@ namespace octet
         return bufferSize <= 0;
       }
 
-      /// @brief  This function will get a new token position
+      /// @brief  This function will get a new char
       void get_next_char(){
         --bufferSize;
         ++currentChar;
+      }
+
+      /// @brief  This function will get the previous char
+      void get_previous_char(){
+        ++bufferSize;
+        --currentChar;
       }
 
       /// @brief Jumps the char "pos" positions
@@ -130,18 +136,18 @@ namespace octet
       /// @brief It will read and return a word
       /// It will start geting characters and return them as a word. It will stop when it finds the begining a comment or a whitespace
       string read_word(){
-        int sizeWord = 1;
+        int sizeWord = 0;
         tempChar = currentChar;
-        if (is_symbol()) printf("Is a symbol, dude!");
-        while (!is_symbol() && !is_whiteSpace() && !is_comment()){
-          get_next_char();
-          ++sizeWord;
+        if (is_symbol())
+          sizeWord = 1;
+        else{
+          while (!is_symbol() && !is_whiteSpace() && !is_comment()){
+            get_next_char();
+            ++sizeWord;
+          }
+          if (is_symbol()) get_previous_char();
+          if (is_comment()) ignore_comment();
         }
-        if (is_symbol()){
-          --sizeWord;
-
-        }
-        else if (is_comment()) ignore_comment();
         string temp ((char*) (tempChar), sizeWord);
         return temp;
       }
