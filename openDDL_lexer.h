@@ -95,9 +95,15 @@ namespace octet
         return (word.c_str()[0] == '%') || (word.c_str()[0] == '$');
       }
 
-      /// @brief  This function will test if the current character is a symbol ( ) { } [ ] , _ 
-      bool is_symbol(char character){
-
+      /// @brief  This function will test if the current character is a symbol { } [ ] ( ) , =
+      bool is_symbol(char * character){
+        int i = first_symbol();
+        bool is_symbol = false;
+        do{
+          is_symbol = (character[0] == token_name(i).c_str()[0]);
+          ++i;
+        } while ( !is_symbol && i > last_symbol());
+        return is_symbol;
       }
 
       /// @brief  This will lexer a comment with /* */or // and break line
@@ -124,7 +130,7 @@ namespace octet
       string read_word(){
         int sizeWord = 0;
         tempChar = currentChar;
-        while (!is_whiteSpace() && !is_comment() && !is_symbol()){
+        while (!is_whiteSpace() && !is_comment() && !is_symbol((char*)currentChar)){
           ++sizeWord;
           get_next_char();
         }
@@ -134,7 +140,7 @@ namespace octet
       }
 
       /// @brief This will initialize the dictionaries of the lexer
-      void init(){
+      void init_type(){
         // Adding the types to the list of types
         for (int i = first_type(); i <= last_type(); ++i)
           add_type(token_name(i).c_str(),i);

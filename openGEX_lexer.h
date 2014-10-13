@@ -16,7 +16,7 @@ namespace octet
       typedef gex_ident::gex_ident_enum gex_ident_list;
 
       /// @brief This will initialize some structures of the lexer (dictionary of identifiers of openGEX)
-      void init(){
+      void init_identifier(){
         gex_ident identList;
         //Load the identifiers of openGEX in identifeirs_ dictionary
         for (int i = gex_ident_list::id_Animation; i != gex_ident_list::ident_last; ++i)
@@ -107,7 +107,8 @@ namespace octet
     public:
       /// @brief Constructor of lexer
       openGEX_lexer(){
-        init();
+        initIdentifier();
+        initType();
       }
 
       /// @brief This will be the function that creates de process of the lexer receiving as parameter the array of characters
