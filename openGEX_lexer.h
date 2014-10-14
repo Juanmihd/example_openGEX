@@ -126,15 +126,16 @@ namespace octet
         if (is_name()) process_name();
         //Later, check if it's ( and call something to check properties - telling the function which structure is this one
         
-        if (currentChar[0] == 0x28) // 28 = (
-          //call something to check properties
-          //expect a ) (if not, error)
-          ;
-        
+        if (currentChar[0] == 0x28){ // 28 = (
+          //call something to check properties          //expect a ) (if not, error)
+          no_error = process_properties();
+        }
+               
         //Later expect a {, if not return error, and check for a new structure inside this structure
         if (currentChar[0] != 0x7b) //7b = {
-          ; //return error
+          no_error = false;
         else{
+          printf("\tSubstructure!\n");
           //no_error = process_structure();  //call to process structure
           //Later expect a }, if not return error
           get_next_char();
@@ -161,7 +162,6 @@ namespace octet
         else{ 
           //printf("Structure Started!\n");
           word = read_word();
-          printf("%s\n", word);
           
           //check if it's a type and return it's index (if its negative it's not a type)
           int type = is_dataType(word); 

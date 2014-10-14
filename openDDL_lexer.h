@@ -190,7 +190,15 @@ namespace octet
       /// @brief  This functions process the name, and add it to the application
       ////////////////////////////////////////////////////////////////////////////////
       void process_name(){
+        printf("It's a name!!\n");
+      }
 
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief  This functions process the properties, and add it to the application
+      ////////////////////////////////////////////////////////////////////////////////
+      bool process_properties(){
+        printf("\tProperties!\n");
+        return true;
       }
 
       ////////////////////////////////////////////////////////////////////////////////
@@ -199,14 +207,16 @@ namespace octet
       /// @return true if it went ok and false if there was any problem (for instance not finding a })
       ////////////////////////////////////////////////////////////////////////////////
       bool process_data_list(int type){
+        int ending;
         string *word = new string();
         get_next_char();
-        while (read_data_list_element(word) == 1){
+        ending = read_data_list_element(word);
+        while (ending == 1){
           printf("Reading -> %s\n", word);
-          // Check the type of 
           get_next_char();
+          ending = read_data_list_element(word);
         }
-        return true;
+        return ending >= 0;
       }
 
       ////////////////////////////////////////////////////////////////////////////////
@@ -245,7 +255,7 @@ namespace octet
           get_next_char();
           ++sizeWord;
         }
-        printf("SYMBOL ->%x\n", currentChar[0]);
+        //printf("SYMBOL ->%x\n", currentChar[0]);
         while (!is_symbol()){
           if (is_comment()) ignore_comment();
           else get_next_char();
@@ -298,9 +308,14 @@ namespace octet
             ++sizeWord;
           }
           if (is_symbol()) get_previous_char();
-          if (is_comment()) ignore_comment();
+          if (is_comment()){
+            ignore_comment();
+            get_next_char();
+          }
         }
-        string temp ((char*) (tempChar), sizeWord);
+        string temp((char*)(tempChar), sizeWord);
+        //printf("Last symbol-> %x finding %s\n", currentChar[0], temp);
+        printf("Finding => %s\n", temp);
         return temp;
       }
 
