@@ -150,7 +150,7 @@ namespace octet
       }
 
       /// @brief  This function has to process the datalist
-      void process_data_list(int type){
+      bool process_data_list(int type){
         string *word = new string();
         get_next_char();
         while (read_data_list_element(word) == 1){
@@ -158,6 +158,7 @@ namespace octet
           // Check the type of 
           get_next_char();
         }
+        return true;
       }
 
       /// @brief  This will lexer a comment with /* */or // and break line

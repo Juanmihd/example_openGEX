@@ -24,7 +24,8 @@ namespace octet
       }
 
       /// @brief  This function will lexer the next words, considering to be a "structureData"
-      void process_structureData(int type){
+      bool process_structureData(int type){
+        bool no_error = true;
         int arraySize;
         printf("\t----Is a Type n: %i!!----\n", type);
         //First step is remove whiteSpace and comments
@@ -53,7 +54,7 @@ namespace octet
           case 0x7b: // 7b = {
             get_next_char();
             printf("It's a data list!\n");
-            process_data_list(type); //expect a } (if not, error)
+            error = process_data_list(type); //expect a } (if not, error)
             break;
             // [ it will be a "array"
           case 0x5b: // 5b = [
@@ -87,10 +88,12 @@ namespace octet
           }
         }
         //Else it's an error
+        return no_error;
       }
 
       /// @brief  This function will lexer the next words, considering to be a "structureIdentifier"
-      void process_structureIdentifier(int type){
+      bool process_structureIdentifier(int type){
+        bool no_error = true;
         printf("\t----Is the identifier n. %i!!----\n",type);
         //First step is remove whiteSpace and comments
         while (is_comment() || is_whiteSpace()){
@@ -118,12 +121,13 @@ namespace octet
             ;//call to process structure
           }
         }
-        
+        return no_error;
       }
 
       /// @brief  This function will process the currentChar to look for the next token and study it
       /// openDDL is divided into structures
       bool process_structure(){
+        bool no_error = true;
         string word;
         //printf("%x ", currentChar[0]);
         // first thing is to check if it's a comment
@@ -147,7 +151,7 @@ namespace octet
             //printf("Structure ended!\n\n");
           }
         }
-        return true;
+        return no_error;
       }
 
     public:
@@ -159,6 +163,7 @@ namespace octet
 
       /// @brief This will be the function that creates de process of the lexer receiving as parameter the array of characters
       bool lexer_file(dynarray<uint8_t> file){
+        return no_error = true;
         sizeRead = 0;
         buffer = file;
         currentChar = &buffer[0];
@@ -173,7 +178,7 @@ namespace octet
           get_next_char();
         }
 
-        return true;
+        return no_error;
       }
     };
   }
