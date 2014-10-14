@@ -37,18 +37,19 @@ namespace octet
         printf("\t----Is a Type n: %i!!----\n", type);
 
         //First step is remove whiteSpace and comments
-        while (is_comment() || is_whiteSpace()){
-          if (is_comment()) ignore_comment();
-          else get_next_char();
-        }
+        remove_comments_whitespaces();
 
         //Then it will read the first character, to see if its a [, or {, or name
         //if name it is a only dataList, so call to process_dataList() and tell that function if has a name or not
+        get_next_char();
         if (currentChar[0] == 0x5b){ // 5b = [
           printf("It's a data array list!\n");
           //check integer-literal (for a data array list)
+          get_next_char();
           arraySize = read_array_size();
           get_next_char();
+
+          remove_comments_whitespaces();
 
           //it may receive a name (optional)
           if (is_name()){
@@ -56,23 +57,16 @@ namespace octet
             get_next_char();
           }
 
+          remove_comments_whitespaces();
+
           //expect a { (if not, error)
           if (currentChar[0] != 0x7b) //7b = {
-            ; //return error
-          else{
-            ;//call to process data array list
-
-            //expect a } (if not, error)
-            get_next_char();
-            if (currentChar[0] != 0x7d) //7d = }
-              ; //return error
-            else{
-              ;//call to process structure
-            }
-          }
-        } 
+            no_error = false; //return error
+          else //call to process data array list, it will check the }
+            no_error = process_data_array_list(type,arraySize);
+        } //ending the [integer-literal] (name) { data-array-list* } option
         
-        //If it's not an [ 
+        //now check the other option (name) { data-list* }
         else{
           if (is_name()){ // check if there is a name, and process it
             printf("It's a name + data list!\n");

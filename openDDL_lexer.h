@@ -98,12 +98,22 @@ namespace octet
           ++sizeRead;
         return sizeRead == word.size();
       }
-
+      
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief  This function will test if the current token is a whitespace (less than 0x20 character)
 ////////////////////////////////////////////////////////////////////////////////
       bool is_whiteSpace(){ // everything less or equal than 0x20 is a whitespace
         return currentChar[0] <= 0x20;
+      }
+      
+////////////////////////////////////////////////////////////////////////////////
+/// @brief  This function will test if the current token is a whitespace (less than 0x20 character)
+////////////////////////////////////////////////////////////////////////////////
+      void remove_comments_whitespaces(){ // everything less or equal than 0x20 is a whitespace
+        while (is_comment() || is_whiteSpace()){
+          if (is_comment()) ignore_comment();
+          else get_next_char();
+        }
       }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -201,7 +211,7 @@ namespace octet
         printf("\tProperties!\n");
         return true;
       }
-
+      
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief  This function has to process the datalist
 ///  This function will keep on checking data until it finds a }. 
@@ -218,6 +228,56 @@ namespace octet
           printf("Reading -> %s\n", word);
         }
         return ending >= 0;
+      }
+      
+////////////////////////////////////////////////////////////////////////////////
+/// @brief  This function has to process the dataarraylist
+///  This function will keep on checking data until it finds a }. 
+/// @return true if it went ok and false if there was any problem (for instance not finding a })
+////////////////////////////////////////////////////////////////////////////////
+      bool process_data_array(int type, int arraySize){
+        //detect {
+        printf("Checking1 %x\n", currentChar[0]);
+        if (currentChar[0] != 0x7b) //7b = {
+          return false;
+        remove_comments_whitespaces();
+        //read elements
+        int itemsLeft = arraySize;
+        while (itemsLeft > 0){
+          printf("I have %i items left\n", itemsLeft);
+          while (currentChar[0] != 0x2c || currentChar[0] != 0x7d){ // 2c = ,
+            get_next_char();
+            printf("Checking DENTRO %x\n", currentChar[0]);
+          }
+          get_next_char();
+
+          --itemsLeft;
+        }
+        get_next_char();
+        //detect }
+        remove_comments_whitespaces();
+        printf("Checking2 %x\n", currentChar[0]);
+        if (currentChar[0] != 0x7d) //7d = }
+          return false;
+        remove_comments_whitespaces();
+        return true;
+      }
+
+////////////////////////////////////////////////////////////////////////////////
+/// @brief  This function has to process the datalist
+///  This function will keep on checking data until it finds a }. 
+/// @return true if it went ok and false if there was any problem (for instance not finding a })
+////////////////////////////////////////////////////////////////////////////////
+      bool process_data_array_list(int type, int arraySize){
+        bool no_error = true;
+        while (no_error && currentChar[0] != 0x7d){
+          printf("Checking %x\n", currentChar[0]);
+          no_error = process_data_array(type, arraySize); //This will have to start with {, read arraySize elements, read }
+        }
+        //expect } (7d)
+        get_next_char();
+        if (currentChar[0] != 0x7d) no_error = false;
+        return no_error;
       }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -286,6 +346,7 @@ namespace octet
           get_next_char();
           ++sizeNumber;
         }
+        printf("\n");
         --sizeNumber;
         for (int i = 0; i <= sizeNumber; ++i){
           number += pow*((int)tempChar[sizeNumber-i]-48);
