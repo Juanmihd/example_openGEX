@@ -44,64 +44,49 @@ namespace octet
 
         //Then it will read the first character, to see if its a [, or {, or name
         //if name it is a only dataList, so call to process_dataList() and tell that function if has a name or not
-        if (is_name()){
-          printf("It's a name + data list!\n");
-          process_name();
+        if (currentChar[0] == 0x5b){ // 5b = [
+          printf("It's a data array list!\n");
+          //check integer-literal (for a data array list)
+          arraySize = read_array_size();
           get_next_char();
+
+          //it may receive a name (optional)
+          if (is_name()){
+            process_name();
+            get_next_char();
+          }
 
           //expect a { (if not, error)
           if (currentChar[0] != 0x7b) //7b = {
             ; //return error
           else{
-            ;// process_data_list(); //expect a } (if not, error)
-          }
-        }
+            ;//call to process data array list
 
-        else{
-          printf("It's not a name\n");
-
-          switch (currentChar[0]){
-          // {  it is a only dataList, so call to process_dataList() and tell that function if has a name or not
-          case 0x7b: // 7b = {
+            //expect a } (if not, error)
             get_next_char();
-            printf("It's a data list!\n");
-            no_error = process_data_list(type);  //expect a } (if not, error)
-            break;
-
-            // [ it will be a "array"
-          case 0x5b: // 5b = [
-            printf("It's an data array list!\n");
-            //check integer-literal (for a data array list)
-            arraySize = read_array_size();
-            get_next_char();
-
-            //it may receive a name (optional)
-            if (is_name()){
-              process_name();
-              get_next_char();
-            }
-
-            //expect a { (if not, error)
-            if (currentChar[0] != 0x7b) //7b = {
+            if (currentChar[0] != 0x7d) //7d = }
               ; //return error
             else{
-              ;//call to process data array list
-
-              //expect a } (if not, error)
-              get_next_char();
-              if (currentChar[0] != 0x7d) //7d = }
-                ; //return error
-              else{
-                ;//call to process structure
-              }
+              ;//call to process structure
             }
-            break;
-
-          default:
-            //Else it's an error
-            printf("Nothin! %x\n",currentChar[0]);
-            break;
           }
+        } 
+        
+        //If it's not an [ 
+        else{
+          if (is_name()){ // check if there is a name, and process it
+            printf("It's a name + data list!\n");
+            process_name();
+            get_next_char();
+          }
+
+          //After the optional name, it expects a {, and analize the data_list
+          if (currentChar[0] == 0x7b){ // 7b = {
+            printf("It's a data list!\n");
+            no_error = process_data_list(type);  //expect a } (if not, error)
+          }
+          else //if there is no {, ITS AN ERROR!!!
+            no_error = false;
         }
 
         return no_error;
@@ -162,6 +147,7 @@ namespace octet
         else{ 
           //printf("Structure Started!\n");
           word = read_word();
+          printf("Finding => %s\n", word);
           
           //check if it's a type and return it's index (if its negative it's not a type)
           int type = is_dataType(word); 

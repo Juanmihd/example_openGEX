@@ -190,7 +190,8 @@ namespace octet
 /// @brief  This functions process the name, and add it to the application
 ////////////////////////////////////////////////////////////////////////////////
       void process_name(){
-        printf("It's a name!!\n");
+        string name = read_word();
+        printf("It's the name %s !!\n", name);
       }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -209,12 +210,12 @@ namespace octet
       bool process_data_list(int type){
         int ending;
         string *word = new string();
-        get_next_char();
         ending = read_data_list_element(word);
+        printf("Reading -> %s\n", word);
         while (ending == 1){
-          printf("Reading -> %s\n", word);
           get_next_char();
           ending = read_data_list_element(word);
+          printf("Reading -> %s\n", word);
         }
         return ending >= 0;
       }
@@ -315,7 +316,7 @@ namespace octet
         }
         string temp((char*)(tempChar), sizeWord);
         //printf("Last symbol-> %x finding %s\n", currentChar[0], temp);
-        printf("Finding => %s\n", temp);
+        //printf("Finding => %s\n", temp);
         return temp;
       }
 
