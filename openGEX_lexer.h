@@ -35,26 +35,30 @@ namespace octet
         //Then it will read the first character, to see if its a [, or {, or name
         //if name it is a only dataList, so call to process_dataList() and tell that function if has a name or not
         if(is_name()) process_name(); 
-        else
+        else{
+          printf("It's not a name\n");
+          get_next_char();
           switch (currentChar[0]){
           // {  it is a only dataList, so call to process_dataList() and tell that function if has a name or not
           case 0x7b: // 7b = {
+            get_next_char();
             printf("It's a data list!\n");
             process_data_list();
             //expect a } (if not, error)
             break;
             // [ it will be a "array"
           case 0x5b: // 5b = [
+            get_next_char();
             printf("It's an data array list!\n");
-            int arraySize = read_array_size();
-            printf("Test number %i\n", arraySize);
             //check integer-literal (for a data array list)
+            int arraySize = read_array_size();
             //it may receive a name (optional)
             //expect a { (if not, error)
             //check data-array-list
             //expect a } (if not, error)
             break;
           };
+        }
         //Else it's an error
       }
 

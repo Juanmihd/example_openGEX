@@ -151,17 +151,16 @@ namespace octet
       int read_array_size(){
         int sizeNumber = 0, number = 0, pow = 1;
         tempChar = currentChar;
-        while (!is_whiteSpace() && !is_comment()){
+        while (currentChar[0] != 0x5d){ // 5d = ]
           get_next_char();
           ++sizeNumber;
         }
-        if (is_symbol()) get_previous_char();
-        if (is_comment()) ignore_comment();
-        for (int i = 0; i < sizeNumber; ++i){
-          number += pow*(int)tempChar[sizeNumber-i];
+        --sizeNumber;
+        for (int i = 0; i <= sizeNumber; ++i){
+          number += pow*((int)tempChar[sizeNumber-i]-48);
           pow *= 10;
         }
-        return 23;
+        return number;
       }
 
       /// @brief It will read and return a word
