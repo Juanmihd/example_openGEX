@@ -98,12 +98,12 @@ namespace octet
       }
 
       /// @brief  This function will test if the current token is a identifier
-      bool is_identifier(string word){
+      int is_identifier(string word){
         int index = identifiers_.get_index(word.c_str());
-        return index >= 0;
+        return index;
       }
 
-      /// @brief  This function will test if the current token is a identifier
+      /// @brief  This function will test if the current token is a name
       bool is_name(){
         return (currentChar[0] == '%') || (currentChar[0] == '$');
       }
@@ -115,32 +115,32 @@ namespace octet
       }
 
       /// @brief  This function will check if it's a bool-literal and return it's value (will check if there is any problem)
-      bool is_bool_literal(string *word, bool *error){
+      bool is_bool_literal(bool *value, string *word){
 
       }
 
-      /// @brief  This function will check if it's a bool-literal
-      int get_integer_literal(string *word, bool *error){
+      /// @brief  This function will check if it's a int-literal
+      bool get_integer_literal(int *value, string *word){
 
       }
 
-      /// @brief  This function will check if it's a bool-literal
-      float get_float_literal(string *word, bool *error){
+      /// @brief  This function will check if it's a float-literal
+      bool get_float_literal(float *value, string *word){
 
       }
 
-      /// @brief  This function will check if it's a bool-literal
-      string get_string_literal(string *word, bool *error){
+      /// @brief  This function will check if it's a string-literal
+      bool get_string_literal(string *value, string *word){
 
       }
 
-      /// @brief  This function will check if it's a bool-literal
-      bool get_reference(string *word, bool *error){
+      /// @brief  This function will check if it's a reference
+      bool get_reference(string *value, string *word){
 
       }
 
-      /// @brief  This function will check if it's a bool-literal
-      bool get_data_type(string *word, bool *error){
+      /// @brief  This function will check if it's a type
+      bool get_data_type(string *value, string *word){
 
       }
 

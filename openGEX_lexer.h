@@ -90,8 +90,8 @@ namespace octet
       }
 
       /// @brief  This function will lexer the next words, considering to be a "structureIdentifier"
-      void process_structureIdentifier(){
-        printf("\t----Is a identifier!!----\n");
+      void process_structureIdentifier(int type){
+        printf("\t----Is the identifier n. %i!!----\n",type);
         //First step is remove whiteSpace and comments
         while (is_comment() || is_whiteSpace()){
           if (is_comment()) ignore_comment();
@@ -137,12 +137,15 @@ namespace octet
           if (type >= 0){
             process_structureData(types_.get_value(type)); //As it's a Data type, now it can be single data list or data array list!
           }
-          else if (is_identifier(word)){
-            process_structureIdentifier(); //As it's a Identifier type, now check name? properties? and then { structure(s)? }
+          else{
+            type = is_identifier(word);
+            if (type >= 0){
+              process_structureIdentifier(identifiers_.get_value(type)); //As it's a Identifier type, now check name? properties? and then { structure(s)? }
+            }
+            else //if it's nothing of the above is an error
+              ;//assert(0 && "It's not a proper structure");
+            //printf("Structure ended!\n\n");
           }
-          else //if it's nothing of the above is an error
-            ;//assert(0 && "It's not a proper structure");
-          //printf("Structure ended!\n\n");
         }
         return true;
       }
