@@ -25,39 +25,66 @@ namespace octet
 
       /// @brief  This function will lexer the next words, considering to be a "structureData"
       void process_structureData(){
+        int arraySize;
         printf("\t----Is a Type!!----\n");
         //First step is remove whiteSpace and comments
         while (is_comment() || is_whiteSpace()){
           if (is_comment()) ignore_comment();
           else get_next_char();
         }
-        
         //Then it will read the first character, to see if its a [, or {, or name
         //if name it is a only dataList, so call to process_dataList() and tell that function if has a name or not
-        if(is_name()) process_name(); 
+        if (is_name()){
+          printf("It's a name + data list!\n");
+          process_name();
+          get_next_char();
+          //expect a { (if not, error)
+          if (currentChar[0] != 0x7b) //7b = {
+            ; //return error
+          else{
+            ;// process_data_list(); //expect a } (if not, error)
+          }
+        }
         else{
           printf("It's not a name\n");
-          get_next_char();
+          //get_next_char();
           switch (currentChar[0]){
           // {  it is a only dataList, so call to process_dataList() and tell that function if has a name or not
           case 0x7b: // 7b = {
             get_next_char();
             printf("It's a data list!\n");
-            process_data_list();
-            //expect a } (if not, error)
+            process_data_list(); //expect a } (if not, error)
             break;
             // [ it will be a "array"
           case 0x5b: // 5b = [
-            get_next_char();
             printf("It's an data array list!\n");
             //check integer-literal (for a data array list)
-            int arraySize = read_array_size();
+            arraySize = read_array_size();
+            get_next_char();
             //it may receive a name (optional)
+            if (is_name()){
+              process_name();
+              get_next_char();
+            }
             //expect a { (if not, error)
-            //check data-array-list
-            //expect a } (if not, error)
+            if (currentChar[0] != 0x7b) //7b = {
+              ; //return error
+            else{
+              ;//call to process data array list
+
+              //expect a } (if not, error)
+              get_next_char();
+              if (currentChar[0] != 0x7d) //7d = }
+                ; //return error
+              else{
+                ;//call to process structure
+              }
+            }
             break;
-          };
+          default:
+            printf("Nothin! %x\n",currentChar[0]);
+            break;
+          }
         }
         //Else it's an error
       }
@@ -84,6 +111,12 @@ namespace octet
         else{
           ;//call to process structure
           //Later expect a }, if not return error
+          get_next_char();
+          if (currentChar[0] != 0x7d) //7d = }
+            ; //return error
+          else{
+            ;//call to process structure
+          }
         }
         
       }

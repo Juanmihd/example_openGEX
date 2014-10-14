@@ -114,6 +114,36 @@ namespace octet
         return symbols_.contains(character.c_str());
       }
 
+      /// @brief  This function will check if it's a bool-literal and return it's value
+      bool is_bool_literal(string *word){
+
+      }
+
+      /// @brief  This function will check if it's a bool-literal
+      bool is_integer_literal(string *word){
+
+      }
+
+      /// @brief  This function will check if it's a bool-literal
+      bool is_float_literal(string *word){
+
+      }
+
+      /// @brief  This function will check if it's a bool-literal
+      bool is_string_literal(string *word){
+
+      }
+
+      /// @brief  This function will check if it's a bool-literal
+      bool is_reference(string *word){
+
+      }
+
+      /// @brief  This function will check if it's a bool-literal
+      bool is_data_type(string *word){
+
+      }
+
       /// @brief  This functions process the name, and add it to the application
       void process_name(){
 
@@ -121,7 +151,12 @@ namespace octet
 
       /// @brief  This function has to process the datalist
       void process_data_list(){
-
+        string *word = new string();
+        get_next_char();
+        while (read_data_list_element(word) == 1){
+          printf("Reading -> %s\n", word);
+          get_next_char();
+        }
       }
 
       /// @brief  This will lexer a comment with /* */or // and break line
@@ -142,9 +177,37 @@ namespace octet
           break;
         }
       }
-
-      int stringToInt(string word){
-
+      
+      /// @brief  This function will read a data-list element and will return if error or more elements
+      /// @param word Pointer to the word, this is the word read
+      /// @return -1 if error
+      /// @return  0 if last element
+      /// @return  1 if more elements
+      int read_data_list_element(string *word){
+        int sizeWord = 0, to_return;
+        tempChar = currentChar;
+        while (!is_symbol() && !is_whiteSpace() && !is_comment()){
+          get_next_char();
+          ++sizeWord;
+        }
+        printf("SYMBOL ->%x\n", currentChar[0]);
+        while (!is_symbol()){
+          if (is_comment()) ignore_comment();
+          else get_next_char();
+        }
+        switch (currentChar[0]){
+        case 0x2c: //2c = ,
+          to_return = 1;
+          break;
+        case 0x7d: //7d = }
+          to_return = 0;
+          break;
+        default:
+         to_return = -1;
+          break;
+        }
+        word->set((char*)(tempChar), sizeWord);
+        return to_return;
       }
 
       /// @brief  This function will read and return an integer
