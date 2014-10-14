@@ -11,10 +11,20 @@ namespace octet{
     struct ddl_token_enum{
       enum token_type
       {
-        tok_bool, 
-        tok_int8, tok_int16, tok_int32, tok_int64, 
-        tok_uint8, tok_uint16, tok_uint32, tok_uint64, 
-        tok_float, tok_double, tok_string, tok_ref, tok_type,
+        tok_bool,   // type  0
+        tok_int8,   // type  1
+        tok_int16,  // type  2
+        tok_int32,  // type  3
+        tok_int64,  // type  4
+        tok_uint8,  // type  5
+        tok_uint16, // type  6
+        tok_uint32, // type  7
+        tok_uint64, // type  8 
+        tok_float,  // type  9 
+        tok_double, // type 10
+        tok_string, // type 11
+        tok_ref,    // type 12
+        tok_type,   // type 13
 
         tok_true, tok_false,
 

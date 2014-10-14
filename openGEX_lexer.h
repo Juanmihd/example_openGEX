@@ -24,9 +24,9 @@ namespace octet
       }
 
       /// @brief  This function will lexer the next words, considering to be a "structureData"
-      void process_structureData(){
+      void process_structureData(int type){
         int arraySize;
-        printf("\t----Is a Type!!----\n");
+        printf("\t----Is a Type n: %i!!----\n", type);
         //First step is remove whiteSpace and comments
         while (is_comment() || is_whiteSpace()){
           if (is_comment()) ignore_comment();
@@ -53,7 +53,7 @@ namespace octet
           case 0x7b: // 7b = {
             get_next_char();
             printf("It's a data list!\n");
-            process_data_list(); //expect a } (if not, error)
+            process_data_list(type); //expect a } (if not, error)
             break;
             // [ it will be a "array"
           case 0x5b: // 5b = [
@@ -91,7 +91,7 @@ namespace octet
 
       /// @brief  This function will lexer the next words, considering to be a "structureIdentifier"
       void process_structureIdentifier(){
-        //printf("\t----Is a identifier!!----\n");
+        printf("\t----Is a identifier!!----\n");
         //First step is remove whiteSpace and comments
         while (is_comment() || is_whiteSpace()){
           if (is_comment()) ignore_comment();
@@ -133,9 +133,9 @@ namespace octet
           //printf("Structure Started!\n");
           word = read_word();
           printf("%s\n", word);
-          //read word
-          if (is_dataType(word)){
-            process_structureData(); //As it's a Data type, now it can be single data list or data array list!
+          int type = is_dataType(word); //check if it's a type and return it's index (if its negative it's not a type)
+          if (type >= 0){
+            process_structureData(types_.get_value(type)); //As it's a Data type, now it can be single data list or data array list!
           }
           else if (is_identifier(word)){
             process_structureIdentifier(); //As it's a Identifier type, now check name? properties? and then { structure(s)? }

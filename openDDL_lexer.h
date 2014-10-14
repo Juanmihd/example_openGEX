@@ -91,10 +91,10 @@ namespace octet
         return currentChar[0] == 0x2F && (currentChar[1] == 0x2F || currentChar[1] == 0x2A);
       }
 
-      /// @brief  This function will test if the current token is a dataType
-      bool is_dataType(string word){
+      /// @brief  This function will test if the current token is a dataType (will return the index of the type
+      int is_dataType(string word){
         int index = types_.get_index(word.c_str());
-        return index >= 0;
+        return index;
       }
 
       /// @brief  This function will test if the current token is a identifier
@@ -114,33 +114,33 @@ namespace octet
         return symbols_.contains(character.c_str());
       }
 
-      /// @brief  This function will check if it's a bool-literal and return it's value
-      bool is_bool_literal(string *word){
+      /// @brief  This function will check if it's a bool-literal and return it's value (will check if there is any problem)
+      bool is_bool_literal(string *word, bool *error){
 
       }
 
       /// @brief  This function will check if it's a bool-literal
-      bool is_integer_literal(string *word){
+      int get_integer_literal(string *word, bool *error){
 
       }
 
       /// @brief  This function will check if it's a bool-literal
-      bool is_float_literal(string *word){
+      float get_float_literal(string *word, bool *error){
 
       }
 
       /// @brief  This function will check if it's a bool-literal
-      bool is_string_literal(string *word){
+      string get_string_literal(string *word, bool *error){
 
       }
 
       /// @brief  This function will check if it's a bool-literal
-      bool is_reference(string *word){
+      bool get_reference(string *word, bool *error){
 
       }
 
       /// @brief  This function will check if it's a bool-literal
-      bool is_data_type(string *word){
+      bool get_data_type(string *word, bool *error){
 
       }
 
@@ -150,11 +150,12 @@ namespace octet
       }
 
       /// @brief  This function has to process the datalist
-      void process_data_list(){
+      void process_data_list(int type){
         string *word = new string();
         get_next_char();
         while (read_data_list_element(word) == 1){
           printf("Reading -> %s\n", word);
+          // Check the type of 
           get_next_char();
         }
       }
