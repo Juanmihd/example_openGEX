@@ -35,10 +35,10 @@ namespace octet
         bool no_error = true;
         int arraySize;
         printf("\t----Is a Type n: %i!!----\n", type);
-
+        printf("%x, ", currentChar[0]);
         //First step is remove whiteSpace and comments
         remove_comments_whitespaces();
-
+        printf("%x\n", currentChar[0]);
         //Then it will read the first character, to see if its a [, or {, or name
         //if name it is a only dataList, so call to process_dataList() and tell that function if has a name or not
         get_next_char();
@@ -60,10 +60,12 @@ namespace octet
           remove_comments_whitespaces();
 
           //expect a { (if not, error)
-          if (currentChar[0] != 0x7b) //7b = {
+          if (currentChar[0] == 0x7b) //7b = {
+            no_error = process_data_array_list(type, arraySize);
+          else{ //call to process data array list, it will check the }
             no_error = false; //return error
-          else //call to process data array list, it will check the }
-            no_error = process_data_array_list(type,arraySize);
+            printf("\n\nERROR: I don't find the data-array-list!\n\n");
+          }
         } //ending the [integer-literal] (name) { data-array-list* } option
         
         //now check the other option (name) { data-list* }
@@ -79,8 +81,10 @@ namespace octet
             printf("It's a data list!\n");
             no_error = process_data_list(type);  //expect a } (if not, error)
           }
-          else //if there is no {, ITS AN ERROR!!!
+          else{ //if there is no {, ITS AN ERROR!!!
             no_error = false;
+            printf("\n\nERROR: I don't find the data-list!\n\n");
+          }
         }
 
         return no_error;
@@ -91,37 +95,44 @@ namespace octet
 ////////////////////////////////////////////////////////////////////////////////
       bool process_structureIdentifier(int type){
         bool no_error = true;
-        printf("\t----Is the identifier n. %i!!----\n",type);
+        printf("\t----Is the identifier n. %i!!----\n", type);
 
         //First step is remove whiteSpace and comments
-        while (is_comment() || is_whiteSpace()){
-          if (is_comment()) ignore_comment();
-          else get_next_char();
-        }
+        remove_comments_whitespaces();
 
         //Then it will read the first character, to see if its a (, or name, or {
 
         //If its a name call to something to process name
         if (is_name()) process_name();
         //Later, check if it's ( and call something to check properties - telling the function which structure is this one
-        
+
         if (currentChar[0] == 0x28){ // 28 = (
           //call something to check properties          //expect a ) (if not, error)
           no_error = process_properties();
         }
-               
+
+        remove_comments_whitespaces();
+        printf("%x\n", currentChar[0]);
         //Later expect a {, if not return error, and check for a new structure inside this structure
-        if (currentChar[0] != 0x7b) //7b = {
-          no_error = false;
-        else{
+        if (currentChar[0] == 0x7b){ //7b = {
           printf("\tSubstructure!\n");
-          //no_error = process_structure();  //call to process structure
+          get_next_char();
+          remove_comments_whitespaces();
+          no_error = process_structure();  //call to process structure
           //Later expect a }, if not return error
           get_next_char();
-          if (currentChar[0] != 0x7d) //7d = }
+          remove_comments_whitespaces();
+          if (currentChar[0] != 0x7d){ //7d = }
             no_error = false;
+            printf("\n\nERROR no ending of the structure!!!\n\n");
+          }
+          get_next_char();
         }
-
+        else{
+          no_error = false;
+          printf("\nERROR: No substructure!!!\n\n");
+        }
+        
         return no_error;
       }
 
@@ -138,7 +149,8 @@ namespace octet
         printf("Structure Started!\n");
         word = read_word();
         printf("Finding => %s\n", word);
-          
+        remove_comments_whitespaces();
+        printf("%x <----\n", currentChar[0]);
         //check if it's a type and return it's index (if its negative it's not a type)
         int type = is_dataType(word); 
         if (type >= 0){ //As it's a Data type, now it can be single data list or data array list!

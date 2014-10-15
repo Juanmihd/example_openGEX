@@ -209,6 +209,18 @@ namespace octet
 ////////////////////////////////////////////////////////////////////////////////
       bool process_properties(){
         printf("\tProperties!\n");
+        get_next_char();
+        remove_comments_whitespaces();
+        while (currentChar[0] != 0x29){
+          //printf("%x, ", currentChar[0]);
+          get_next_char();
+          if (is_end_file()){
+            return false;
+            printf("\n\nERROR!!!\n\n");
+          }
+        }
+        get_next_char();
+        //printf("\n End Properties!\n");
         return true;
       }
       
@@ -269,7 +281,7 @@ namespace octet
 /// @return true if it went ok and false if there was any problem (for instance not finding a })
 ////////////////////////////////////////////////////////////////////////////////
       bool process_data_array_list(int type, int arraySize){
-        bool no_error = true;
+        bool no_error = false;
         while (no_error && currentChar[0] != 0x7d){
           printf("Checking %x\n", currentChar[0]);
           no_error = process_data_array(type, arraySize); //This will have to start with {, read arraySize elements, read }
@@ -277,7 +289,7 @@ namespace octet
         //expect } (7d)
         get_next_char();
         if (currentChar[0] != 0x7d) no_error = false;
-        return no_error;
+        return true;
       }
 
 ////////////////////////////////////////////////////////////////////////////////
