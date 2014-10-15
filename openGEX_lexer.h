@@ -196,10 +196,12 @@ namespace octet
         // Will do this until the end of the file
         while (!is_end_file() && no_error){
           remove_comments_whitespaces();
-          //Process token (in openDDL is a structure) when you find it (when it's not a whiteSpace)
-          no_error = process_structure();
-          //get new token
-          get_next_char();
+          if (!is_end_file()){
+            //Process token (in openDDL is a structure) when you find it
+            no_error = process_structure();
+            //get new token
+            get_next_char();
+          }
         }
 
         return no_error;

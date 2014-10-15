@@ -157,42 +157,42 @@ namespace octet
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief  This function will check if it's a bool-literal and return it's value (will check if there is any problem)
 ////////////////////////////////////////////////////////////////////////////////
-      bool is_bool_literal(bool *value, string *word){
+      bool get_bool_literal(bool &value, string word){
 
       }
 
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief  This function will check if it's a int-literal
 ////////////////////////////////////////////////////////////////////////////////
-      bool get_integer_literal(int *value, string *word){
+      bool get_integer_literal(int &value, string word){
 
       }
 
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief  This function will check if it's a float-literal
 ////////////////////////////////////////////////////////////////////////////////
-      bool get_float_literal(float *value, string *word){
+      bool get_float_literal(float &value, string word){
 
       }
 
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief  This function will check if it's a string-literal
 ////////////////////////////////////////////////////////////////////////////////
-      bool get_string_literal(string *value, string *word){
+      bool get_string_literal(string &value, string word){
 
       }
 
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief  This function will check if it's a reference
 ////////////////////////////////////////////////////////////////////////////////
-      bool get_reference(string *value, string *word){
+      bool get_reference(string &value, string word){
 
       }
 
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief  This function will check if it's a type
 ////////////////////////////////////////////////////////////////////////////////
-      bool get_data_type(string *value, string *word){
+      bool get_data_type(string &value, string word){
 
       }
 
@@ -223,6 +223,39 @@ namespace octet
         //printf("\n End Properties!\n");
         return true;
       }
+
+////////////////////////////////////////////////////////////////////////////////
+/// @brief  This functions process the name, and add it to the application
+////////////////////////////////////////////////////////////////////////////////
+      void process_data_list_element(int type, string word){
+        bool no_error = true;
+        switch (type){
+        case token_type::tok_bool:
+          bool value;
+          no_error = get_bool_literal(value, word);
+          break;
+        case token_type::tok_int8:
+        case token_type::tok_int16:
+        case token_type::tok_int32:
+        case token_type::tok_int64:
+        case token_type::tok_uint8:
+        case token_type::tok_uint16:
+        case token_type::tok_uint32:
+        case token_type::tok_uint64:
+          break;
+        case token_type::tok_float:
+        case token_type::tok_double:
+          break;
+        case token_type::tok_string:
+          break;
+        case token_type::tok_ref:
+          break;
+        case token_type::tok_type:
+          break;
+        default:
+          break;
+        };
+      }
       
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief  This function has to process the datalist
@@ -233,6 +266,7 @@ namespace octet
         int ending;
         string *word = new string();
         ending = read_data_list_element(word);
+        process_data_list_element(type, word);
         printf("Reading -> %d\n", ending);
         while (ending == 1){
           get_next_char();
