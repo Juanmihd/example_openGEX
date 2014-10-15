@@ -35,10 +35,10 @@ namespace octet
         bool no_error = true;
         int arraySize;
         printf("\t----Is a Type n: %i!!----\n", type);
-        printf("%x, ", currentChar[0]);
         //First step is remove whiteSpace and comments
         remove_comments_whitespaces();
-        printf("%x\n", currentChar[0]);
+        //printf("%x\n", currentChar[0]);
+
         //Then it will read the first character, to see if its a [, or {, or name
         //if name it is a only dataList, so call to process_dataList() and tell that function if has a name or not
         if (currentChar[0] == 0x5b){ // 5b = [
@@ -78,6 +78,9 @@ namespace octet
           //After the optional name, it expects a {, and analize the data_list
           if (currentChar[0] == 0x7b){ // 7b = {
             printf("It's a data list!\n");
+            get_next_char();
+            remove_comments_whitespaces();
+            printf("%x\n", currentChar[0]);
             no_error = process_data_list(type);  //expect a } (if not, error)
           }
           else{ //if there is no {, ITS AN ERROR!!!

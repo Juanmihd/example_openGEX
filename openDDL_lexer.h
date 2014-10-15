@@ -233,11 +233,11 @@ namespace octet
         int ending;
         string *word = new string();
         ending = read_data_list_element(word);
-        printf("Reading -> %s\n", word);
+        printf("Reading -> %d\n", ending);
         while (ending == 1){
           get_next_char();
           ending = read_data_list_element(word);
-          printf("Reading -> %s\n", word);
+          printf("Reading -> %d\n", ending);
         }
         return ending >= 0;
       }
@@ -324,15 +324,14 @@ namespace octet
       int read_data_list_element(string *word){
         int sizeWord = 0, to_return;
         tempChar = currentChar;
-        while (!is_symbol() && !is_whiteSpace() && !is_comment()){
+        while (currentChar[0] != 0x2c && currentChar[0] != 0x7d && !is_whiteSpace() && !is_comment()){
+          printf("%x, ", currentChar[0]);
           get_next_char();
           ++sizeWord;
         }
-        //printf("SYMBOL ->%x\n", currentChar[0]);
-        while (!is_symbol()){
-          if (is_comment()) ignore_comment();
-          else get_next_char();
-        }
+
+        remove_comments_whitespaces();
+
         switch (currentChar[0]){
         case 0x2c: //2c = ,
           to_return = 1;
