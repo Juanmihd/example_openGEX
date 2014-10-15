@@ -157,42 +157,85 @@ namespace octet
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief  This function will check if it's a bool-literal and return it's value (will check if there is any problem)
 ////////////////////////////////////////////////////////////////////////////////
-      bool get_bool_literal(bool &value, string word){
+      bool get_bool_literal(bool &value, string *word){
 
       }
 
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief  This function will check if it's a int-literal
 ////////////////////////////////////////////////////////////////////////////////
-      bool get_integer_literal(int &value, string word){
+      bool get_integer_literal(int &value, string *word){
 
       }
 
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief  This function will check if it's a float-literal
 ////////////////////////////////////////////////////////////////////////////////
-      bool get_float_literal(float &value, string word){
+      bool get_float_literal(float &value, string *word){
+        int decimal = 1;
+        int initial_i = 0;
+        int pos_negative = 1;
+        int pow = 10;
+        value = 0;
 
+        //It may have - or +
+        if (word->c_str()[0] == 0x2b){ //2b = +
+          initial_i = 1; //ignore the first character
+          pos_negative = 1; //is positive number
+        }
+        else if (word->c_str()[0] == 0x2d){
+          initial_i = 1; //ignore the first character
+          pos_negative = -1;
+        }
+
+        //It may be a binary-literal, hex-literal or float-literal (starting with 0 or .) or float-literal starting with any number
+        if (word->c_str()[initial_i] == 0x30){ //30 = 0
+          if (word->c_str()[initial_i + 1] == 0x42 || word->c_str()[initial_i + 1] == 0x62){ //42 = B, 62 = b, that meaning, it's a binary number
+            pow = 2;
+            initial_i += 2;
+          }
+          else if (word->c_str()[initial_i + 1] == 0x58 || word->c_str()[initial_i + 1] == 0x78){ //58 = X, 78 = x, that meaning, it's an hex number
+            pow = 16;
+            initial_i += 2;
+          }
+        }
+        else if (word->c_str()[initial_i] == 0x2e){ //2e = ., it can be a float starting by a dot
+          ++initial_i;
+          decimal = 10;
+        }
+
+        if (pow == 10)
+          //fill this with something that understand decimals
+          for (int i = initial_i; i < word->size(); ++i){
+            value = value*pow + word->c_str()[i] - 48;
+          //add here something to understand E10 exponentials
+        }
+        else if (pow == 2){
+          //fill this with the reader of binaries
+        }
+        else if (pow == 16){
+          //fill this with the reader of exadecimals
+        }
       }
 
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief  This function will check if it's a string-literal
 ////////////////////////////////////////////////////////////////////////////////
-      bool get_string_literal(string &value, string word){
+      bool get_string_literal(string &value, string *word){
 
       }
 
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief  This function will check if it's a reference
 ////////////////////////////////////////////////////////////////////////////////
-      bool get_reference(string &value, string word){
+      bool get_value_reference(string &value, string *word){
 
       }
 
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief  This function will check if it's a type
 ////////////////////////////////////////////////////////////////////////////////
-      bool get_data_type(string &value, string word){
+      bool get_value_data_type(string &value, string *word){
 
       }
 
@@ -225,15 +268,18 @@ namespace octet
       }
 
 ////////////////////////////////////////////////////////////////////////////////
-/// @brief  This functions process the name, and add it to the application
+/// @brief  This functions process the data list, taking into account the type of data expected
 ////////////////////////////////////////////////////////////////////////////////
-      void process_data_list_element(int type, string word){
+      void process_data_list_element(int type, string *word){
         bool no_error = true;
+        //Check the type, and call to the appropriate processor function
         switch (type){
         case token_type::tok_bool:
-          bool value;
-          no_error = get_bool_literal(value, word);
+        {
+          bool valueBool;
+          no_error = get_bool_literal(valueBool, word);
           break;
+        }
         case token_type::tok_int8:
         case token_type::tok_int16:
         case token_type::tok_int32:
@@ -242,16 +288,36 @@ namespace octet
         case token_type::tok_uint16:
         case token_type::tok_uint32:
         case token_type::tok_uint64:
+        {
+          int valueInt;
+          no_error = get_integer_literal(valueInt, word);
           break;
+        }
         case token_type::tok_float:
         case token_type::tok_double:
+        {
+          float valueFloat;
+          no_error = get_float_literal(valueFloat, word);
           break;
+        }
         case token_type::tok_string:
+        {
+          string valueString;
+          no_error = get_string_literal(valueString, word);
           break;
+        }
         case token_type::tok_ref:
+        {
+          string valueRef;
+          no_error = get_value_reference(valueRef, word);
           break;
+        }
         case token_type::tok_type:
+        {
+          string valueType;
+          no_error = get_value_data_type(valueType, word);
           break;
+        }
         default:
           break;
         };
@@ -265,14 +331,16 @@ namespace octet
       bool process_data_list(int type){
         int ending;
         string *word = new string();
+        printf("{ ");
         ending = read_data_list_element(word);
         process_data_list_element(type, word);
-        printf("Reading -> %d\n", ending);
         while (ending == 1){
+          printf(", ");
           get_next_char();
           ending = read_data_list_element(word);
-          printf("Reading -> %d\n", ending);
+          process_data_list_element(type, word);
         }
+        printf(" }\n");
         return ending >= 0;
       }
       
