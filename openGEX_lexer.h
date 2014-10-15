@@ -133,33 +133,28 @@ namespace octet
         bool no_error = true;
         string word;
 
-        // first thing is to check if it's a comment
-        if (is_comment()) ignore_comment(); //if it's a comment analyze it (that means, ignore it)
-        else if (is_whiteSpace()); // check if it's a whitespace, do nothing (that's why there is a ;)
-
         // It's a real structure! But it can be IDENTIFIER or DATATYPE
-        else{ 
-          //printf("Structure Started!\n");
-          word = read_word();
-          printf("Finding => %s\n", word);
+        
+        printf("Structure Started!\n");
+        word = read_word();
+        printf("Finding => %s\n", word);
           
-          //check if it's a type and return it's index (if its negative it's not a type)
-          int type = is_dataType(word); 
-          if (type >= 0){ //As it's a Data type, now it can be single data list or data array list!
-            process_structureData(types_.get_value(type)); 
+        //check if it's a type and return it's index (if its negative it's not a type)
+        int type = is_dataType(word); 
+        if (type >= 0){ //As it's a Data type, now it can be single data list or data array list!
+          process_structureData(types_.get_value(type)); 
+        }
+
+        else{
+          //check if it's a identifier and return it's index (if its negative it's not a identifier)
+          type = is_identifier(word);
+          if (type >= 0){ //As it's a Identifier type, now check name? properties? and then { structure(s)? }
+            process_structureIdentifier(identifiers_.get_value(type)); 
           }
 
-          else{
-            //check if it's a identifier and return it's index (if its negative it's not a identifier)
-            type = is_identifier(word);
-            if (type >= 0){ //As it's a Identifier type, now check name? properties? and then { structure(s)? }
-              process_structureIdentifier(identifiers_.get_value(type)); 
-            }
-
-            else //if it's nothing of the above is an error
-              ;//assert(0 && "It's not a proper structure");
-            //printf("Structure ended!\n\n");
-          }
+          else //if it's nothing of the above is an error
+            ;//assert(0 && "It's not a proper structure");
+          printf("Structure ended!\n\n");
         }
         return no_error;
       }
@@ -186,6 +181,7 @@ namespace octet
         // It's starting to process all the array of characters starting with the first
         // Will do this until the end of the file
         while (!is_end_file() && no_error){
+          remove_comments_whitespaces();
           //Process token (in openDDL is a structure) when you find it (when it's not a whiteSpace)
           no_error = process_structure();
           //get new token
