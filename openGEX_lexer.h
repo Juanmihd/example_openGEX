@@ -41,7 +41,6 @@ namespace octet
         printf("%x\n", currentChar[0]);
         //Then it will read the first character, to see if its a [, or {, or name
         //if name it is a only dataList, so call to process_dataList() and tell that function if has a name or not
-        get_next_char();
         if (currentChar[0] == 0x5b){ // 5b = [
           printf("It's a data array list!\n");
           //check integer-literal (for a data array list)

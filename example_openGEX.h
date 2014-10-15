@@ -11,7 +11,6 @@ namespace octet {
     // scene for drawing duck
     ref<visual_scene> app_scene;
     openGEX_loader coolLoader;
-    collada_builder loader;
   public:
     /// this is called when we construct the class before everything is initialised.
     example_openGEX(int argc, char **argv) : app(argc, argv) {
@@ -27,11 +26,6 @@ namespace octet {
         printf("It did not work!!");
       }
 
-      if (!loader.load_xml("assets/duck_triangulate.dae")) {
-        // failed to load file
-        return;
-      }
-      loader.get_resources(dict);
 
       dynarray<resource*> meshes;
       dict.find_all(meshes, atom_mesh);
