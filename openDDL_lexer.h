@@ -193,29 +193,25 @@ namespace octet
           if (word->c_str()[initial_i + 1] == 0x42 || word->c_str()[initial_i + 1] == 0x62){ //42 = B, 62 = b, that meaning, it's a binary number
             pow = 2;
             initial_i += 2;
+            //fill this with the reader of binaries
           }
           else if (word->c_str()[initial_i + 1] == 0x58 || word->c_str()[initial_i + 1] == 0x78){ //58 = X, 78 = x, that meaning, it's an hex number
             pow = 16;
             initial_i += 2;
+            //fill this with the reader of exadecimals
           }
         }
-        else if (word->c_str()[initial_i] == 0x2e){ //2e = ., it can be a float starting by a dot
-          ++initial_i;
-          decimal = 10;
-        }
-
-        if (pow == 10)
+        else{
+          if (word->c_str()[initial_i] == 0x2e){ //2e = ., it can be a float starting by a dot
+            ++initial_i;
+            decimal = 10;
+          }
           //fill this with something that understand decimals
-          for (int i = initial_i; i < word->size(); ++i){
+          for (int i = initial_i; i < word->size(); ++i)
             value = value*pow + word->c_str()[i] - 48;
-          //add here something to understand E10 exponentials
+            //add here something to understand E10 exponentials
         }
-        else if (pow == 2){
-          //fill this with the reader of binaries
-        }
-        else if (pow == 16){
-          //fill this with the reader of exadecimals
-        }
+          
       }
 
 ////////////////////////////////////////////////////////////////////////////////
