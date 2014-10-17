@@ -176,6 +176,8 @@ namespace octet
         int initial_i = 0;
         int pos_negative = 1;
         int pow = 10;
+        int exponential = 1;
+        int exp_pos_neg = 1;
         value = 0;
 
         //It may have - or +
@@ -183,7 +185,7 @@ namespace octet
           initial_i = 1; //ignore the first character
           pos_negative = 1; //is positive number
         }
-        else if (word->c_str()[0] == 0x2d){
+        else if (word->c_str()[0] == 0x2d){ //2d = -
           initial_i = 1; //ignore the first character
           pos_negative = -1;
         }
@@ -201,18 +203,50 @@ namespace octet
             //fill this with the reader of exadecimals
           }
         }
-        else{
-          if (word->c_str()[initial_i] == 0x2e){ //2e = ., it can be a float starting by a dot
-            ++initial_i;
-            decimal = 10;
-          }
-          //fill this with something that understand decimals
-          for (int i = initial_i; i < word->size(); ++i)
-            value = value*pow + word->c_str()[i] - 48;
-            //add here something to understand E10 exponentials
-        }
         
+        if (pow == 10){
+          int i;
+          //this will read the left part of the dot 
+          for (i = initial_i; i < word->size() && decimal == 1 && exponential == 1; ++i){
+            if (word->c_str()[i] == 0x2e)
+              decimal = 10;
+            else if (word->c_str()[i] == 0x45 || word->c_str()[i] == 0x65) //45 = E, 65 = e
+              exponential = 0;
+            else
+              value = value*pow + (word->c_str()[i] - 48);
+          }
 
+          //this part will read decimals (right part of dot)
+          if (decimal != 1)
+            for (; i < word->size() && exponential == 1; ++i){
+              if (word->c_str()[i] == 0x45 || word->c_str()[i] == 0x65) //45 = E, 65 = e
+                exponential = 0;
+              else{
+                decimal *= 10;
+                value = value*pow + (word->c_str()[i] - 48);
+              }
+            }
+
+          //this part will understand exponentials (if there is any)
+          if (exponential == 0){
+            if (word->c_str()[i] == 0x2b) //2b = +
+              ++i;
+            else if (word->c_str()[i] == 0x2d){ //2d = -
+              ++i;
+              exp_pos_neg = -1;
+            }
+            for (; i < word->size(); ++i){
+              exponential = exponential*10 + (word->c_str()[i] - 48);
+            }
+          }
+
+        }
+
+        //Now construct the number knowing value, pos_negative, decimal, pow, exponential!
+        value = value*pos_negative / decimal;
+        printf("Obtaining decimal -> %i\n", word->size());
+        printf("Obtaining number -> %f\n", value);
+        return true;
       }
 
 ////////////////////////////////////////////////////////////////////////////////
