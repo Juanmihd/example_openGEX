@@ -196,6 +196,9 @@ namespace octet
             pow = 2;
             initial_i += 2;
             //fill this with the reader of binaries
+            for (int i = 0; i < word->size(); ++i){
+              value = value*pow + (word->c_str()[i] - 48);
+            }
           }
           else if (word->c_str()[initial_i + 1] == 0x58 || word->c_str()[initial_i + 1] == 0x78){ //58 = X, 78 = x, that meaning, it's an hex number
             pow = 16;
