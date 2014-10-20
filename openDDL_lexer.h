@@ -165,11 +165,65 @@ namespace octet
 /// @brief  This function will check if it's a int-literal
 ////////////////////////////////////////////////////////////////////////////////
       bool get_integer_literal(int &value, string *word){
+        value = 0;
+        int pow = 10;
+        int initial_i = 0;
+        int pos_negative = 1;
+
+        //It may have - or +
+        if (word->c_str()[0] == 0x2b){ //2b = +
+          initial_i = 1; //ignore the first character
+          pos_negative = 1; //is positive number
+        }
+        else if (word->c_str()[0] == 0x2d){ //2d = -
+          initial_i = 1; //ignore the first character
+          pos_negative = -1;
+        }
+
+
+        //It may be a binary-literal, hex-literal or float-literal (starting with 0 or .) or float-literal starting with any number
+        if (word->c_str()[initial_i] == 0x30){ //30 = 0
+          if (word->c_str()[initial_i + 1] == 0x42 || word->c_str()[initial_i + 1] == 0x62){ //42 = B, 62 = b, that meaning, it's a binary number
+            pow = 2;
+            initial_i += 2;
+            //fill this with the reader of binaries
+            for (int i = 0; i < word->size(); ++i){
+              if (word->c_str()[i] == 48 || word->c_str()[i] == 49)
+                value = value*pow + (word->c_str()[i] - 48);
+              else
+                return false; //ERROR!
+            }
+          }
+          else if (word->c_str()[initial_i + 1] == 0x58 || word->c_str()[initial_i + 1] == 0x78){ //58 = X, 78 = x, that meaning, it's an hex number
+            pow = 16;
+            initial_i += 2;
+            //fill this with the reader of exadecimals
+            for (int i = 0; i < word->size(); ++i){
+              if (word->c_str()[i] >= 48 || word->c_str()[i] <= 57)
+                value = value*pow + (word->c_str()[i] - 48);
+              else if (word->c_str()[i] >= 65 || word->c_str()[i] <= 70)
+                value = value*pow + (word->c_str()[i] - 55);
+              else if (word->c_str()[i] >= 97 || word->c_str()[i] <= 102)
+                value = value*pow + (word->c_str()[i] - 87);
+              else
+                return false; //ERROR!
+            }
+          }
+        }
+
+        for (int i = initial_i; i < word->size(); ++i){
+          if (word->c_str()[i] >= 97 || word->c_str()[i] <= 102)
+            value = value*pow + (word->c_str()[i] - 87);
+          else
+            return false; //ERROR!
+        }
+
+        value *= pos_negative;
         return true;
       }
 
 ////////////////////////////////////////////////////////////////////////////////
-/// @brief  This function will check if it's a float-literal
+/// @brief  This function will check (and read) if it's a float-literal
 ////////////////////////////////////////////////////////////////////////////////
       bool get_float_literal(float &value, string *word){
         int decimal = 1;
@@ -197,36 +251,57 @@ namespace octet
             initial_i += 2;
             //fill this with the reader of binaries
             for (int i = 0; i < word->size(); ++i){
-              value = value*pow + (word->c_str()[i] - 48);
+              if (word->c_str()[i] == 48 || word->c_str()[i] == 49)
+                value = value*pow + (word->c_str()[i] - 48);
+              else
+                return false; //ERROR!
             }
           }
           else if (word->c_str()[initial_i + 1] == 0x58 || word->c_str()[initial_i + 1] == 0x78){ //58 = X, 78 = x, that meaning, it's an hex number
             pow = 16;
             initial_i += 2;
             //fill this with the reader of exadecimals
+            for (int i = 0; i < word->size(); ++i){
+              if (word->c_str()[i] >= 48 || word->c_str()[i] <= 57)
+                value = value*pow + (word->c_str()[i] - 48);
+              else if (word->c_str()[i] >= 65 || word->c_str()[i] <= 70)
+                  value = value*pow + (word->c_str()[i] - 55);
+              else if (word->c_str()[i] >= 97 || word->c_str()[i] <= 102)
+                value = value*pow + (word->c_str()[i] - 87);
+              else
+                return false; //ERROR!
+            }
           }
         }
         
         if (pow == 10){
           int i;
+          // It can be a decimal, so we will use decimal as a way to test if it's decimal or not
+          decimal = -1;
+
           //this will read the left part of the dot 
-          for (i = initial_i; i < word->size() && decimal == 1 && exponential == 1; ++i){
-            if (word->c_str()[i] == 0x2e)
-              decimal = 10;
+          for (i = initial_i; i < word->size() && decimal == -1 && exponential == 1; ++i){
+            if (word->c_str()[i] == 0x2e) //2e = .
+              decimal = 1;
             else if (word->c_str()[i] == 0x45 || word->c_str()[i] == 0x65) //45 = E, 65 = e
               exponential = 0;
-            else
+            else if (word->c_str()[i] >= 48 || word->c_str()[i] <= 57)
               value = value*pow + (word->c_str()[i] - 48);
+            else
+              return false; //ERROR!
           }
 
           //this part will read decimals (right part of dot)
-          if (decimal != 1)
+          if (decimal != -1)
             for (; i < word->size() && exponential == 1; ++i){
               if (word->c_str()[i] == 0x45 || word->c_str()[i] == 0x65) //45 = E, 65 = e
                 exponential = 0;
               else{
-                decimal *= 10;
-                value = value*pow + (word->c_str()[i] - 48);
+                decimal *= 10; 
+                if (word->c_str()[i] >= 48 || word->c_str()[i] <= 57)
+                  value = value*pow + (word->c_str()[i] - 48);
+                else
+                  return false; //ERROR!
               }
             }
 
@@ -239,15 +314,19 @@ namespace octet
               exp_pos_neg = -1;
             }
             for (; i < word->size(); ++i){
-              exponential = exponential*10 + (word->c_str()[i] - 48);
+              if (word->c_str()[i] >= 48 || word->c_str()[i] <= 57)
+                exponential = exponential * 10 + (word->c_str()[i] - 48);
+              else
+                return false; //ERROR!
             }
           }
 
+          //If decimal arrived here as -1, it's not decimal, so make decimal == 1; if it's different to -1, its a decimal, so keep decimal value
+          decimal = decimal == -1 ? 1 : decimal;
         }
 
         //Now construct the number knowing value, pos_negative, decimal, pow, exponential!
         value = value*pos_negative / decimal;
-        printf("Obtaining decimal -> %i\n", word->size());
         printf("Obtaining number -> %f\n", value);
         return true;
       }
