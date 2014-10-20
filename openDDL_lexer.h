@@ -354,6 +354,23 @@ namespace octet
 /// @brief  This function will check if it's a string-literal
 ////////////////////////////////////////////////////////////////////////////////
       bool get_string_literal(string &value, string *word){
+        char caracter;
+        //first of all check if it's a correct string
+        if (word->c_str()[0] != 0x22 || word->c_str()[word->size() - 1] != 0x22)
+          return false; // ERROR!!!
+        
+        const int i_limit = word->size() - 1;
+        dynarray<char> new_word(i_limit);
+        for (int i = 1; i < i_limit; ++i){
+          caracter = word->c_str()[i];
+          if (caracter == 0x5c){ //5c = '\'
+            printf("Escape char\n");
+          }
+          else{
+
+          }
+        }
+
         return true;
       }
 
