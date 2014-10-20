@@ -158,6 +158,18 @@ namespace octet
 /// @brief  This function will check if it's a bool-literal and return it's value (will check if there is any problem)
 ////////////////////////////////////////////////////////////////////////////////
       bool get_bool_literal(bool &value, string *word){
+        if (word->size() == 4){ //true.size() == 4
+          if (word->find("true"))
+            value = true;
+          else
+            return false;
+        }
+        else if (word->size() == 5){ //false.size() == 5
+          if (word->find("false"))
+            value = false;
+          else
+            return false;
+        }
         return true;
       }
 
@@ -194,6 +206,7 @@ namespace octet
                 return false; //ERROR!
             }
           }
+
           else if (word->c_str()[initial_i + 1] == 0x58 || word->c_str()[initial_i + 1] == 0x78){ //58 = X, 78 = x, that meaning, it's an hex number
             pow = 16;
             initial_i += 2;
@@ -209,15 +222,21 @@ namespace octet
                 return false; //ERROR!
             }
           }
-        }
 
-        for (int i = initial_i; i < word->size(); ++i){
-          if (word->c_str()[i] >= 97 || word->c_str()[i] <= 102)
-            value = value*pow + (word->c_str()[i] - 87);
-          else
-            return false; //ERROR!
-        }
+        } else if (word->c_str()[0] == 0x27) { //27 = '   This will be need to be fixed, this is for character literal
+          for (int i = initial_i; i < word->size(); ++i){
+            value = value*pow + (word->c_str()[i] - 48);
+            //this has to check also for escape-char
+          }
 
+        } else {
+          for (int i = initial_i; i < word->size(); ++i){
+            if (word->c_str()[i] >= 48 || word->c_str()[i] <= 57)
+              value = value*pow + (word->c_str()[i] - 48);
+            else
+              return false; //ERROR!
+          }
+        }
         value *= pos_negative;
         return true;
       }
