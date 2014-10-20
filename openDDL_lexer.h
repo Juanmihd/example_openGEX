@@ -365,12 +365,14 @@ namespace octet
           caracter = word->c_str()[i];
           if (caracter == 0x5c){ //5c = '\'
             printf("Escape char\n");
+            //Here it would be a function that decode the escape char. I'll do it later
           }
-          else{
-
+          else{ //If it's not a escape char, it's text
+            new_word.data()[i] = word->c_str()[i];
           }
         }
 
+        value = string(new_word.data());
         return true;
       }
 
