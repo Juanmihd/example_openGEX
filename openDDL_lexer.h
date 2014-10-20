@@ -346,7 +346,7 @@ namespace octet
 
         //Now construct the number knowing value, pos_negative, decimal, pow, exponential!
         value = value*pos_negative / decimal;
-        printf("Obtaining number -> %f\n", value);
+        //printf("Obtaining number -> %f\n", value);
         return true;
       }
 
@@ -354,6 +354,7 @@ namespace octet
 /// @brief  This function will check if it's a string-literal
 ////////////////////////////////////////////////////////////////////////////////
       bool get_string_literal(string &value, string *word){
+        printf("Reading the string: ");
         char caracter;
         //first of all check if it's a correct string
         if (word->c_str()[0] != 0x22 || word->c_str()[word->size() - 1] != 0x22)
@@ -364,14 +365,15 @@ namespace octet
         for (int i = 1; i < i_limit; ++i){
           caracter = word->c_str()[i];
           if (caracter == 0x5c){ //5c = '\'
-            printf("Escape char\n");
+            //printf("Escape char\n");
             //Here it would be a function that decode the escape char. I'll do it later
           }
           else{ //If it's not a escape char, it's text
             new_word.data()[i] = word->c_str()[i];
+            printf("%c", new_word.data()[i]);
           }
         }
-
+        printf("\n");
         value = string(new_word.data());
         return true;
       }
@@ -402,7 +404,7 @@ namespace octet
 /// @brief  This functions process the properties, and add it to the application
 ////////////////////////////////////////////////////////////////////////////////
       bool process_properties(){
-        printf("\tProperties!\n");
+        //printf("\tProperties!\n");
         get_next_char();
         remove_comments_whitespaces();
         while (currentChar[0] != 0x29){
@@ -410,7 +412,7 @@ namespace octet
           get_next_char();
           if (is_end_file()){
             return false;
-            printf("\n\nERROR!!!\n\n");
+            //printf("\n\nERROR!!!\n\n");
           }
         }
         get_next_char();
@@ -482,16 +484,16 @@ namespace octet
       bool process_data_list(int type){
         int ending;
         string *word = new string();
-        printf("{ ");
+        //printf("{ ");
         ending = read_data_list_element(word);
         process_data_list_element(type, word);
         while (ending == 1){
-          printf(", ");
+          //printf(", ");
           get_next_char();
           ending = read_data_list_element(word);
           process_data_list_element(type, word);
         }
-        printf(" }\n");
+        //printf(" }\n");
         return ending >= 0;
       }
       
@@ -502,7 +504,6 @@ namespace octet
 ////////////////////////////////////////////////////////////////////////////////
       bool process_data_array(int type, int arraySize){
         //detect {
-        printf("Checking1 %x\n", currentChar[0]);
         if (currentChar[0] != 0x7b) //7b = {
           return false;
         remove_comments_whitespaces();
@@ -510,20 +511,20 @@ namespace octet
         int itemsLeft = arraySize;
         while (itemsLeft > 0){
           printf("I have %i items left\n", itemsLeft);
-          while (currentChar[0] != 0x2c || currentChar[0] != 0x7d){ // 2c = ,
+          while (currentChar[0] != 0x2c && currentChar[0] != 0x7d){ // 2c = ,
             get_next_char();
-            printf("Checking DENTRO %x\n", currentChar[0]);
           }
+          printf("Checking DENTRO %x\n", currentChar[0]);
           get_next_char();
-
           --itemsLeft;
         }
         get_next_char();
         //detect }
         remove_comments_whitespaces();
-        printf("Checking2 %x\n", currentChar[0]);
-        if (currentChar[0] != 0x7d) //7d = }
+        if (currentChar[0] != 0x7d){ //7d = }
           return false;
+          printf("I Don't find the } inside process_data_array\n");
+        }
         remove_comments_whitespaces();
         return true;
       }
@@ -534,15 +535,19 @@ namespace octet
 /// @return true if it went ok and false if there was any problem (for instance not finding a })
 ////////////////////////////////////////////////////////////////////////////////
       bool process_data_array_list(int type, int arraySize){
-        bool no_error = false;
+        bool no_error = true;
         while (no_error && currentChar[0] != 0x7d){
           printf("Checking %x\n", currentChar[0]);
           no_error = process_data_array(type, arraySize); //This will have to start with {, read arraySize elements, read }
         }
         //expect } (7d)
         get_next_char();
-        if (currentChar[0] != 0x7d) no_error = false;
-        return true;
+        if (currentChar[0] != 0x7d){
+          no_error = false;
+          printf("----ERROR WITH DATA ARRAY LIST\n");
+        }
+
+        return no_error;
       }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -578,7 +583,7 @@ namespace octet
         int sizeWord = 0, to_return;
         tempChar = currentChar;
         while (currentChar[0] != 0x2c && currentChar[0] != 0x7d && !is_whiteSpace() && !is_comment()){
-          printf("%x, ", currentChar[0]);
+         // printf("%x, ", currentChar[0]);
           get_next_char();
           ++sizeWord;
         }
@@ -610,7 +615,7 @@ namespace octet
           get_next_char();
           ++sizeNumber;
         }
-        printf("\n");
+        //printf("\n");
         --sizeNumber;
         for (int i = 0; i <= sizeNumber; ++i){
           number += pow*((int)tempChar[sizeNumber-i]-48);
@@ -633,7 +638,7 @@ namespace octet
             get_next_char();
             ++sizeWord;
           }
-          if (is_symbol()) get_previous_char();
+          //if (is_symbol()) get_previous_char();
           if (is_comment()){
             ignore_comment();
             get_next_char();

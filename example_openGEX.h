@@ -10,7 +10,7 @@ namespace octet {
   class example_openGEX : public app {
     // scene for drawing duck
     ref<visual_scene> app_scene;
-    openGEX_loader coolLoader;
+    openGEX_loader openGEXLoader;
   public:
     /// this is called when we construct the class before everything is initialised.
     example_openGEX(int argc, char **argv) : app(argc, argv) {
@@ -22,7 +22,7 @@ namespace octet {
 
       resource_dict dict;
 
-      if (!coolLoader.loadFile("assets/openGEX/cubeGEX_2.txt")){
+      if (!openGEXLoader.loadFile("assets/openGEX/cubeGEX_2.txt")){
         printf("It did not work!!");
       }
 

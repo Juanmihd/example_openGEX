@@ -37,7 +37,7 @@ namespace octet
         printf("\t----Is a Type n: %i!!----\n", type);
         //First step is remove whiteSpace and comments
         remove_comments_whitespaces();
-        //printf("%x\n", currentChar[0]);
+        printf("%x\n", currentChar[0]);
 
         //Then it will read the first character, to see if its a [, or {, or name
         //if name it is a only dataList, so call to process_dataList() and tell that function if has a name or not
@@ -46,8 +46,8 @@ namespace octet
           //check integer-literal (for a data array list)
           get_next_char();
           arraySize = read_array_size();
+          printf("The size is %i\n", arraySize);
           get_next_char();
-
           remove_comments_whitespaces();
 
           //it may receive a name (optional)
@@ -80,14 +80,16 @@ namespace octet
             printf("It's a data list!\n");
             get_next_char();
             remove_comments_whitespaces();
-            printf("%x\n", currentChar[0]);
             no_error = process_data_list(type);  //expect a } (if not, error)
+            if (!no_error) printf("---SOMETHING WENT WRONG WITH DATA LIST\n");
           }
           else{ //if there is no {, ITS AN ERROR!!!
             no_error = false;
             printf("\n\nERROR: I don't find the data-list!\n\n");
           }
+          //get_next_char();
         }
+
 
         return no_error;
       }
@@ -114,27 +116,24 @@ namespace octet
         }
 
         remove_comments_whitespaces();
-        printf("%x\n", currentChar[0]);
         //Later expect a {, if not return error, and check for a new structure inside this structure
         if (currentChar[0] == 0x7b){ //7b = {
-          printf("\tSubstructure!\n");
+          printf("SUBSTRUCTURES...\n"); 
           get_next_char();
           remove_comments_whitespaces();
-          no_error = process_structure();  //call to process structure
-          //Later expect a }, if not return error
-          get_next_char();
-          remove_comments_whitespaces();
-          if (currentChar[0] != 0x7d){ //7d = }
-            no_error = false;
-            printf("\n\nERROR no ending of the structure!!!\n\n");
+
+          while (currentChar[0] != 0x7d){ //7d = } (keep on looking for new substructures while it does not find }
+            no_error = process_structure();  //call to process structure
+            //Later expect a }, if not return error
+            get_next_char();
+            remove_comments_whitespaces();
           }
-          get_next_char();
+          printf("...SUBSTRUCTURES\n");
         }
         else{
           no_error = false;
           printf("\nERROR: No substructure!!!\n\n");
         }
-        
         return no_error;
       }
 
@@ -147,12 +146,13 @@ namespace octet
         string word;
 
         // It's a real structure! But it can be IDENTIFIER or DATATYPE
-        
-        printf("Structure Started!\n");
+
+        //remove_comments_whitespaces();
         word = read_word();
         printf("Finding => %s\n", word);
         remove_comments_whitespaces();
-        printf("%x <----\n", currentChar[0]);
+        //printf("%x <----\n", currentChar[0]);
+
         //check if it's a type and return it's index (if its negative it's not a type)
         int type = is_dataType(word); 
         if (type >= 0){ //As it's a Data type, now it can be single data list or data array list!
@@ -163,13 +163,15 @@ namespace octet
           //check if it's a identifier and return it's index (if its negative it's not a identifier)
           type = is_identifier(word);
           if (type >= 0){ //As it's a Identifier type, now check name? properties? and then { structure(s)? }
-            process_structureIdentifier(identifiers_.get_value(type)); 
+            process_structureIdentifier(identifiers_.get_value(type));
           }
 
-          else //if it's nothing of the above is an error
-            ;//assert(0 && "It's not a proper structure");
-          printf("Structure ended!\n\n");
+          else{ //if it's nothing of the above is an error
+            printf("ERRROR!!! there is no real structure here dude!\n");//assert(0 && "It's not a proper structure");
+
+          }
         }
+        printf("Finished structure with... %x\n", currentChar[0]);
         return no_error;
       }
 
@@ -197,6 +199,7 @@ namespace octet
         while (!is_end_file() && no_error){
           remove_comments_whitespaces();
           if (!is_end_file()){
+            printf("\n\n\n\n-------------------------------BIG STRUCTURE\n");
             //Process token (in openDDL is a structure) when you find it
             no_error = process_structure();
             //get new token
