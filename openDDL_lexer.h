@@ -508,18 +508,22 @@ namespace octet
           printf("Problem reading the begining of the data array!!! \n");
           return false;
         }
-        else
-          printf("Reading new array list!%x\n", currentChar[0]);
         //read elements
+        string word;
         int itemsLeft = arraySize;
         while (itemsLeft > 0){
           get_next_char();
           remove_comments_whitespaces();
-          printf("Start reading with the thing...%x\n", currentChar[0]);
+          //printf("Start reading with the thing...%x\n", currentChar[0]);
+          // Change this part to be able to read the data list elements, and then analize them. 
+          // This function has to return a integer (with -1, 0 or 1) and it will be obtained by the read_data_list_element
+          // In fact, the process_data_array (part of the data_array_list, is just like reading one single data_list!!!!
+          // Fix this thing and check then the reading capabilities with hexadecimals numbers (mainly the openGEX will use
+          // hexadecimal numbers to finx the problems
           while (currentChar[0] != 0x2c && currentChar[0] != 0x7d){ // 2c = ,
             get_next_char();
           }
-          printf("Stop reading because it find...%x\n", currentChar[0]);
+          //printf("Stop reading because it find...%x\n", currentChar[0]);
           --itemsLeft;
         }
         //detect }
@@ -547,7 +551,7 @@ namespace octet
           no_error = process_data_array(type, arraySize); //This will have to start with {, read arraySize elements, read }
           get_next_char();
           remove_comments_whitespaces();
-          printf("After data array...%x\n", currentChar[0]);
+          //printf("After data array...%x\n", currentChar[0]);
         }
         //expect } (7d)
 
