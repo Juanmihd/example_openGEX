@@ -189,17 +189,17 @@ namespace octet
         return (currentChar[0] == '%') || (currentChar[0] == '$');
       }
 
-////////////////////////////////////////////////////////////////////////////////
-/// @brief  This function will test if the current character is a symbol { } [ ] ( ) , =
-////////////////////////////////////////////////////////////////////////////////
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief  This function will test if the current character is a symbol { } [ ] ( ) , =
+      ////////////////////////////////////////////////////////////////////////////////
       bool is_symbol(){
         string character ((char*)currentChar,1);
         return symbols_.contains(character.c_str());
       }
 
-////////////////////////////////////////////////////////////////////////////////
-/// @brief  This function will check if it's a bool-literal and return it's value (will check if there is any problem)
-////////////////////////////////////////////////////////////////////////////////
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief  This function will check if it's a bool-literal and return it's value (will check if there is any problem)
+      ////////////////////////////////////////////////////////////////////////////////
       bool get_bool_literal(bool &value, string *word){
         if (word->size() == 4){ //true.size() == 4
           if (word->find("true"))
@@ -216,9 +216,9 @@ namespace octet
         return true;
       }
 
-////////////////////////////////////////////////////////////////////////////////
-/// @brief  This function will check if it's a int-literal
-////////////////////////////////////////////////////////////////////////////////
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief  This function will check if it's a int-literal
+      ////////////////////////////////////////////////////////////////////////////////
       bool get_integer_literal(int &value, string *word){
         value = 0;
         int pow = 10;
@@ -284,9 +284,9 @@ namespace octet
         return true;
       }
 
-////////////////////////////////////////////////////////////////////////////////
-/// @brief  This function will check (and read) if it's a float-literal
-////////////////////////////////////////////////////////////////////////////////
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief  This function will check (and read) if it's a float-literal
+      ////////////////////////////////////////////////////////////////////////////////
       bool get_float_literal(float &value, string *word){
         int decimal = 1;
         int initial_i = 0;
@@ -393,9 +393,9 @@ namespace octet
         return true;
       }
 
-////////////////////////////////////////////////////////////////////////////////
-/// @brief  This function will check if it's a string-literal
-////////////////////////////////////////////////////////////////////////////////
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief  This function will check if it's a string-literal
+      ////////////////////////////////////////////////////////////////////////////////
       bool get_string_literal(string &value, string *word){
         printf("Reading the string: ");
         char caracter;
@@ -421,31 +421,31 @@ namespace octet
         return true;
       }
 
-////////////////////////////////////////////////////////////////////////////////
-/// @brief  This function will check if it's a reference
-////////////////////////////////////////////////////////////////////////////////
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief  This function will check if it's a reference
+      ////////////////////////////////////////////////////////////////////////////////
       bool get_value_reference(string &value, string *word){
         return true;
       }
 
-////////////////////////////////////////////////////////////////////////////////
-/// @brief  This function will check if it's a type
-////////////////////////////////////////////////////////////////////////////////
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief  This function will check if it's a type
+      ////////////////////////////////////////////////////////////////////////////////
       bool get_value_data_type(string &value, string *word){
         return true;
       }
 
-////////////////////////////////////////////////////////////////////////////////
-/// @brief  This functions process the name, and add it to the application
-////////////////////////////////////////////////////////////////////////////////
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief  This functions process the name, and add it to the application
+      ////////////////////////////////////////////////////////////////////////////////
       void process_name(){
         string name = read_word();
         printf("It's the name %s !!\n", name);
       }
 
-////////////////////////////////////////////////////////////////////////////////
-/// @brief  This functions process the properties, and add it to the application
-////////////////////////////////////////////////////////////////////////////////
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief  This functions process the properties, and add it to the application
+      ////////////////////////////////////////////////////////////////////////////////
       bool process_properties(){
         //printf("\tProperties!\n");
         get_next_char();
@@ -463,9 +463,9 @@ namespace octet
         return true;
       }
 
-////////////////////////////////////////////////////////////////////////////////
-/// @brief  This functions process the data list, taking into account the type of data expected
-////////////////////////////////////////////////////////////////////////////////
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief  This functions process the data list, taking into account the type of data expected
+      ////////////////////////////////////////////////////////////////////////////////
       void process_data_list_element(int type, string *word){
         bool no_error = true;
         //Check the type, and call to the appropriate processor function
@@ -519,33 +519,33 @@ namespace octet
         };
       }
       
-////////////////////////////////////////////////////////////////////////////////
-/// @brief  This function has to process the datalist
-///  This function will keep on checking data until it finds a }. 
-/// @return true if it went ok and false if there was any problem (for instance not finding a })
-////////////////////////////////////////////////////////////////////////////////
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief  This function has to process the datalist
+      ///  This function will keep on checking data until it finds a }. 
+      /// @return true if it went ok and false if there was any problem (for instance not finding a })
+      ////////////////////////////////////////////////////////////////////////////////
       bool process_data_list(int type){
         int ending;
-        string *word = new string();
+        string word;
         //printf("{ ");
-        ending = read_data_list_element(word);
-        process_data_list_element(type, word);
+        ending = read_data_list_element(&word);
+        process_data_list_element(type, &word);
         while (ending == 1){
           //printf(", ");
           get_next_char();
-          ending = read_data_list_element(word);
-          process_data_list_element(type, word);
+          ending = read_data_list_element(&word);
+          process_data_list_element(type, &word);
         }
         //printf(" }\n");
         return ending >= 0;
       }
       
-////////////////////////////////////////////////////////////////////////////////
-/// @brief  This function has to process the dataarraylist
-///  This function will keep on checking data until it finds a }. 
-/// @return true if it went ok and false if there was any problem (for instance not finding a })
-////////////////////////////////////////////////////////////////////////////////
-      bool process_data_array(int type, int arraySize){
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief  This function has to process the dataarraylist
+      ///  This function will keep on checking data until it finds a }. 
+      /// @return true if it went ok and false if there was any problem (for instance not finding a })
+      ////////////////////////////////////////////////////////////////////////////////
+      int process_data_array(int type, int arraySize){
         //detect {
         if (currentChar[0] != 0x7b){ //7b = {
           printf("Problem reading the begining of the data array!!! \n");
@@ -553,20 +553,21 @@ namespace octet
         }
         //read elements
         string word;
+        int ending;
         int itemsLeft = arraySize;
         while (itemsLeft > 0){
           get_next_char();
           remove_comments_whitespaces();
           //printf("Start reading with the thing...%x\n", currentChar[0]);
-          // Change this part to be able to read the data list elements, and then analize them. 
+          // TODO: Change this part to be able to read the data list elements, and then analize them. 
           // This function has to return a integer (with -1, 0 or 1) and it will be obtained by the read_data_list_element
           // In fact, the process_data_array (part of the data_array_list, is just like reading one single data_list!!!!
           // Fix this thing and check then the reading capabilities with hexadecimals numbers (mainly the openGEX will use
           // hexadecimal numbers to finx the problems
-          while (currentChar[0] != 0x2c && currentChar[0] != 0x7d){ // 2c = ,
-            get_next_char();
-          }
-          //printf("Stop reading because it find...%x\n", currentChar[0]);
+          ending = read_data_list_element(&word);
+          process_data_list_element(type, &word);
+          printf("Reading word... %s\n", word);
+          printf("Stop reading because it find...%x\n", currentChar[0]);
           --itemsLeft;
         }
         //detect }
@@ -577,11 +578,11 @@ namespace octet
         return true;
       }
 
-////////////////////////////////////////////////////////////////////////////////
-/// @brief  This function has to process the datalist
-///  This function will keep on checking data until it finds a }. 
-/// @return true if it went ok and false if there was any problem (for instance not finding a })
-////////////////////////////////////////////////////////////////////////////////
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief  This function has to process the datalist
+      ///  This function will keep on checking data until it finds a }. 
+      /// @return true if it went ok and false if there was any problem (for instance not finding a })
+      ////////////////////////////////////////////////////////////////////////////////
       bool process_data_array_list(int type, int arraySize){
         bool no_error = true;
         if (currentChar[0] != 0x7b){ //7b = {
@@ -607,13 +608,13 @@ namespace octet
       }
 
 
-////////////////////////////////////////////////////////////////////////////////
-/// @brief  This function will read a data-list element and will return if error or more elements
-/// @param word Pointer to the word, this is the word read
-/// @return -1 if error
-/// @return  0 if last element
-/// @return  1 if more elements
-////////////////////////////////////////////////////////////////////////////////
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief  This function will read a data-list element and will return if error or more elements
+      /// @param word Pointer to the word, this is the word read
+      /// @return -1 if error
+      /// @return  0 if last element
+      /// @return  1 if more elements
+      ////////////////////////////////////////////////////////////////////////////////
       int read_data_list_element(string *word){
         int sizeWord = 0, to_return;
         tempChar = currentChar;
