@@ -286,6 +286,8 @@ namespace octet
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief  This function will check (and read) if it's a float-literal
+      ///   ToDo: Replace String for char* and do NOT use c_str()
+      ///   ToDo: Check this line: "value = value * 16 + ( ( *src - ( *src < 'A' ? '0' : 'A'-10 ) ) & 15 );"
       ////////////////////////////////////////////////////////////////////////////////
       bool get_float_literal(float &value, string *word){
         int decimal = 1;
