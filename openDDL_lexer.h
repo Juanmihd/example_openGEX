@@ -167,7 +167,8 @@ namespace octet
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief  This function will test if the current token is a dataType (will return the index of the type
-      /// @param  
+      /// @param  word    It's the word to check if it's a data type
+      /// @return   it returns the value of the type readed
       ////////////////////////////////////////////////////////////////////////////////
       int is_dataType(string word){
         int index = types_.get_index(word.c_str());
@@ -176,6 +177,7 @@ namespace octet
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief  This function will test if the current token is a identifier
+      /// @return   True if it's a identifier, and false if it's not a identifier
       ////////////////////////////////////////////////////////////////////////////////
       int is_identifier(string word){
         int index = identifiers_.get_index(word.c_str());
@@ -184,6 +186,7 @@ namespace octet
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief  This function will test if the current token is a name
+      /// @return   True if it's a name, and false if it's not a name
       ////////////////////////////////////////////////////////////////////////////////
       bool is_name(){
         return (currentChar[0] == '%') || (currentChar[0] == '$');
@@ -191,6 +194,7 @@ namespace octet
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief  This function will test if the current character is a symbol { } [ ] ( ) , =
+      /// @return   True if it's a symbol, and false if it's not a symbol
       ////////////////////////////////////////////////////////////////////////////////
       bool is_symbol(){
         string character ((char*)currentChar,1);
@@ -199,6 +203,9 @@ namespace octet
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief  This function will check if it's a bool-literal and return it's value (will check if there is any problem)
+      /// @param  value   it returns the value of the boolean
+      /// @param  word    this is the word to lexer into a value
+      /// @return   True if everything went right, and false if something went wrong
       ////////////////////////////////////////////////////////////////////////////////
       bool get_bool_literal(bool &value, string *word){
         if (word->size() == 4){ //true.size() == 4
@@ -218,6 +225,9 @@ namespace octet
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief  This function will check if it's a int-literal
+      /// @param  value   it returns the value of the integer
+      /// @param  word    this is the word to lexer into a value
+      /// @return   True if everything went right, and false if something went wrong
       ////////////////////////////////////////////////////////////////////////////////
       bool get_integer_literal(int &value, string *word){
         value = 0;
@@ -286,7 +296,10 @@ namespace octet
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief  This function will check (and read) if it's a float-literal
-      ///   ToDo: Replace String for char* and do NOT use c_str()
+      /// @param  value   it returns the value of the float
+      /// @param  word    this is the word to lexer into a value
+      /// @return   True if everything went right, and false if something went wrong
+      ///   ToDo: Replace String for char* 
       ///   ToDo: Check this line: "value = value * 16 + ( ( *src - ( *src < 'A' ? '0' : 'A'-10 ) ) & 15 );"
       ////////////////////////////////////////////////////////////////////////////////
       bool get_float_literal(float &value, string *word){
@@ -404,6 +417,9 @@ namespace octet
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief  This function will check if it's a string-literal
+      /// @param  value   it returns the value of the string
+      /// @param  word    this is the word to lexer into a value
+      /// @return   True if everything went right, and false if something went wrong
       ////////////////////////////////////////////////////////////////////////////////
       bool get_string_literal(string &value, string *word){
         printf("Reading the string: ");
@@ -432,6 +448,9 @@ namespace octet
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief  This function will check if it's a reference
+      /// @param  value   it returns the value of the reference
+      /// @param  word    this is the word to lexer into a value
+      /// @return   True if everything went right, and false if something went wrong
       ////////////////////////////////////////////////////////////////////////////////
       bool get_value_reference(string &value, string *word){
         return true;
@@ -439,6 +458,9 @@ namespace octet
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief  This function will check if it's a type
+      /// @param  value   it returns the value of the type
+      /// @param  word    this is the word to lexer into a value
+      /// @return   True if everything went right, and false if something went wrong
       ////////////////////////////////////////////////////////////////////////////////
       bool get_value_data_type(string &value, string *word){
         return true;
@@ -446,6 +468,7 @@ namespace octet
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief  This functions process the name, and add it to the application
+      /// @return   True if everything went right, and false if something went wrong
       ////////////////////////////////////////////////////////////////////////////////
       void process_name(){
         string name = read_word();
@@ -454,6 +477,7 @@ namespace octet
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief  This functions process the properties, and add it to the application
+      /// @return   True if everything went right, and false if something went wrong
       ////////////////////////////////////////////////////////////////////////////////
       bool process_properties(){
         //printf("\tProperties!\n");
@@ -474,6 +498,8 @@ namespace octet
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief  This functions process the data list, taking into account the type of data expected
+      /// @param  type  represent the type of element that it's expecting
+      /// @param  word  pointer to the word readed
       ////////////////////////////////////////////////////////////////////////////////
       void process_data_list_element(int type, string *word){
         bool no_error = true;
@@ -530,8 +556,9 @@ namespace octet
       
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief  This function has to process the datalist
-      ///  This function will keep on checking data until it finds a }. 
+      /// @param  type  This is the type of the data list elements
       /// @return true if it went ok and false if there was any problem (for instance not finding a })
+      ///   This function will keep on checking data until it finds a }. 
       ////////////////////////////////////////////////////////////////////////////////
       bool process_data_list(int type){
         int ending;
@@ -551,8 +578,10 @@ namespace octet
       
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief  This function has to process the dataarraylist
-      ///  This function will keep on checking data until it finds a }. 
+      /// @param  type  This is the type of the elements that it's reading in the array
+      /// @param  arraySize   This is the size of the array (it will be used to make faster the parser process)
       /// @return true if it went ok and false if there was any problem (for instance not finding a })
+      ///  This function will keep on checking data until it finds a }. 
       ////////////////////////////////////////////////////////////////////////////////
       int process_data_array(int type, int arraySize){
         //detect {
@@ -589,8 +618,10 @@ namespace octet
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief  This function has to process the datalist
-      ///  This function will keep on checking data until it finds a }. 
+      /// @param  type  This is the type of the elements that it's reading in the array
+      /// @param  arraySize   This is the size of the array (it will be used to make faster the parser process)
       /// @return true if it went ok and false if there was any problem (for instance not finding a })
+      ///  This function will keep on checking data until it finds a }. 
       ////////////////////////////////////////////////////////////////////////////////
       bool process_data_array_list(int type, int arraySize){
         bool no_error = true;
@@ -651,7 +682,8 @@ namespace octet
       }
 
       ////////////////////////////////////////////////////////////////////////////////
-      /// @brief  This function will read and return an integer
+      /// @brief  This function will check the size of the array
+      /// @return Returns the size of the array
       ////////////////////////////////////////////////////////////////////////////////
       int read_array_size(){
         int sizeNumber = 0, number = 0, pow = 1;
@@ -671,7 +703,10 @@ namespace octet
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief It will read and return a word
+      /// @return it will return the word readed
       /// It will start geting characters and return them as a word. It will stop when it finds the begining a comment or a whitespace
+      ///       ToDO: ACTUALLY, I don't need STRINGS, it could be enough for me just use the char*, and the size of the word. That's enough to 
+      ///             work with the words!!!!!!!!!!!!!!!!
       ////////////////////////////////////////////////////////////////////////////////
       string read_word(){
         int sizeWord = 0;

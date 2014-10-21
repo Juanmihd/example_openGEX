@@ -9,6 +9,9 @@
 
 namespace octet{
   namespace loaders{
+    ////////////////////////////////////////////////////////////////////////////////
+
+    ////////////////////////////////////////////////////////////////////////////////
     struct gex_ident_enum{
       enum ident_type
       {
@@ -53,12 +56,16 @@ namespace octet{
       };
     };
 
+    ////////////////////////////////////////////////////////////////////////////////
     /// @brief This will be the class of ddl tokens
+    ////////////////////////////////////////////////////////////////////////////////
     class gex_ident : public gex_ident_enum
     {
 
     public:
+      ////////////////////////////////////////////////////////////////////////////////
       /// @brief This function will return the token_name of the given token identifier
+      ////////////////////////////////////////////////////////////////////////////////
       static const string ident_name(unsigned t){
         static const string ident_names[ident_last] = {
           "Animation",      // identificator 00
@@ -106,41 +113,3 @@ namespace octet{
   }
 }
 
-/*
-Animation
-Atten
-BoneCountArray
-BoneIndexArray
-BoneNode
-BoneRefArray
-BoneWeightArray
-CameraNode
-CameraObject
-Color
-GeometryNode
-GeometryObject
-IndexArray
-Key
-LightNode
-LightObject
-Material
-MaterialRef
-Mesh
-Metric
-Morph
-Name
-Node
-ObjectRef
-Param
-Rotation
-Scale
-Skeleton
-Skin
-Texture
-Time
-Track
-Transform
-Translation
-Value
-VertexArray
-*/
