@@ -504,28 +504,29 @@ namespace octet
 ////////////////////////////////////////////////////////////////////////////////
       bool process_data_array(int type, int arraySize){
         //detect {
-        if (currentChar[0] != 0x7b) //7b = {
+        if (currentChar[0] != 0x7b){ //7b = {
+          printf("Problem reading the begining of the data array!!! \n");
           return false;
-        remove_comments_whitespaces();
+        }
+        else
+          printf("Reading new array list!%x\n", currentChar[0]);
         //read elements
         int itemsLeft = arraySize;
         while (itemsLeft > 0){
-          printf("I have %i items left\n", itemsLeft);
+          get_next_char();
+          remove_comments_whitespaces();
+          printf("Start reading with the thing...%x\n", currentChar[0]);
           while (currentChar[0] != 0x2c && currentChar[0] != 0x7d){ // 2c = ,
             get_next_char();
           }
-          printf("Checking DENTRO %x\n", currentChar[0]);
-          get_next_char();
+          printf("Stop reading because it find...%x\n", currentChar[0]);
           --itemsLeft;
         }
-        get_next_char();
         //detect }
-        remove_comments_whitespaces();
         if (currentChar[0] != 0x7d){ //7d = }
           return false;
           printf("I Don't find the } inside process_data_array\n");
         }
-        remove_comments_whitespaces();
         return true;
       }
 
@@ -536,12 +537,20 @@ namespace octet
 ////////////////////////////////////////////////////////////////////////////////
       bool process_data_array_list(int type, int arraySize){
         bool no_error = true;
+        if (currentChar[0] != 0x7b){ //7b = {
+          printf("Problem reading the begining of the data array!!! \n");
+          return false;
+        }
+        get_next_char();
+        remove_comments_whitespaces();
         while (no_error && currentChar[0] != 0x7d){
-          printf("Checking %x\n", currentChar[0]);
           no_error = process_data_array(type, arraySize); //This will have to start with {, read arraySize elements, read }
+          get_next_char();
+          remove_comments_whitespaces();
+          printf("After data array...%x\n", currentChar[0]);
         }
         //expect } (7d)
-        get_next_char();
+
         if (currentChar[0] != 0x7d){
           no_error = false;
           printf("----ERROR WITH DATA ARRAY LIST\n");

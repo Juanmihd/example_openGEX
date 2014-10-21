@@ -37,7 +37,7 @@ namespace octet
         printf("\t----Is a Type n: %i!!----\n", type);
         //First step is remove whiteSpace and comments
         remove_comments_whitespaces();
-        printf("%x\n", currentChar[0]);
+        //printf("%x\n", currentChar[0]);
 
         //Then it will read the first character, to see if its a [, or {, or name
         //if name it is a only dataList, so call to process_dataList() and tell that function if has a name or not
