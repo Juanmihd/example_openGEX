@@ -3,7 +3,7 @@
 /// @author Juanmi Huertas Delgado
 /// @brief This is the lexer to load the files of OpenGEX
 ///
-/// NOTE: In the compiler several functions will have the boolean "no_error"
+/// NOTE: In the compiler several functions will have the boolean "no_error" this boolean is true when there is NO error, and false when error
 ///
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -18,9 +18,9 @@ namespace octet
     class openGEX_lexer : openDDL_lexer{
       typedef gex_ident::gex_ident_enum gex_ident_list;
 
-////////////////////////////////////////////////////////////////////////////////
-/// @brief This will initialize some structures of the lexer (dictionary of identifiers of openGEX)
-////////////////////////////////////////////////////////////////////////////////
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief This will initialize some structures of the lexer (dictionary of identifiers of openGEX)
+      ////////////////////////////////////////////////////////////////////////////////
       void init_gex(){
         gex_ident identList;
         //Load the identifiers of openGEX in identifeirs_ dictionary
@@ -30,6 +30,8 @@ namespace octet
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief  This function will lexer the next words, considering to be a "structureData"
+      /// @param  It will receive the type of the data that it has been read
+      /// @return True if everthing went well, false if there was some error
       ////////////////////////////////////////////////////////////////////////////////
       bool process_structureData(int type){
         bool no_error = true;
@@ -94,9 +96,11 @@ namespace octet
         return no_error;
       }
 
-////////////////////////////////////////////////////////////////////////////////
-/// @brief  This function will lexer the next words, considering to be a "structureIdentifier"
-////////////////////////////////////////////////////////////////////////////////
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief  This function will lexer the next words, considering to be a "structureIdentifier"
+      /// @param  It will receive the type of identifier that has been read
+      /// @return True if everything went well, false if there was some error
+      ////////////////////////////////////////////////////////////////////////////////
       bool process_structureIdentifier(int type){
         bool no_error = true;
         printf("\t----Is the identifier n. %i!!----\n", type);
@@ -137,10 +141,10 @@ namespace octet
         return no_error;
       }
 
-////////////////////////////////////////////////////////////////////////////////
-/// @brief  This function will process the currentChar to look for the next token and study it
-/// openDDL is divided into structures
-////////////////////////////////////////////////////////////////////////////////
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief  This function will process the currentChar to look for the next token and study it
+      /// @return True if everything went well, false if there was some problem
+      ////////////////////////////////////////////////////////////////////////////////
       bool process_structure(){
         bool no_error = true;
         string word;
@@ -176,17 +180,19 @@ namespace octet
       }
 
     public:
-////////////////////////////////////////////////////////////////////////////////
-/// @brief Constructor of lexer
-////////////////////////////////////////////////////////////////////////////////
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief Constructor of lexer
+      ////////////////////////////////////////////////////////////////////////////////
       openGEX_lexer(){
         init_ddl();
         init_gex();
       }
 
-////////////////////////////////////////////////////////////////////////////////
-/// @brief This will be the function that creates de process of the lexer receiving as parameter the array of characters
-////////////////////////////////////////////////////////////////////////////////
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief  This will be the function that creates de process of the lexer receiving as parameter the array of characters
+      /// @param  It will receive a dynarray of uint8, it will represente the content of the file
+      /// @return True if everything went well, false if there was some problem
+      ////////////////////////////////////////////////////////////////////////////////
       bool lexer_file(dynarray<uint8_t> file){
         bool no_error = true;
         sizeRead = 0;

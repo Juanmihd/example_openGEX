@@ -35,63 +35,79 @@ namespace octet
       // The size of the token
       int sizeRead;
 
-////////////////////////////////////////////////////////////////////////////////
-/// @brief  This function will add an identifiers to the dictionary
-////////////////////////////////////////////////////////////////////////////////
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief  This function will add an identifiers to the dictionary
+      /// @param  id  , stands for the name of the identificator 
+      /// @param  tok , stands for the token of the identificator
+      ////////////////////////////////////////////////////////////////////////////////
       void add_identifier(const char *id, int tok){
         identifiers_[id] = tok;
       }
 
-////////////////////////////////////////////////////////////////////////////////
-/// @brief  This function will add an types to the dictionary
-////////////////////////////////////////////////////////////////////////////////
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief  This function will add an types to the dictionary
+      /// @param  id  , stands for the name of the type
+      /// @param  tok , stands forthe token of the type
+      ////////////////////////////////////////////////////////////////////////////////
       void add_type(const char *id, int tok){
         types_[id] = tok;
       }
 
-////////////////////////////////////////////////////////////////////////////////
-/// @brief  This function will add an symbols to the dictionary
-////////////////////////////////////////////////////////////////////////////////
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief  This function will add an symbols to the dictionary
+      /// @param  id  , stands for the name of the symbol to add (the character)
+      /// @param  tok , stands for the token of the symbol
+      ////////////////////////////////////////////////////////////////////////////////
       void add_symbol(const char *id, int tok){
         symbols_[id] = tok;
       }
 
-      // Some small functions to make easier the testing
-////////////////////////////////////////////////////////////////////////////////
-/// @brief  This function returns true if the pointer is at the end of the file
-////////////////////////////////////////////////////////////////////////////////
+      // Some small functions to make easier the lexer process
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief  This function checks if the currentChar is in at the end of the file (or has passed it)
+      /// @return This function returns true if the pointer is at the end of the file
+      ////////////////////////////////////////////////////////////////////////////////
       bool is_end_file(){
         return bufferSize <= 0;
       }
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief  This function will get a new char
+      ///   To do so, it will decrease the number of elements, and it will get a new char
+      ///   this function does not check if it's the end of the file! (It should?)
       ////////////////////////////////////////////////////////////////////////////////
       void get_next_char(){
         --bufferSize;
         ++currentChar;
       }
 
-////////////////////////////////////////////////////////////////////////////////
-/// @brief  This function will get the previous char
-////////////////////////////////////////////////////////////////////////////////
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief  This function will get the previous char
+      ///   To do so, it will increase the number of elements, and it will get the previous char
+      ////////////////////////////////////////////////////////////////////////////////
       void get_previous_char(){
         ++bufferSize;
         --currentChar;
       }
 
-////////////////////////////////////////////////////////////////////////////////
-/// @brief Jumps the char "pos" positions
-////////////////////////////////////////////////////////////////////////////////
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief Jumps the char "pos" positions
+      /// @param  pos , stands for the number of characters that need to jump
+      ///     This function will be useful when "jumpin" some characters that have already been readed
+      ///     Be aware that it does not check if it has passed the end of the file!!!!
+      ////////////////////////////////////////////////////////////////////////////////
       void char_jump(int pos){
         bufferSize -= pos;
         currentChar += pos;
       }
 
-////////////////////////////////////////////////////////////////////////////////
-/// @brief This will check if the current char is equal the string
-/// This will check the whole string, if it matches with the begining of currentChar
-////////////////////////////////////////////////////////////////////////////////
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief This will check if the current char is equal the string
+      /// @param  word  , This is the word that has to be checked
+      /// @returns  True if the word /word is equal to the first characters from the current character
+      ///     ToDO: Is this function useful? Check if it has been used later
+      ///  (deprecated)
+      ////////////////////////////////////////////////////////////////////////////////
       bool char_word_is(string word){
         sizeRead = 0;
         while ((sizeRead < word.size()) && (currentChar[sizeRead] == (uint8_t)word[sizeRead]))
@@ -99,16 +115,18 @@ namespace octet
         return sizeRead == word.size();
       }
       
-////////////////////////////////////////////////////////////////////////////////
-/// @brief  This function will test if the current token is a whitespace (less than 0x20 character)
-////////////////////////////////////////////////////////////////////////////////
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief  This function will test if the current token is a whitespace (less than 0x20 character)
+      /// @return True if the current character is a whiteSpace (any value less than 0x20)
+      ////////////////////////////////////////////////////////////////////////////////
       bool is_whiteSpace(){ // everything less or equal than 0x20 is a whitespace
         return currentChar[0] <= 0x20;
       }
       
-////////////////////////////////////////////////////////////////////////////////
-/// @brief  This function will test if the current token is a whitespace (less than 0x20 character)
-////////////////////////////////////////////////////////////////////////////////
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief  This function ignore any comment or whitespace
+      ///     ToDO: This is used really often, check if it is really efficient!
+      ////////////////////////////////////////////////////////////////////////////////
       void remove_comments_whitespaces(){ // everything less or equal than 0x20 is a whitespace
         while (is_comment() || is_whiteSpace()){
           if (is_comment()) ignore_comment();
@@ -116,32 +134,57 @@ namespace octet
         }
       }
 
-////////////////////////////////////////////////////////////////////////////////
-/// @brief  This function will test if the current token is going to be a comment (// or /*)
-////////////////////////////////////////////////////////////////////////////////
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief  This function will test if the current token is going to be a comment (// or /*)
+      /// @returns This function returns true if the currentChar is the begining of a comment
+      ////////////////////////////////////////////////////////////////////////////////
       bool is_comment(){ //0x2f = /  and  0x2A = *
         return currentChar[0] == 0x2F && (currentChar[1] == 0x2F || currentChar[1] == 0x2A);
       }
 
-////////////////////////////////////////////////////////////////////////////////
-/// @brief  This function will test if the current token is a dataType (will return the index of the type
-////////////////////////////////////////////////////////////////////////////////
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief  This will lexer a comment with /* */or // and break line
+      ///     ToDo: This function is used A LOT. Check if it's really good, and make it better!
+      ////////////////////////////////////////////////////////////////////////////////
+      void ignore_comment(){
+        get_next_char();
+
+        switch (currentChar[0]){
+        case 0x2F: // 0x2f = /  as it comes from another / that means that it's a // comment
+          while (currentChar[0] != 0x0D && currentChar[0] != 0x0A)
+            get_next_char();
+          break;
+        case 0x2A: // 0x2a = * as it comes from another / that means that it's a /* comment
+          get_next_char();
+          while (currentChar[0] != 0x2A && currentChar[1] != 0x2f){ // until next characters are * and / 
+            get_next_char();
+            if (is_end_file()) assert(0 && "It's missing the */ of a comment");
+          }
+          get_next_char();
+          break;
+        }
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief  This function will test if the current token is a dataType (will return the index of the type
+      /// @param  
+      ////////////////////////////////////////////////////////////////////////////////
       int is_dataType(string word){
         int index = types_.get_index(word.c_str());
         return index;
       }
 
-////////////////////////////////////////////////////////////////////////////////
-/// @brief  This function will test if the current token is a identifier
-////////////////////////////////////////////////////////////////////////////////
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief  This function will test if the current token is a identifier
+      ////////////////////////////////////////////////////////////////////////////////
       int is_identifier(string word){
         int index = identifiers_.get_index(word.c_str());
         return index;
       }
 
-////////////////////////////////////////////////////////////////////////////////
-/// @brief  This function will test if the current token is a name
-////////////////////////////////////////////////////////////////////////////////
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief  This function will test if the current token is a name
+      ////////////////////////////////////////////////////////////////////////////////
       bool is_name(){
         return (currentChar[0] == '%') || (currentChar[0] == '$');
       }
@@ -563,27 +606,6 @@ namespace octet
         return no_error;
       }
 
-////////////////////////////////////////////////////////////////////////////////
-/// @brief  This will lexer a comment with /* */or // and break line
-////////////////////////////////////////////////////////////////////////////////
-      void ignore_comment(){
-        get_next_char();
-
-        switch (currentChar[0]){
-        case 0x2F: // 0x2f = /  as it comes from another / that means that it's a // comment
-          while (currentChar[0] != 0x0D && currentChar[0] != 0x0A)
-            get_next_char();
-          break;
-        case 0x2A: // 0x2a = * as it comes from another / that means that it's a /* comment
-          get_next_char();
-          while (currentChar[0] != 0x2A && currentChar[1] != 0x2f){ // until next characters are * and / 
-            get_next_char();
-            if (is_end_file()) assert(0 && "It's missing the */ of a comment");
-          }
-          get_next_char();
-          break;
-        }
-      }
 
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief  This function will read a data-list element and will return if error or more elements
