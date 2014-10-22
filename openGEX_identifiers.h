@@ -7,6 +7,9 @@
 
 /// @brief This will be the list of identifiers of openGEX
 
+#ifndef OPENGEX_IDENTIFIERS_INCLUDED
+#define OPENGEX_IDENTIFIERS_INCLUDED
+
 namespace octet{
   namespace loaders{
     ////////////////////////////////////////////////////////////////////////////////
@@ -156,3 +159,5 @@ namespace octet{
   }
 }
 
+
+#endif

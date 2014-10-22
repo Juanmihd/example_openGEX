@@ -547,7 +547,6 @@ namespace octet
       ////////////////////////////////////////////////////////////////////////////////
       bool process_properties(){
         bool no_error;
-        if (debuggingDDL) printf("\tProperties!\n");
 
         get_next_char();
         remove_comments_whitespaces();
@@ -566,7 +565,7 @@ namespace octet
           no_error = process_single_property();
         }
         get_next_char();
-        if (debuggingDDL) printf("\n End Properties!\n");
+
         return true;
       }
 
@@ -627,7 +626,7 @@ namespace octet
           break;
         };
       }
-      
+
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief  This function has to process the datalist
       /// @param  type  This is the type of the data list elements
@@ -647,7 +646,7 @@ namespace octet
         if (debuggingDDL) printf("\n");
         return ending >= 0;
       }
-      
+
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief  This function has to process the dataarraylist
       /// @param  type  This is the type of the elements that it's reading in the array
@@ -711,7 +710,6 @@ namespace octet
 
         return no_error;
       }
-
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief  This function will read a data-list element and will return if error or more elements

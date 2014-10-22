@@ -4,7 +4,6 @@
 /// @brief This class will do a simple example of a openGEX file imported
 /// This class is make from the example_duck from octet
 
-
 namespace octet {
   /// Scene containing openGEX object with octet.
   class example_openGEX : public app {
