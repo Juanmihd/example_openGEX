@@ -205,21 +205,6 @@ namespace octet
       }
 
       ////////////////////////////////////////////////////////////////////////////////
-      /// @brief  This function will test if the current token is a identifier (version with *char)
-      /// @param  charWord    It's the word to check if it's a identifier type
-      /// @param  word_size   It's the size of the word to check
-      /// @return   True if it's a identifier, and false if it's not a identifier
-      ////////////////////////////////////////////////////////////////////////////////
-      int is_identifier(char *charWord, int word_size){
-        /*charWord = new char[word_size];
-        for (int i = 0; i < word_size; ++i)
-          charWord[i] = tempChar[i];*/
-        int index = identifiers_.get_index(charWord);
-        //delete charWord;
-        return index;
-      }
-
-      ////////////////////////////////////////////////////////////////////////////////
       /// @brief  This function will test if the current token is a name
       /// @return   True if it's a name, and false if it's not a name
       ////////////////////////////////////////////////////////////////////////////////
@@ -523,28 +508,62 @@ namespace octet
       }
 
       ////////////////////////////////////////////////////////////////////////////////
+      /// @brief  This functions process one single property
+      /// @return   True if everything went right, and false if something went wrong
+      ////////////////////////////////////////////////////////////////////////////////
+      bool process_single_property(){
+        string word;
+
+        //Now it has to find a identifier
+        word = read_word();
+        int type = is_identifier(word);
+
+        //Now check if it's a correct property
+        if (type >= 0)
+          printf("This property is a %i\n", identifiers_.get_value(type));
+        else{
+          printf("\n\nERROR: It's not a proper property!!!\n");
+          return false;
+        }
+        remove_comments_whitespaces();
+
+        //Now it has to find an =
+        if (*currentChar != 0x3D){
+          printf("\nERROR: It was expecting a '=' and find %c instead.\n", *currentChar);
+          return false;
+        }
+        get_next_char();
+        remove_comments_whitespaces();
+
+        //Not it has to find a literal, that might be (bool, int, float, string, ref or type)
+        while (*currentChar != 0x29 && *currentChar != 0x2C) get_next_char();
+
+        return true;
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////
       /// @brief  This functions process the properties, and add it to the application
       /// @return   True if everything went right, and false if something went wrong
       ////////////////////////////////////////////////////////////////////////////////
       bool process_properties(){
-        int word_size;
+        bool no_error;
         if (debuggingDDL) printf("\tProperties!\n");
+
         get_next_char();
         remove_comments_whitespaces();
-        //Now it has to find a identifier
-        word_size = read_word_size();
-        //Now it has to find an =
+        //process the first element
+        no_error = process_single_property();
 
-        //Not it has to find a literal, that might be (bool, int, float, string, ref or type)
-
-        //Not it has to find a }
-        while (*currentChar != 0x29){
-          if (debuggingDDL) printf("%x, ", currentChar[0]);
-          get_next_char();
-          if (is_end_file()){
+        //it will have to expect more properties as long as it's not a )
+        while (*currentChar != 0x29){ // 0x29 = )
+          if (debuggingDDL) printf("More properties!\n");
+          //before going on, check that it's a proper list of properties, that's so, it has to have a ,
+          if (*currentChar != 0x2C){ // 0x2C = ,   
+            printf("\n\nERROR!! It was expecting a ',' and it found a %c instead.\n", *currentChar);
             return false;
-            printf("\n\nERROR!!!\n\n");
           }
+          //now, keep on processing properties
+          no_error = process_single_property();
         }
         get_next_char();
         if (debuggingDDL) printf("\n End Properties!\n");

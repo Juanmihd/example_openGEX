@@ -51,7 +51,6 @@ namespace octet{
         id_Translation, 
         id_Value, 
         id_VertexArray,
-        last_structure,
         prop_attrib,
         prop_begin,
         prop_clip,
@@ -74,7 +73,6 @@ namespace octet{
         prop_two_sided,
         prop_type,
         prop_visible,
-        
         ident_last,
       };
     };
