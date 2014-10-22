@@ -51,6 +51,29 @@ namespace octet{
         id_Translation, 
         id_Value, 
         id_VertexArray,
+        last_structure,
+        prop_attrib,
+        prop_begin,
+        prop_clip,
+        prop_curve,
+        prop_end,
+        prop_front,
+        prop_index,
+        prop_key,
+        prop_kind,
+        prop_lod,
+        prop_material,
+        prop_morph,
+        prop_motion_blur,
+        prop_object,
+        prop_primitive,
+        prop_restart,
+        prop_shadow,
+        prop_target,
+        prop_texcoord,
+        prop_two_sided,
+        prop_type,
+        prop_visible,
         
         ident_last,
       };
@@ -104,6 +127,28 @@ namespace octet{
           "Translation",    // identificator 33
           "Value",          // identificator 34
           "VertexArray",    // identificator 35
+          "attrib",         // identificator 36
+          "begin",          // identificator 37
+          "clip",           // identificator 38
+          "curve",          // identificator 39
+          "end",            // identificator 40
+          "front",          // identificator 41
+          "index",          // identificator 42
+          "key",            // identificator 43
+          "kind",           // identificator 44
+          "lod",            // identificator 45
+          "material",       // identificator 46
+          "morph",          // identificator 47
+          "motion_blur",    // identificator 48
+          "object",         // identificator 49
+          "primitive",      // identificator 50
+          "restart",        // identificator 51
+          "shadow",         // identificator 52
+          "target",         // identificator 53
+          "texcoord",       // identificator 54
+          "two_sided",      // identificator 55
+          "type",           // identificator 56
+          "visible"         // identificator 57
         };
         // It will be an error if we try to call a token bigger than our current token list!
         assert((t < ident_last) && "Calling a token bigger than the token list!");

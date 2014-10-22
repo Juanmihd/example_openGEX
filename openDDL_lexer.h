@@ -19,7 +19,7 @@ namespace octet
 {
   namespace loaders{
     class openDDL_lexer : ddl_token{
-      enum { debuging = 1, debugingMore = 1 };
+      enum { debuggingDDL = 1, debuggingDDLMore = 0 };
     protected:
       // Dictionary of identifiers of the openDDL language we are using
       dictionary<int> identifiers_;
@@ -158,30 +158,30 @@ namespace octet
 
         switch (*currentChar){
         case 0x2F: // 0x2f = /  as it comes from another / that means that it's a // comment
-          if (debugingMore) printf("(//comment)");
+          if (debuggingDDLMore) printf("(//comment)");
           get_next_char();
           while (*currentChar != 0x0D && *currentChar != 0x0A){
-            if (debugingMore) printf("%c", *currentChar);
+            if (debuggingDDLMore) printf("%c", *currentChar);
             get_next_char();
           }
-          if (debugingMore) printf("_%c", *currentChar);
+          if (debuggingDDLMore) printf("_%c", *currentChar);
           break;
         case 0x2A: // 0x2a = * as it comes from another / that means that it's a /* comment
-          if (debugingMore) printf("(/**/comment)");
+          if (debuggingDDLMore) printf("(/**/comment)");
           get_next_char();
           while (*currentChar != 0x2A && currentChar[1] != 0x2f){ // until next characters are * and / 
-            if (debugingMore) printf("%c", *currentChar);
+            if (debuggingDDLMore) printf("%c", *currentChar);
             get_next_char();
             if (is_end_file()) assert(0 && "It's missing the */ of a comment");
           }
-          if (debugingMore) printf("_%c", *currentChar);
+          if (debuggingDDLMore) printf("_%c", *currentChar);
           get_next_char();
-          if (debugingMore) printf("_%c", *currentChar);
+          if (debuggingDDLMore) printf("_%c", *currentChar);
           get_next_char();
           break;
         }
         while (is_whiteSpace()) get_next_char();
-        if (debugingMore) printf("\n%x\n", *currentChar);
+        if (debuggingDDLMore) printf("\n%x\n", *currentChar);
       }
 
       ////////////////////////////////////////////////////////////////////////////////
@@ -196,10 +196,26 @@ namespace octet
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief  This function will test if the current token is a identifier
+      /// @param  word    It's the word to check if it's a identifier type
       /// @return   True if it's a identifier, and false if it's not a identifier
       ////////////////////////////////////////////////////////////////////////////////
       int is_identifier(string word){
         int index = identifiers_.get_index(word.c_str());
+        return index;
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief  This function will test if the current token is a identifier (version with *char)
+      /// @param  charWord    It's the word to check if it's a identifier type
+      /// @param  word_size   It's the size of the word to check
+      /// @return   True if it's a identifier, and false if it's not a identifier
+      ////////////////////////////////////////////////////////////////////////////////
+      int is_identifier(char *charWord, int word_size){
+        /*charWord = new char[word_size];
+        for (int i = 0; i < word_size; ++i)
+          charWord[i] = tempChar[i];*/
+        int index = identifiers_.get_index(charWord);
+        //delete charWord;
         return index;
       }
 
@@ -376,7 +392,7 @@ namespace octet
                 return false; //ERROR!
             }
             value = u.f;
-            if (debuging) printf("===> %f, %8x <==== Is this right?\n", u.f, u.i);
+            if (debuggingDDLMore) printf("===> %f, %8x <==== Is this right?\n", u.f, u.i);
           }
         }
 
@@ -440,7 +456,7 @@ namespace octet
 
         //Now construct the number knowing value, pos_negative, decimal, pow, exponential!
         value = value*pos_negative / decimal;
-        if (debuging) printf("Obtaining number -> %f\n", value);
+        if (debuggingDDL) printf("Number-> %f ", value);
         return true;
       }
 
@@ -451,7 +467,7 @@ namespace octet
       /// @return   True if everything went right, and false if something went wrong
       ////////////////////////////////////////////////////////////////////////////////
       bool get_string_literal(string &value, string *word){
-        if (debuging) printf("Reading the string: ");
+        if (debuggingDDL) printf("Reading the string: ");
         char caracter;
         //first of all check if it's a correct string
         if (word->c_str()[0] != 0x22 || word->c_str()[word->size() - 1] != 0x22)
@@ -462,15 +478,15 @@ namespace octet
         for (int i = 1; i < i_limit; ++i){
           caracter = word->c_str()[i];
           if (caracter == 0x5c){ //5c = '\'
-            if (debuging) printf("Escape char\n");
+            if (debuggingDDL) printf("Escape char\n");
             //Here it would be a function that decode the escape char. I'll do it later
           }
           else{ //If it's not a escape char, it's text
             new_word.data()[i] = word->c_str()[i];
-            if (debuging) printf("%c", new_word.data()[i]);
+            if (debuggingDDL) printf("%c", new_word.data()[i]);
           }
         }
-        if (debuging) printf("\n");
+        if (debuggingDDL) printf("\n");
         value = string(new_word.data());
         return true;
       }
@@ -482,6 +498,8 @@ namespace octet
       /// @return   True if everything went right, and false if something went wrong
       ////////////////////////////////////////////////////////////////////////////////
       bool get_value_reference(string &value, string *word){
+
+
         return true;
       }
 
@@ -501,7 +519,7 @@ namespace octet
       ////////////////////////////////////////////////////////////////////////////////
       void process_name(){
         string name = read_word();
-        if (debuging) printf("It's the name %s !!\n", name);
+        if (debuggingDDL) printf("It's the name %s !!\n", name);
       }
 
       ////////////////////////////////////////////////////////////////////////////////
@@ -509,11 +527,19 @@ namespace octet
       /// @return   True if everything went right, and false if something went wrong
       ////////////////////////////////////////////////////////////////////////////////
       bool process_properties(){
-        if (debuging) printf("\tProperties!\n");
+        int word_size;
+        if (debuggingDDL) printf("\tProperties!\n");
         get_next_char();
         remove_comments_whitespaces();
+        //Now it has to find a identifier
+        word_size = read_word_size();
+        //Now it has to find an =
+
+        //Not it has to find a literal, that might be (bool, int, float, string, ref or type)
+
+        //Not it has to find a }
         while (*currentChar != 0x29){
-          if (debuging) printf("%x, ", currentChar[0]);
+          if (debuggingDDL) printf("%x, ", currentChar[0]);
           get_next_char();
           if (is_end_file()){
             return false;
@@ -521,7 +547,7 @@ namespace octet
           }
         }
         get_next_char();
-        if (debuging) printf("\n End Properties!\n");
+        if (debuggingDDL) printf("\n End Properties!\n");
         return true;
       }
 
@@ -599,6 +625,7 @@ namespace octet
           ending = read_data_list_element(&word);
           process_data_list_element(type, &word);
         }
+        if (debuggingDDL) printf("\n");
         return ending >= 0;
       }
       
@@ -624,10 +651,10 @@ namespace octet
           remove_comments_whitespaces();
           ending = read_data_list_element(&word);
           process_data_list_element(type, &word);
-          if (debuging) printf("Stop reading because it find...%x\n", currentChar[0]);
           --itemsLeft;
         }
         //detect }
+        if (debuggingDDL) printf("_%x\n", currentChar[0]);
         if (*currentChar != 0x7d){ //7d = }
           return false;
           printf("I Don't find the } inside process_data_array\n");
@@ -654,7 +681,7 @@ namespace octet
           no_error = process_data_array(type, arraySize); //This will have to start with {, read arraySize elements, read }
           get_next_char();
           remove_comments_whitespaces();
-          if (debuging) printf("After data array...%x\n", currentChar[0]);
+          if (debuggingDDL) printf("After data array...%x\n", currentChar[0]);
         }
         //expect } (7d)
 
@@ -678,7 +705,7 @@ namespace octet
         int sizeWord = 0, to_return;
         tempChar = currentChar;
         while (*currentChar != 0x2c && *currentChar != 0x7d && !is_whiteSpace() && !is_comment()){
-          if (debugingMore) printf("%x, ", currentChar[0]);
+          if (debuggingDDLMore) printf("%x, ", currentChar[0]);
           get_next_char();
           ++sizeWord;
         }
@@ -711,7 +738,7 @@ namespace octet
           get_next_char();
           ++sizeNumber;
         }
-        if (debugingMore) printf("\n");
+        if (debuggingDDLMore) printf("\n");
         --sizeNumber;
         for (int i = 0; i <= sizeNumber; ++i){
           number += pow*((int)tempChar[sizeNumber-i]-48);
@@ -744,9 +771,35 @@ namespace octet
           }
         }
         string temp((char*)(tempChar), sizeWord);
-        if (debugingMore) printf("Last symbol-> %x finding %s\n", currentChar[0], temp);
-        if (debuging) printf("Finding => %s\n", temp);
+        if (debuggingDDLMore) printf("Last symbol-> %x finding %s\n", currentChar[0], temp);
+        if (debuggingDDL) printf("Finding => %s ", temp);
         return temp;
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief It will read and return the size of the next word
+      /// @return Integer with the<size of the word
+      ///     NOTICE: This will let "currentChar" at the begining of the next token
+      ///             To use the word, it has to work with tempChar and the size that this
+      ///             function returns as an integer
+      ////////////////////////////////////////////////////////////////////////////////
+      int read_word_size(){
+        int sizeWord = 0;
+        tempChar = currentChar;
+        if (is_symbol())
+          sizeWord = 1;
+        else{
+          while (!is_symbol() && !is_whiteSpace() && !is_comment()){
+            
+            ++sizeWord;
+          }
+          //if (is_symbol()) get_previous_char();
+          if (is_comment()){
+            ignore_comment();
+            get_next_char();
+          }
+        }
+        return sizeWord;
       }
 
       ////////////////////////////////////////////////////////////////////////////////
