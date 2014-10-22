@@ -16,6 +16,7 @@ namespace octet
 {
   namespace loaders{
     class openGEX_lexer : openDDL_lexer{
+      enum { debuging = 1, debugingMore = 1 };
       typedef gex_ident::gex_ident_enum gex_ident_list;
 
       ////////////////////////////////////////////////////////////////////////////////
@@ -36,19 +37,19 @@ namespace octet
       bool process_structureData(int type){
         bool no_error = true;
         int arraySize;
-        printf("\t----Is a Type n: %i!!----\n", type);
+        if (debuging) printf("\t----Is a Type n: %i!!----\n", type);
         //First step is remove whiteSpace and comments
         remove_comments_whitespaces();
-        //printf("%x\n", currentChar[0]);
+        if (debugingMore) printf("%x\n", currentChar[0]);
 
         //Then it will read the first character, to see if its a [, or {, or name
         //if name it is a only dataList, so call to process_dataList() and tell that function if has a name or not
-        if (currentChar[0] == 0x5b){ // 5b = [
-          printf("It's a data array list!\n");
+        if (*currentChar == 0x5b){ // 5b = [
+          if(debuging) printf("It's a data array list!\n");
           //check integer-literal (for a data array list)
           get_next_char();
           arraySize = read_array_size();
-          printf("The size is %i\n", arraySize);
+          if (debugingMore) printf("The size is %i\n", arraySize);
           get_next_char();
           remove_comments_whitespaces();
 
@@ -61,7 +62,7 @@ namespace octet
           remove_comments_whitespaces();
 
           //expect a { (if not, error)
-          if (currentChar[0] == 0x7b) //7b = {
+          if (*currentChar == 0x7b) //7b = {
             no_error = process_data_array_list(type, arraySize);
           else{ //call to process data array list, it will check the }
             no_error = false; //return error
@@ -72,14 +73,14 @@ namespace octet
         //now check the other option (name) { data-list* }
         else{
           if (is_name()){ // check if there is a name, and process it
-            printf("It's a name + data list!\n");
+            if (debuging) printf("It's a name + data list!\n");
             process_name();
             get_next_char();
           }
 
           //After the optional name, it expects a {, and analize the data_list
-          if (currentChar[0] == 0x7b){ // 7b = {
-            printf("It's a data list!\n");
+          if (*currentChar == 0x7b){ // 7b = {
+            if (debuging) printf("It's a data list!\n");
             get_next_char();
             remove_comments_whitespaces();
             no_error = process_data_list(type);  //expect a } (if not, error)
@@ -89,7 +90,6 @@ namespace octet
             no_error = false;
             printf("\n\nERROR: I don't find the data-list!\n\n");
           }
-          //get_next_char();
         }
 
 
@@ -103,7 +103,7 @@ namespace octet
       ////////////////////////////////////////////////////////////////////////////////
       bool process_structureIdentifier(int type){
         bool no_error = true;
-        printf("\t----Is the identifier n. %i!!----\n", type);
+        if (debuging) printf("\t----Is the identifier n. %i!!----\n", type);
 
         //First step is remove whiteSpace and comments
         remove_comments_whitespaces();
@@ -114,25 +114,25 @@ namespace octet
         if (is_name()) process_name();
         //Later, check if it's ( and call something to check properties - telling the function which structure is this one
 
-        if (currentChar[0] == 0x28){ // 28 = (
+        if (*currentChar == 0x28){ // 28 = (
           //call something to check properties          //expect a ) (if not, error)
           no_error = process_properties();
         }
 
         remove_comments_whitespaces();
         //Later expect a {, if not return error, and check for a new structure inside this structure
-        if (currentChar[0] == 0x7b){ //7b = {
-          printf("SUBSTRUCTURES...\n"); 
+        if (*currentChar == 0x7b){ //7b = {
+          if (debuging) printf("SUBSTRUCTURES...\n");
           get_next_char();
           remove_comments_whitespaces();
 
-          while (currentChar[0] != 0x7d){ //7d = } (keep on looking for new substructures while it does not find }
+          while (*currentChar != 0x7d){ //7d = } (keep on looking for new substructures while it does not find }
             no_error = process_structure();  //call to process structure
             //Later expect a }, if not return error
             get_next_char();
             remove_comments_whitespaces();
           }
-          printf("...SUBSTRUCTURES\n");
+          if (debuging) printf("...SUBSTRUCTURES\n");
         }
         else{
           no_error = false;
@@ -153,9 +153,9 @@ namespace octet
 
         //remove_comments_whitespaces();
         word = read_word();
-        printf("Finding => %s\n", word);
+        if (debuging) printf("Finding => %s\n", word);
         remove_comments_whitespaces();
-        //printf("%x <----\n", currentChar[0]);
+        if (debugingMore) printf("%x <----\n", currentChar[0]);
 
         //check if it's a type and return it's index (if its negative it's not a type)
         int type = is_dataType(word); 
@@ -175,7 +175,7 @@ namespace octet
 
           }
         }
-        printf("Finished structure with... %x\n", currentChar[0]);
+        if (debuging) printf("Finished structure with... %x\n", *currentChar);
         return no_error;
       }
 
@@ -205,7 +205,7 @@ namespace octet
         while (!is_end_file() && no_error){
           remove_comments_whitespaces();
           if (!is_end_file()){
-            printf("\n\n\n\n-------------------------------BIG STRUCTURE\n");
+            if (debuging) printf("\n\n\n\n-------------------------------BIG STRUCTURE\n");
             //Process token (in openDDL is a structure) when you find it
             no_error = process_structure();
             //get new token
