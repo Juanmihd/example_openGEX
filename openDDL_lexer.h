@@ -3,6 +3,11 @@
 /// @author Juanmi Huertas Delgado
 /// @brief This is the lexer to load the files of OpenGEX
 ///
+///   NOTE: Some of the functions will have some "no_error" to track if there is an error.
+///         likewise when in the coments there is a two digit number = something, that stands
+///         for the hexadecimal representation of that symbol in UTF8
+///         if there is nothing regarding that number, that mean that it's an hexadecimal
+///         in case of doubt just check the number "before" the comment
 ////////////////////////////////////////////////////////////////////////////////
 
 #include "openDDL_tokens.h"
@@ -303,13 +308,13 @@ namespace octet
       ///   ToDo: Check this line: "value = value * 16 + ( ( *src - ( *src < 'A' ? '0' : 'A'-10 ) ) & 15 );"
       ////////////////////////////////////////////////////////////////////////////////
       bool get_float_literal(float &value, string *word){
-        const char *src = word->c_str();
-        int decimal = 1;
-        int initial_i = 0;
-        int pos_negative = 1;
-        int pow = 10;
-        int exponential = 1;
-        int exp_pos_neg = 1;
+        const char *src = word->c_str(); //This will be used to check each letter of the "word"
+        int decimal = 1; //This will be use to check how many decimals
+        int initial_i = 0; //This will be used to "jump" the firs character if there is a sign (+, -)
+        int pos_negative = 1; //This will be used to determine if it's positive or negative
+        int pow = 10; //This will be use to always track which kind of power we are aplying
+        int exponential = 1; //This will be use to check the exponential
+        int exp_pos_neg = 1; //This will be use to check the sign of the exponential
         value = 0;
 
         //It may have - or +
@@ -324,34 +329,42 @@ namespace octet
 
         //It may be a binary-literal, hex-literal or float-literal (starting with 0 or .) or float-literal starting with any number
         if (src[initial_i] == 0x30){ //30 = 0
+          //------CHECKING BINARY NUMBER
           if (src[initial_i + 1] == 0x42 || src[initial_i + 1] == 0x62){ //42 = B, 62 = b, that meaning, it's a binary number
             pow = 2;
             initial_i += 2;
             //fill this with the reader of binaries
-            for (int i = 0; i < word->size(); ++i){
-              if (src[i] == 48 || src[i] == 49)
-                value = value*pow + (src[i] - 48);
+            for (int i = initial_i; i < word->size(); ++i){
+              if (src[i] == 48 || src[i] == 49)  //48 in decimal is the symbol 0, 49 in decimal is the symbol 1
+                value = value*2 + (src[i] - 48);
               else
                 return false; //ERROR!
             }
           }
+
+          //------CHECKING HEXADECIMAL NUMBER
           else if (src[initial_i + 1] == 0x58 || src[initial_i + 1] == 0x78){ //58 = X, 78 = x, that meaning, it's an hex number
+            union tupla { int i; float f; } u;
             pow = 16;
             initial_i += 2;
+            u.i = 0;
             //fill this with the reader of exadecimals
-            for (int i = 0; i < word->size(); ++i){
-              if (src[i] >= 48 || src[i] <= 57)
-                value = value*pow + (src[i] - 48);
-              else if (src[i] >= 65 || src[i] <= 70)
-                  value = value*pow + (src[i] - 55);
-              else if (src[i] >= 97 || src[i] <= 102)
-                value = value*pow + (src[i] - 87);
+            for (int i = initial_i; i < word->size(); ++i){
+              if (src[i] >= 0x30 && src[i] <= 0x39)
+                u.i = u.i * 16 + (src[i] - 0x30);
+              else if (src[i] >= 0x41 && src[i] <= 0x5A)
+                u.i = u.i * 16 + (src[i] - (0x41 - 10));
+              else if (src[i] >= 0x61 && src[i] <= 0x7A)
+                u.i = u.i * 16 + (src[i] - (0x61 - 10));
               else
                 return false; //ERROR!
             }
+            value = u.f;
+            //printf("===> %f, %8x <==== Is this right?\n", u.f, u.i);
           }
         }
-        
+
+        //------CHECKING DECIMAL NUMBER
         if (pow == 10){
           int i;
           // It can be a decimal, so we will use decimal as a way to test if it's decimal or not
@@ -364,13 +377,13 @@ namespace octet
             else if (src[i] == 0x45 || src[i] == 0x65) //45 = E, 65 = e
               exponential = 0;
             else if (src[i] >= 48 || src[i] <= 57)
-              value = value*pow + (src[i] - 48);
+              value = value*10 + (src[i] - 48);
             else{
               printf("It's not a correct digit!\n");
               return false; //ERROR!
             }
           }
-
+          //------CHECKING right part of the DECIMAL NUMBER
           //this part will read decimals (right part of dot)
           if (decimal != -1)
             for (; i < word->size() && exponential == 1; ++i){
@@ -379,14 +392,14 @@ namespace octet
               else{
                 decimal *= 10; 
                 if (src[i] >= 48 || src[i] <= 57)
-                  value = value*pow + (src[i] - 48);
+                  value = value*10 + (src[i] - 48);
                 else{
                   printf("It's not a correct digit!\n");
                   return false; //ERROR!
                 }
               }
             }
-
+          //------CHECKING exponential part of the DECIMAL NUMBER
           //this part will understand exponentials (if there is any)
           if (exponential == 0){
             if (src[i] == 0x2b) //2b = +
