@@ -10,6 +10,8 @@
 ///         in case of doubt just check the number "before" the comment
 ////////////////////////////////////////////////////////////////////////////////
 
+#ifndef OPENDDL_LEXER_INCLUDED
+#define OPENDDL_LEXER_INCLUDED
 #include "openDDL_tokens.h"
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -296,13 +298,15 @@ namespace octet
             }
           }
 
-        } else if (word->c_str()[0] == 0x27) { //27 = '   This will be need to be fixed, this is for character literal
+        }
+        else if (word->c_str()[0] == 0x27) { //27 = '   This will be need to be fixed, this is for character literal
           for (int i = initial_i; i < word->size(); ++i){
             value = value*pow + (word->c_str()[i] - 48);
             //this has to check also for escape-char
           }
 
-        } else {
+        }
+        else {
           for (int i = initial_i; i < word->size(); ++i){
             if (word->c_str()[i] >= 48 || word->c_str()[i] <= 57)
               value = value*pow + (word->c_str()[i] - 48);
@@ -353,7 +357,7 @@ namespace octet
             //fill this with the reader of binaries
             for (int i = initial_i; i < word->size(); ++i){
               if (src[i] == 48 || src[i] == 49)  //48 in decimal is the symbol 0, 49 in decimal is the symbol 1
-                value = value*2 + (src[i] - 48);
+                value = value * 2 + (src[i] - 48);
               else
                 return false; //ERROR!
             }
@@ -394,7 +398,7 @@ namespace octet
             else if (src[i] == 0x45 || src[i] == 0x65) //45 = E, 65 = e
               exponential = 0;
             else if (src[i] >= 48 && src[i] <= 57)
-              value = value*10 + (src[i] - 48);
+              value = value * 10 + (src[i] - 48);
             else{
               printf("It's not a correct digit!\n");
               return false; //ERROR!
@@ -404,17 +408,17 @@ namespace octet
           //this part will read decimals (right part of dot)
           if (decimal != -1)
             for (; i < word->size() && exponential == 1; ++i){
-              if (src[i] == 0x45 || src[i] == 0x65) //45 = E, 65 = e
-                exponential = 0;
+            if (src[i] == 0x45 || src[i] == 0x65) //45 = E, 65 = e
+              exponential = 0;
+            else{
+              decimal *= 10;
+              if (src[i] >= 48 && src[i] <= 57)
+                value = value * 10 + (src[i] - 48);
               else{
-                decimal *= 10; 
-                if (src[i] >= 48 && src[i] <= 57)
-                  value = value*10 + (src[i] - 48);
-                else{
-                  printf("It's not a correct digit!\n");
-                  return false; //ERROR!
-                }
+                printf("It's not a correct digit!\n");
+                return false; //ERROR!
               }
+            }
             }
           //------CHECKING exponential part of the DECIMAL NUMBER
           //this part will understand exponentials (if there is any)
@@ -457,7 +461,7 @@ namespace octet
         //first of all check if it's a correct string
         if (word->c_str()[0] != 0x22 || word->c_str()[word->size() - 1] != 0x22)
           return false; // ERROR!!!
-        
+
         const int i_limit = word->size() - 1;
         dynarray<char> new_word(i_limit);
         for (int i = 1; i < i_limit; ++i){
@@ -495,6 +499,293 @@ namespace octet
       /// @return   True if everything went right, and false if something went wrong
       ////////////////////////////////////////////////////////////////////////////////
       bool get_value_data_type(string &value, string *word){
+        return true;
+      }
+
+
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief  This function will check if it's a bool-literal and return it's value (will check if there is any problem)
+      /// @param  value   it returns the value of the boolean
+      /// @param  word    this is a pointer to the beginning of the word
+      /// @param  size    this is the size of the word readed
+      /// @return   True if everything went right, and false if something went wrong
+      ////////////////////////////////////////////////////////////////////////////////
+      bool get_bool_literal(bool &value, char *word, int size){
+        if (size == 4){ //true.size() == 4
+          if (word[0] == 't' && word[1] == 'r' && word[2] == 'u' && word[4] == 'e')
+            value = true;
+          else
+            return false;
+        }
+        else if (size == 5){ //false.size() == 5
+          if (word[0] == 'f' && word[1] == 'a' && word[2] == 'l' && word[4] == 's' && word[5] == 'e')
+            value = false;
+          else
+            return false;
+        }
+        return true;
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief  This function will check if it's a int-literal
+      /// @param  value   it returns the value of the integer
+      /// @param  word    this is a pointer to the beginning of the word
+      /// @param  size    this is the size of the word readed
+      /// @return   True if everything went right, and false if something went wrong
+      ////////////////////////////////////////////////////////////////////////////////
+      bool get_integer_literal(int &value, char *word, int size){
+        value = 0;
+        int pow = 10;
+        int initial_i = 0;
+        int pos_negative = 1;
+
+        //It may have - or +
+        if (*word == 0x2b){ //2b = +
+          initial_i = 1; //ignore the first character
+          pos_negative = 1; //is positive number
+        }
+        else if (*word == 0x2d){ //2d = -
+          initial_i = 1; //ignore the first character
+          pos_negative = -1;
+        }
+
+
+        //It may be a binary-literal, hex-literal or float-literal (starting with 0 or .) or float-literal starting with any number
+        if (word[initial_i] == 0x30){ //30 = 0
+          if (word[initial_i + 1] == 0x42 || word[initial_i + 1] == 0x62){ //42 = B, 62 = b, that meaning, it's a binary number
+            pow = 2;
+            initial_i += 2;
+            //fill this with the reader of binaries
+            for (int i = 0; i < size; ++i){
+              if (word[i] == 48 || word[i] == 49)
+                value = value*pow + (word[i] - 48);
+              else
+                return false; //ERROR!
+            }
+          }
+
+          else if (word[initial_i + 1] == 0x58 || word[initial_i + 1] == 0x78){ //58 = X, 78 = x, that meaning, it's an hex number
+            pow = 16;
+            initial_i += 2;
+            //fill this with the reader of exadecimals
+            for (int i = 0; i < size; ++i){
+              if (word[i] >= 48 || word[i] <= 57)
+                value = value*pow + (word[i] - 48);
+              else if (word[i] >= 65 || word[i] <= 70)
+                value = value*pow + (word[i] - 55);
+              else if (word[i] >= 97 || word[i] <= 102)
+                value = value*pow + (word[i] - 87);
+              else
+                return false; //ERROR!
+            }
+          }
+
+        }
+        else if (*word == 0x27) { //27 = '   This will be need to be fixed, this is for character literal
+          for (int i = initial_i; i < size; ++i){
+            value = value*pow + (word[i] - 48);
+            //this has to check also for escape-char
+          }
+
+        }
+        else {
+          for (int i = initial_i; i < size; ++i){
+            if (word[i] >= 48 || word[i] <= 57)
+              value = value*pow + (word[i] - 48);
+            else
+              return false; //ERROR!
+          }
+        }
+        value *= pos_negative;
+        return true;
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief  This function will check (and read) if it's a float-literal
+      /// @param  value   it returns the value of the float
+      /// @param  word    this is a pointer to the beginning of the word
+      /// @param  size    this is the size of the word readed
+      /// @return   True if everything went right, and false if something went wrong
+      ///   ToDo: Replace String for char* 
+      ///   ToDo: Check this line: "value = value * 16 + ( ( *src - ( *src < 'A' ? '0' : 'A'-10 ) ) & 15 );"
+      ////////////////////////////////////////////////////////////////////////////////
+      bool get_float_literal(float &value, char *word, int size){
+        int decimal = 1; //This will be use to check how many decimals
+        int initial_i = 0; //This will be used to "jump" the firs character if there is a sign (+, -)
+        int pos_negative = 1; //This will be used to determine if it's positive or negative
+        int pow = 10; //This will be use to always track which kind of power we are aplying
+        int exponential = 1; //This will be use to check the exponential
+        int exp_pos_neg = 1; //This will be use to check the sign of the exponential
+        value = 0;
+
+        //It may have - or +
+        if (word[0] == 0x2b){ //2b = +
+          initial_i = 1; //ignore the first character
+          pos_negative = 1; //is positive number
+        }
+        else if (word[0] == 0x2d){ //2d = -
+          initial_i = 1; //ignore the first character
+          pos_negative = -1;
+        }
+
+        resource_dict a;
+
+        //It may be a binary-literal, hex-literal or float-literal (starting with 0 or .) or float-literal starting with any number
+        if (word[initial_i] == 0x30){ //30 = 0
+          //------CHECKING BINARY NUMBER
+          if (word[initial_i + 1] == 0x42 || word[initial_i + 1] == 0x62){ //42 = B, 62 = b, that meaning, it's a binary number
+            pow = 2;
+            initial_i += 2;
+            //fill this with the reader of binaries
+            for (int i = initial_i; i < size; ++i){
+              if (word[i] == 48 || word[i] == 49)  //48 in decimal is the symbol 0, 49 in decimal is the symbol 1
+                value = value * 2 + (word[i] - 48);
+              else
+                return false; //ERROR!
+            }
+          }
+
+          //------CHECKING HEXADECIMAL NUMBER
+          else if (word[initial_i + 1] == 0x58 || word[initial_i + 1] == 0x78){ //58 = X, 78 = x, that meaning, it's an hex number
+            union tupla { int i; float f; } u;
+            pow = 16;
+            initial_i += 2;
+            u.i = 0;
+            //fill this with the reader of exadecimals
+            for (int i = initial_i; i < size; ++i){
+              if (word[i] >= 0x30 && word[i] <= 0x39)
+                u.i = u.i * 16 + (word[i] - 0x30);
+              else if (word[i] >= 0x41 && word[i] <= 0x5A)
+                u.i = u.i * 16 + (word[i] - (0x41 - 10));
+              else if (word[i] >= 0x61 && word[i] <= 0x7A)
+                u.i = u.i * 16 + (word[i] - (0x61 - 10));
+              else
+                return false; //ERROR!
+            }
+            value = u.f;
+            if (debuggingDDLMore) printf("===> %f, %8x <==== Is this right?\n", u.f, u.i);
+          }
+        }
+
+        //------CHECKING DECIMAL NUMBER
+        if (pow == 10){
+          int i;
+          // It can be a decimal, so we will use decimal as a way to test if it's decimal or not
+          decimal = -1;
+
+          //this will read the left part of the dot 
+          for (i = initial_i; i < size && decimal == -1 && exponential == 1; ++i){
+            if (word[i] == 0x2e) //2e = .
+              decimal = 1;
+            else if (word[i] == 0x45 || word[i] == 0x65) //45 = E, 65 = e
+              exponential = 0;
+            else if (word[i] >= 48 && word[i] <= 57)
+              value = value * 10 + (word[i] - 48);
+            else{
+              printf("It's not a correct digit!\n");
+              return false; //ERROR!
+            }
+          }
+          //------CHECKING right part of the DECIMAL NUMBER
+          //this part will read decimals (right part of dot)
+          if (decimal != -1)
+            for (; i < size && exponential == 1; ++i){
+            if (word[i] == 0x45 || word[i] == 0x65) //45 = E, 65 = e
+              exponential = 0;
+            else{
+              decimal *= 10;
+              if (word[i] >= 48 && word[i] <= 57)
+                value = value * 10 + (word[i] - 48);
+              else{
+                printf("It's not a correct digit!\n");
+                return false; //ERROR!
+              }
+            }
+            }
+          //------CHECKING exponential part of the DECIMAL NUMBER
+          //this part will understand exponentials (if there is any)
+          if (exponential == 0){
+            if (word[i] == 0x2b) //2b = +
+              ++i;
+            else if (word[i] == 0x2d){ //2d = -
+              ++i;
+              exp_pos_neg = -1;
+            }
+            for (; i < size; ++i){
+              if (word[i] >= 48 && word[i] <= 57)
+                exponential = exponential * 10 + (word[i] - 48);
+              else{
+                printf("It's not a correct digit!\n");
+                return false; //ERROR!
+              }
+            }
+          }
+
+          //If decimal arrived here as -1, it's not decimal, so make decimal == 1; if it's different to -1, its a decimal, so keep decimal value
+          decimal = decimal == -1 ? 1 : decimal;
+        }
+
+        //Now construct the number knowing value, pos_negative, decimal, pow, exponential!
+        value = value*pos_negative / decimal;
+        if (debuggingDDL) printf("Number-> %f ", value);
+        return true;
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief  This function will check if it's a string-literal
+      /// @param  value   it returns the value of the string
+      /// @param  word    this is a pointer to the beginning of the word
+      /// @param  size    this is the size of the word readed
+      /// @return   True if everything went right, and false if something went wrong
+      ////////////////////////////////////////////////////////////////////////////////
+      bool get_string_literal(string &value, char *word, int size){
+        if (debuggingDDL) printf("Reading the string: ");
+        char caracter;
+        //first of all check if it's a correct string
+        if (*word != 0x22 || word[size - 1] != 0x22)
+          return false; // ERROR!!!
+
+        const int i_limit = size - 1;
+        int new_size = size;
+        dynarray<char> new_word(i_limit);
+        for (int i = 1; i < i_limit; ++i){
+          caracter = word[i];
+          if (caracter == 0x5c){ //5c = '\'
+            if (debuggingDDL) printf("Escape char\n");
+            //Here it would be a function that decode the escape char. I'll do it later
+            --new_size;
+          }
+          else{ //If it's not a escape char, it's text
+            new_word.data()[i] = word[i];
+            if (debuggingDDL) printf("%c", new_word.data()[i]);
+          }
+        }
+        if (debuggingDDL) printf("\n");
+        value = string(new_word.data(),new_size);
+        return true;
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief  This function will check if it's a reference
+      /// @param  value   it returns the value of the reference
+      /// @param  word    this is a pointer to the beginning of the word
+      /// @param  size    this is the size of the word readed
+      /// @return   True if everything went right, and false if something went wrong
+      ////////////////////////////////////////////////////////////////////////////////
+      bool get_value_reference(string &value, char *word, int size){
+
+
+        return true;
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief  This function will check if it's a type
+      /// @param  value   it returns the value of the type
+      /// @param  word    this is a pointer to the beginning of the word
+      /// @param  size    this is the size of the word readed
+      /// @return   True if everything went right, and false if something went wrong
+      ////////////////////////////////////////////////////////////////////////////////
+      bool get_value_data_type(string &value, char *word, int size){
         return true;
       }
 
@@ -536,7 +827,9 @@ namespace octet
         remove_comments_whitespaces();
 
         //Not it has to find a literal, that might be (bool, int, float, string, ref or type)
-        while (*currentChar != 0x29 && *currentChar != 0x2C) get_next_char();
+        int size;
+        read_data_property(size);
+
 
         return true;
       }
@@ -745,6 +1038,27 @@ namespace octet
       }
 
       ////////////////////////////////////////////////////////////////////////////////
+      /// @brief  This function will read a data-list element and will return if error or more elements
+      /// @param word Pointer to the word, this is the word read
+      /// @return -1 if error
+      /// @return  0 if last element
+      /// @return  1 if more elements
+      ////////////////////////////////////////////////////////////////////////////////
+      bool read_data_property(int &size){
+        size = 0;
+        tempChar = currentChar;
+        while (*currentChar != 0x7d && !is_whiteSpace() && !is_comment()){
+          if (debuggingDDLMore) printf("%x, ", *currentChar);
+          ++size;
+          get_next_char();
+        }
+
+        remove_comments_whitespaces();
+
+        return true;
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////
       /// @brief  This function will check the size of the array
       /// @return Returns the size of the array
       ////////////////////////////////////////////////////////////////////////////////
@@ -838,3 +1152,5 @@ namespace octet
     };
   }
 }
+
+#endif

@@ -7,6 +7,9 @@
 ///
 ////////////////////////////////////////////////////////////////////////////////
 
+#ifndef OPENGEX_LEXER_INCLUDED
+#define OPENGEX_LEXER_INCLUDED
+
 #include "openDDL_lexer.h"
 #include "openGEX_identifiers.h"
 
@@ -217,3 +220,5 @@ namespace octet
     };
   }
 }
+
+#endif

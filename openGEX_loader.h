@@ -4,6 +4,10 @@
 /// @brief This is the loader to load the files of OpenGEX
 ///
 ////////////////////////////////////////////////////////////////////////////////
+
+#ifndef OPENGEX_LOADER_INCLUDED
+#define OPENGEX_LOADER_INCLUDED
+
 #include "openGEX_lexer.h"
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -45,3 +49,5 @@ namespace octet { namespace loaders {
     };
   }
 }
+
+#endif
