@@ -829,7 +829,8 @@ namespace octet
         //Not it has to find a literal, that might be (bool, int, float, string, ref or type)
         int size;
         read_data_property(size);
-
+        
+        printf("\n\tCurrent character after the word %s!! %c\n\n", string((char*)tempChar, size), *currentChar);
 
         return true;
       }
@@ -865,16 +866,17 @@ namespace octet
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief  This functions process the data list, taking into account the type of data expected
       /// @param  type  represent the type of element that it's expecting
-      /// @param  word  pointer to the word readed
+      /// @param  size  The size of the word to read (starting with tempChar)
       ////////////////////////////////////////////////////////////////////////////////
-      void process_data_list_element(int type, string *word){
+      void process_data_list_element(int type, int size){
         bool no_error = true;
+        string word((char*)tempChar, size);
         //Check the type, and call to the appropriate processor function
         switch (type){
         case token_type::tok_bool:
         {
           bool valueBool;
-          no_error = get_bool_literal(valueBool, word);
+          no_error = get_bool_literal(valueBool, &word);
           break;
         }
         case token_type::tok_int8:
@@ -887,32 +889,32 @@ namespace octet
         case token_type::tok_uint64:
         {
           int valueInt;
-          no_error = get_integer_literal(valueInt, word);
+          no_error = get_integer_literal(valueInt, &word);
           break;
         }
         case token_type::tok_float:
         case token_type::tok_double:
         {
           float valueFloat;
-          no_error = get_float_literal(valueFloat, word);
+          no_error = get_float_literal(valueFloat, &word);
           break;
         }
         case token_type::tok_string:
         {
           string valueString;
-          no_error = get_string_literal(valueString, word);
+          no_error = get_string_literal(valueString, &word);
           break;
         }
         case token_type::tok_ref:
         {
           string valueRef;
-          no_error = get_value_reference(valueRef, word);
+          no_error = get_value_reference(valueRef, &word);
           break;
         }
         case token_type::tok_type:
         {
           string valueType;
-          no_error = get_value_data_type(valueType, word);
+          no_error = get_value_data_type(valueType, &word);
           break;
         }
         default:
@@ -927,17 +929,21 @@ namespace octet
       ///   This function will keep on checking data until it finds a }. 
       ////////////////////////////////////////////////////////////////////////////////
       bool process_data_list(int type){
-        int ending;
-        string word;
-        ending = read_data_list_element(&word);
-        process_data_list_element(type, &word);
-        while (ending == 1){
+        int ending, size;
+
+        //Read the first element and process it
+        ending = read_data_list_element(size);
+        process_data_list_element(type, size);
+
+        //If there are more elements...
+        while (ending == 1){ //keep on reading while there are more elements
           get_next_char();
-          ending = read_data_list_element(&word);
-          process_data_list_element(type, &word);
+          ending = read_data_list_element(size);
+          process_data_list_element(type, size);
         }
         if (debuggingDDL) printf("\n");
-        return ending >= 0;
+        //If the ending is other than zero, is that there were some mistakes
+        return ending == 0;
       }
 
       ////////////////////////////////////////////////////////////////////////////////
@@ -947,7 +953,7 @@ namespace octet
       /// @return true if it went ok and false if there was any problem (for instance not finding a })
       ///  This function will keep on checking data until it finds a }. 
       ////////////////////////////////////////////////////////////////////////////////
-      int process_data_array(int type, int arraySize){
+      bool process_data_array(int type, int arraySize){
         //detect {
         if (*currentChar != 0x7b){ //7b = {
           printf("Problem reading the begining of the data array!!! \n");
@@ -1006,13 +1012,15 @@ namespace octet
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief  This function will read a data-list element and will return if error or more elements
-      /// @param word Pointer to the word, this is the word read
+      /// @param  size  This function read the size of the next word
       /// @return -1 if error
       /// @return  0 if last element
       /// @return  1 if more elements
+      ///     The starting position of the word is tempChar!
       ////////////////////////////////////////////////////////////////////////////////
-      int read_data_list_element(string *word){
-        int sizeWord = 0, to_return;
+      int read_data_list_element(int &sizeWord){
+        int to_return;
+        sizeWord = 0;
         tempChar = currentChar;
         while (*currentChar != 0x2c && *currentChar != 0x7d && !is_whiteSpace() && !is_comment()){
           if (debuggingDDLMore) printf("%x, ", currentChar[0]);
@@ -1033,7 +1041,7 @@ namespace octet
          to_return = -1;
           break;
         }
-        word->set((char*)(tempChar), sizeWord);
+
         return to_return;
       }
 
@@ -1044,18 +1052,21 @@ namespace octet
       /// @return  0 if last element
       /// @return  1 if more elements
       ////////////////////////////////////////////////////////////////////////////////
-      bool read_data_property(int &size){
+      int read_data_property(int &size){
         size = 0;
         tempChar = currentChar;
-        while (*currentChar != 0x7d && !is_whiteSpace() && !is_comment()){
+        while (*currentChar != 0x2C && *currentChar != 0x29 && !is_whiteSpace() && !is_comment()){
           if (debuggingDDLMore) printf("%x, ", *currentChar);
           ++size;
           get_next_char();
         }
 
         remove_comments_whitespaces();
-
-        return true;
+        if (*currentChar == 0x2C)
+          return 1;
+        else if (*currentChar == 0x29)
+          return 0;
+        return -1;
       }
 
       ////////////////////////////////////////////////////////////////////////////////

@@ -27,10 +27,9 @@ namespace octet
       /// @brief This will initialize some structures of the lexer (dictionary of identifiers of openGEX)
       ////////////////////////////////////////////////////////////////////////////////
       void init_gex(){
-        gex_ident identList;
         //Load the identifiers of openGEX in identifeirs_ dictionary
         for (int i = gex_ident_list::id_Animation; i != gex_ident_list::ident_last; ++i){
-          add_identifier(identList.ident_name(i).c_str(), i);
+          add_identifier(gex_ident::ident_name(i).c_str(), i);
         }
       }
 
