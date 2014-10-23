@@ -870,13 +870,13 @@ namespace octet
       ////////////////////////////////////////////////////////////////////////////////
       void process_data_list_element(int type, int size){
         bool no_error = true;
-        string word((char*)tempChar, size);
+        //string word((char*)tempChar, size);
         //Check the type, and call to the appropriate processor function
         switch (type){
         case token_type::tok_bool:
         {
           bool valueBool;
-          no_error = get_bool_literal(valueBool, &word);
+          no_error = get_bool_literal(valueBool, (char*)tempChar, size);
           break;
         }
         case token_type::tok_int8:
@@ -889,32 +889,32 @@ namespace octet
         case token_type::tok_uint64:
         {
           int valueInt;
-          no_error = get_integer_literal(valueInt, &word);
+          no_error = get_integer_literal(valueInt, (char*)tempChar, size);
           break;
         }
         case token_type::tok_float:
         case token_type::tok_double:
         {
           float valueFloat;
-          no_error = get_float_literal(valueFloat, &word);
+          no_error = get_float_literal(valueFloat, (char*)tempChar, size);
           break;
         }
         case token_type::tok_string:
         {
           string valueString;
-          no_error = get_string_literal(valueString, &word);
+          no_error = get_string_literal(valueString, (char*)tempChar, size);
           break;
         }
         case token_type::tok_ref:
         {
           string valueRef;
-          no_error = get_value_reference(valueRef, &word);
+          no_error = get_value_reference(valueRef, (char*)tempChar, size);
           break;
         }
         case token_type::tok_type:
         {
           string valueType;
-          no_error = get_value_data_type(valueType, &word);
+          no_error = get_value_data_type(valueType, (char*)tempChar, size);
           break;
         }
         default:
