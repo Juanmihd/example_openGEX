@@ -21,7 +21,7 @@ namespace octet
 {
   namespace loaders{
     class openDDL_lexer : ddl_token{
-      enum { debuggingDDL = 1, debuggingDDLMore = 0 };
+      enum { debuggingDDL = 0, debuggingDDLMore = 0, debugging = 0, debuggingMore = 0 };
     protected:
       // Dictionary of identifiers of the openDDL language we are using
       dictionary<int> identifiers_;
@@ -42,6 +42,8 @@ namespace octet
       int bufferSize;
       // The size of the token
       int sizeRead;
+      // Just to check nesting
+      int nesting;
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief  This function will add an identifiers to the dictionary
@@ -136,10 +138,11 @@ namespace octet
       ///     ToDO: This is used really often, check if it is really efficient!
       ////////////////////////////////////////////////////////////////////////////////
       void remove_comments_whitespaces(){ // everything less or equal than 0x20 is a whitespace
-        while (is_comment() || is_whiteSpace()){
-          if (is_comment()) ignore_comment();
-          else get_next_char();
-        }
+        if(!is_end_file())
+          while ((is_whiteSpace() || is_comment()) && !is_end_file()){
+            if (is_whiteSpace()) get_next_char(); 
+            else ignore_comment();
+          }
       }
 
       ////////////////////////////////////////////////////////////////////////////////
@@ -465,9 +468,9 @@ namespace octet
         if (*word != 0x22 || word[size - 1] != 0x22)
           return false; // ERROR!!!
 
-        const int i_limit = size - 2;
+        const int i_limit = size - 1;
         int new_size = 0;
-        dynarray<char> new_word(i_limit);
+        dynarray<char> new_word(i_limit-1);
         for (int i = 1; i < i_limit; ++i){
           caracter = word[i];
           if (caracter == 0x5c){ //5c = '\'
@@ -514,12 +517,12 @@ namespace octet
               get_next_char();
               remove_comments_whitespaces();
               new_word = read_word();
-              printf(" %s ", new_word);
+              if (debugging) printf(" %s ", new_word);
               get_next_char();
               remove_comments_whitespaces();
             }
             else{
-              printf(" %c ", *currentChar);
+              if (debugging) printf(" %c ", *currentChar);
               remove_comments_whitespaces(); 
             }
           }
@@ -561,9 +564,7 @@ namespace octet
         int type = is_identifier(word);
 
         //Now check if it's a correct property
-        if (type >= 0)
-          printf("This property is a %i\n", identifiers_.get_value(type));
-        else{
+        if (type < 0){
           printf("\n\nERROR: It's not a proper property!!!\n");
           return false;
         }
@@ -581,7 +582,7 @@ namespace octet
         int size;
         read_data_property(size);
         
-        printf("\n\tCurrent character after the word %s!! %c\n\n", string((char*)tempChar, size), *currentChar);
+        if (debugging) printf("\n\tCurrent character after the word %s!! %c\n\n", string((char*)tempChar, size), *currentChar);
 
         return true;
       }
@@ -743,12 +744,11 @@ namespace octet
           printf("Problem reading the begining of the data array!!! \n");
           return false;
         }
-        get_next_char();
-        remove_comments_whitespaces();
+
         while (no_error && *currentChar != 0x7d){
-          no_error = process_data_array(type, arraySize); //This will have to start with {, read arraySize elements, read }
           get_next_char();
           remove_comments_whitespaces();
+          no_error = process_data_array(type, arraySize); //This will have to start with {, read arraySize elements, read }
           if (debuggingDDL) printf("After data array...%x\n", currentChar[0]);
         }
         //expect } (7d)
@@ -896,6 +896,158 @@ namespace octet
       }
 
       ////////////////////////////////////////////////////////////////////////////////
+      /// @brief  This function will lexer the next words, considering to be a "structureData"
+      /// @param  It will receive the type of the data that it has been read
+      /// @return True if everthing went well, false if there was some error
+      ////////////////////////////////////////////////////////////////////////////////
+      bool process_structureData(int type){
+        bool no_error = true;
+        int arraySize;
+        if (debugging) printf("\t----TYPE n: %i!!----\n", type);
+        //First step is remove whiteSpace and comments
+        remove_comments_whitespaces();
+        if (debuggingMore) printf("%x\n", currentChar[0]);
+
+        //Then it will read the first character, to see if its a [, or {, or name
+        //if name it is a only dataList, so call to process_dataList() and tell that function if has a name or not
+        if (*currentChar == 0x5b){ // 5b = [
+          if (debugging) printf("It's a data array list!\n");
+          //check integer-literal (for a data array list)
+          get_next_char();
+          arraySize = read_array_size();
+          if (debuggingMore) printf("The size is %i\n", arraySize);
+          get_next_char();
+          remove_comments_whitespaces();
+
+          //it may receive a name (optional)
+          if (is_name()){
+            process_name();
+            get_next_char();
+          }
+
+          remove_comments_whitespaces();
+
+          //expect a { (if not, error)
+          if (*currentChar == 0x7b) //7b = {
+            no_error = process_data_array_list(type, arraySize);
+          else{ //call to process data array list, it will check the }
+            no_error = false; //return error
+            printf("\n\nERROR: I don't find the data-array-list!\n\n");
+          }
+        } //ending the [integer-literal] (name) { data-array-list* } option
+
+        //now check the other option (name) { data-list* }
+        else{
+          if (is_name()){ // check if there is a name, and process it
+            if (debugging) printf("It's a name + data list!\n");
+            process_name();
+            get_next_char();
+          }
+
+          //After the optional name, it expects a {, and analize the data_list
+          if (*currentChar == 0x7b){ // 7b = {
+            if (debugging) printf("It's a data list!\n");
+            get_next_char();
+            remove_comments_whitespaces();
+            no_error = process_data_list(type);  //expect a } (if not, error)
+            if (!no_error) printf("---SOMETHING WENT WRONG WITH DATA LIST\n");
+          }
+          else{ //if there is no {, ITS AN ERROR!!!
+            no_error = false;
+            printf("\n\nERROR: I don't find the data-list!\n\n");
+          }
+        }
+        if (debugging) printf("Expect a } ... %c\n", *currentChar);
+
+        return no_error;
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief  This function will lexer the next words, considering to be a "structureIdentifier"
+      /// @param  It will receive the type of identifier that has been read
+      /// @return True if everything went well, false if there was some error
+      ////////////////////////////////////////////////////////////////////////////////
+      bool process_structureIdentifier(int type){
+        bool no_error = true;
+        if (debugging) printf("\t----IDENTIFIER n. %i!!----\n", type);
+
+        //First step is remove whiteSpace and comments
+        remove_comments_whitespaces();
+
+        //Then it will read the first character, to see if its a (, or name, or {
+
+        //If its a name call to something to process name
+        if (is_name()) process_name();
+        //Later, check if it's ( and call something to check properties - telling the function which structure is this one
+
+        if (*currentChar == 0x28){ // 28 = (
+          //call something to check properties          //expect a ) (if not, error)
+          no_error = process_properties();
+        }
+
+        remove_comments_whitespaces();
+        //Later expect a {, if not return error, and check for a new structure inside this structure
+        if (*currentChar == 0x7b){ //7b = {
+          get_next_char();
+          remove_comments_whitespaces();
+
+          while (*currentChar != 0x7d){ //7d = } (keep on looking for new substructures while it does not find }
+            no_error = process_structure();  //call to process structure
+            //Later expect a }, if not return error
+            remove_comments_whitespaces();
+          }
+        }
+        else{
+          no_error = false;
+          printf("\nERROR: No substructure!!!\n\n");
+        }
+        if (debugging) printf("Expect a } ... %c\n", *currentChar);
+        return no_error;
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief  This function will process the currentChar to look for the next token and study it
+      /// @return True if everything went well, false if there was some problem
+      ////////////////////////////////////////////////////////////////////////////////
+      bool process_structure(){
+        bool no_error = true;
+        if (is_end_file()) return true; //If we arrived to the end of the file, let's finish this!
+        string word;
+        ++nesting;
+        if (debugging) printf("\n-----------%x\t%c\n", *currentChar, *currentChar);
+
+        // It's a real structure! But it can be IDENTIFIER or DATATYPE
+
+        //remove_comments_whitespaces();
+        word = read_word();
+        if (debugging) printf("Finding => %s\n", word);
+        remove_comments_whitespaces();
+        if (debuggingMore) printf("%x <----\n", currentChar[0]);
+
+        //check if it's a type and return it's index (if its negative it's not a type)
+        int type = is_dataType(word);
+        if (type >= 0){ //As it's a Data type, now it can be single data list or data array list!
+          process_structureData(types_.get_value(type));
+        }
+
+        else{
+          //check if it's a identifier and return it's index (if its negative it's not a identifier)
+          type = is_identifier(word);
+          if (type >= 0){ //As it's a Identifier type, now check name? properties? and then { structure(s)? }
+            process_structureIdentifier(identifiers_.get_value(type));
+          }
+
+          else{ //if it's nothing of the above is an error
+            printf("ERRROR!!! there is no real structure here dude!\n");//assert(0 && "It's not a proper structure");
+          }
+        }
+        if (debugging) printf("Expect a } ... %c\n", *currentChar);
+        get_next_char();
+        --nesting;
+        return no_error;
+      }
+      
+      ////////////////////////////////////////////////////////////////////////////////
       /// @brief This will initialize the dictionaries of the lexer
       ////////////////////////////////////////////////////////////////////////////////
       void init_ddl(){
@@ -904,6 +1056,7 @@ namespace octet
           add_type(token_name(i).c_str(),i);
         for (int i = first_symbol(); i <= last_symbol(); ++i)
           add_symbol(token_name(i).c_str(), i);
+        nesting = 0;
       }
     public:
       ////////////////////////////////////////////////////////////////////////////////
@@ -911,6 +1064,32 @@ namespace octet
       ////////////////////////////////////////////////////////////////////////////////
       openDDL_lexer(){}
 
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief  This will be the function that creates de process of the lexer receiving as parameter the array of characters
+      /// @param  It will receive a dynarray of uint8, it will represente the content of the file
+      /// @return True if everything went well, false if there was some problem
+      ////////////////////////////////////////////////////////////////////////////////
+      bool lexer_file(dynarray<uint8_t> file){
+        bool no_error = true;
+        sizeRead = 0;
+        buffer = file;
+        currentChar = &buffer[0];
+        bufferSize = buffer.size();
+
+        // It's starting to process all the array of characters starting with the first
+        // Will do this until the end of the file
+        while (!is_end_file() && no_error){
+          remove_comments_whitespaces();
+          if (!is_end_file()){
+            //Process token (in openDDL is a structure) when you find it
+            no_error = process_structure();
+            //get new token
+            if(debugging) printf("-----------%x\n", *currentChar);
+          }
+        }
+
+        return no_error;
+      }
     };
   }
 }
