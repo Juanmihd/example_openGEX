@@ -503,8 +503,27 @@ namespace octet
             value = string(word,size); //assing 'null' to the value 
           }
         }
-        // it can be also a name
-        // followed optionally for some identifiers
+        // If it's not the null value...
+        else{
+          // it can be also a name
+          
+          // followed optionally for some identifiers
+          string new_word;
+          while (*currentChar != 0x7d && *currentChar != 0x2c){ //While the current char is not the } or , there must be more references to this reference
+            if (*currentChar == 0x25){
+              get_next_char();
+              remove_comments_whitespaces();
+              new_word = read_word();
+              printf(" %s ", new_word);
+              get_next_char();
+              remove_comments_whitespaces();
+            }
+            else{
+              printf(" %c ", *currentChar);
+              remove_comments_whitespaces(); 
+            }
+          }
+        }
 
         if (debuggingDDL) printf("%s\n", value);
         return true;
@@ -674,8 +693,8 @@ namespace octet
           process_data_list_element(type, size);
         }
         if (debuggingDDL) printf("\n");
-        //If the ending is other than zero, is that there were some mistakes
-        return ending == 0;
+
+        return true;
       }
 
       ////////////////////////////////////////////////////////////////////////////////
