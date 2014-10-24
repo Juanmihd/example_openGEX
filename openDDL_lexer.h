@@ -465,7 +465,7 @@ namespace octet
         if (*word != 0x22 || word[size - 1] != 0x22)
           return false; // ERROR!!!
 
-        const int i_limit = size - 1;
+        const int i_limit = size - 2;
         int new_size = 0;
         dynarray<char> new_word(i_limit);
         for (int i = 1; i < i_limit; ++i){
@@ -473,7 +473,6 @@ namespace octet
           if (caracter == 0x5c){ //5c = '\'
             if (debuggingDDL) printf("Escape char\n");
             //Here it would be a function that decode the escape char. I'll do it later
-            --new_size;
           }
           else{ //If it's not a escape char, it's text
             new_word.data()[new_size] = caracter;
@@ -494,8 +493,20 @@ namespace octet
       /// @return   True if everything went right, and false if something went wrong
       ////////////////////////////////////////////////////////////////////////////////
       bool get_value_reference(string &value, char *word, int size){
+        if (debuggingDDL) printf("Reading the reference: ");
+        
+        value = string(word, size);
 
+        // A reference can be the identificator or name 'null'
+        if (size == 4){ //null size is 4
+          if (word[0] == 'n' && word[1] == 'u' && word[2] == 'l' && word[3] == 'l'){
+            value = string(word,size); //assing 'null' to the value 
+          }
+        }
+        // it can be also a name
+        // followed optionally for some identifiers
 
+        if (debuggingDDL) printf("%s\n", value);
         return true;
       }
 
