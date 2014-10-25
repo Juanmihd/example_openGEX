@@ -1038,7 +1038,7 @@ namespace octet
           }
 
           else{ //if it's nothing of the above is an error
-            printf("ERRROR!!! there is no real structure here dude!\n");//assert(0 && "It's not a proper structure");
+            printf("ERRROR!!! There is no real structure.\n");//assert(0 && "It's not a proper structure");
           }
         }
         if (debugging) printf("Expect a } ... %c\n", *currentChar);
