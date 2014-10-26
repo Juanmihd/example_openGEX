@@ -463,8 +463,10 @@ namespace octet
         if (debuggingDDL) printf("Reading the string: ");
         char caracter;
         //first of all check if it's a correct string
-        if (*word != 0x22 || word[size - 1] != 0x22)
+        if (*word != 0x22 || word[size - 1] != 0x22){
           return false; // ERROR!!!
+          printf("Error with the string! \n");
+        }
 
         const int i_limit = size - 1;
         int new_size = 0;
@@ -768,21 +770,32 @@ namespace octet
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief  This function will read a data-list element and will return if error or more elements
-      /// @param  size  This function read the size of the next word
+      /// @param  size  This function read the size of the next word and returns it also as a parameter 
       /// @return -1 if error
       /// @return  0 if last element
       /// @return  1 if more elements
       ///     The starting position of the word is tempChar!
       ////////////////////////////////////////////////////////////////////////////////
-      int read_data_list_element(int &sizeWord){
+      int read_data_list_element(int &sizeWord, bool charString = false){
         int to_return;
         sizeWord = 0;
         remove_comments_whitespaces();
         tempChar = currentChar;
-        while (*currentChar != 0x2c && *currentChar != 0x7d && !is_whiteSpace() && !is_comment()){
-          if (debuggingDDLMore) printf("%x, ", currentChar[0]);
-          get_next_char();
-          ++sizeWord;
+        //If the element to read is a char literal or a string literal, we cannot ignore all whitespaces, so we will
+        // have to use a different way to stop it with whitespaces
+        if (*currentChar == 0x27 || *currentChar == 0x22){ //27 = ' and 22 = "
+          while (*currentChar != 0x2c && *currentChar != 0x7d && !(*currentChar != 0x20 && is_whiteSpace()) && !is_comment()){
+            if (debuggingDDLMore) printf("%c, ", *currentChar);
+            get_next_char();
+            ++sizeWord;
+          }
+        }
+        else{
+          while (*currentChar != 0x2c && *currentChar != 0x7d && !is_whiteSpace() && !is_comment()){
+            if (debuggingDDLMore) printf("%x, ", currentChar[0]);
+            get_next_char();
+            ++sizeWord;
+          }
         }
 
         remove_comments_whitespaces();
