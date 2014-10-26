@@ -452,6 +452,10 @@ namespace octet
         return true;
       }
 
+      bool is_hex_digit(char c){
+        return (c >= 0x30) && (c <= 0x66) && !(c > 0x39 && c < 0x41) && !(c > 0x47 && c < 0x61);
+      }
+
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief  This function will check if it's a string-literal
       /// @param  value   it returns the value of the string
@@ -471,16 +475,68 @@ namespace octet
         const int i_limit = size - 1;
         int new_size = 0;
         dynarray<char> new_word(i_limit-1);
-        for (int i = 1; i < i_limit; ++i){
-          caracter = word[i];
+        ++word;
+        for (int i = 1; i < i_limit; ++i, ++word){
+          caracter = *word;
           if (caracter == 0x5c){ //5c = '\'
             if (debuggingDDL) printf("Escape char\n");
-            //Here it would be a function that decode the escape char. I'll do it later
+            ++i;
+            if (i >= i_limit){
+              printf("There is an error with the string\n");
+              return false;
+            }
+            ++word;
+            if (*word == 0x78 && is_hex_digit(word[1]) && is_hex_digit(word[2])){ //78 = x , so is a escape-char with 2 hex-digit
+              i += 2;
+              //obtain value of caracter)
+              new_word.data()[new_size] = caracter;
+              ++new_size;
+            }
+            else{
+              switch (*word){
+              case 0x22: //22 = " means double quote 0x22
+                caracter = 0x22;
+                break;
+              case 0x27: //27 = ' means Single quote 0x27
+                caracter = 0x27;
+                break;
+              case 0x3F: //3f = ? means question mark 0x3f
+                caracter = 0x3f;
+                break;
+              case 0x5C: //5c = \ means blackslash 0x5c
+                caracter = 0x5c;
+                break;
+              case 0x61: //61 = a means bell 0x07
+                caracter = 0x07;
+                break;
+              case 0x62: //62 = b means backspace 0x08
+                caracter = 0x08;
+                break;
+              case 0x66: //66 = f means formfeed 0x0c
+                caracter = 0x0c;
+                break;
+              case 0x6E: //6e = n means newline 0x0a
+                caracter = 0x0a;
+                break;
+              case 0x72: //72 = r means carriage return 0x0d
+                caracter = 0x0d;
+                break;
+              case 0x74: //74 = t means horizontal tab 0x09
+                caracter = 0x09;
+                break;
+              case 0x76: //76 = v means vertical tab 0x0b
+                caracter = 0x0b;
+                break;
+              default:
+                printf("Error with the escape char!\n");
+                return false;
+                break;
+              }
+            }
           }
-          else{ //If it's not a escape char, it's text
-            new_word.data()[new_size] = caracter;
-            ++new_size;
-          }
+          //and then, once the escape char was tested (if it was a escapeChar) and if not the same caracter
+          new_word.data()[new_size] = caracter;
+          ++new_size;
         }
         value = string(new_word.data(),new_size);
         
