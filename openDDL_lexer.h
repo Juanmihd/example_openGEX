@@ -522,7 +522,12 @@ namespace octet
               break;
             case 0x78: //78 = x means is a especial escape char
               i += 2;
-
+              if (is_hex_digit(word[1]) && is_hex_digit(word[2])){
+                caracter = (word[1] - (word[1]<0x39 ? '0' : (word[1]<0x60 ? 'A' : 'a'))) * 16 + (word[2] - (word[2]<0x39 ? '0' : (word[2]<0x60 ? 'A' : 'a')));
+              }
+              else{
+                printf("Error with the escpace char, it's not a hexadecimal!\n");
+              }
               break;
             default:
               printf("Error with the escape char!\n");
@@ -551,7 +556,7 @@ namespace octet
       bool get_char_literal(char &value, char *word, int size){
         if (debuggingDDL) printf("Reading the string: ");
         //first of all check if it's a correct char literal
-        if (size < 3 || size > 4){
+        if (size < 3 || size > 5){
           printf("The size of the char literal is not correct!\n");
           return false;
         }
@@ -595,6 +600,14 @@ namespace octet
               break;
             case 0x76: //76 = v means vertical tab 0x0b
               value = 0x0b;
+              break;
+            case 0x78: //78 = x means is a especial escape char
+              if (is_hex_digit(word[1]) && is_hex_digit(word[2])){
+                value = (word[1] - (word[1]<0x39 ? '0' : (word[1]<0x60 ? 'A' : 'a'))) * 16 + (word[2] - (word[2]<0x39 ? '0' : (word[2]<0x60 ? 'A' : 'a')));
+              }
+              else{
+                printf("Error with the escpace char, it's not a hexadecimal!\n");
+              }
               break;
             default:
               printf("Error with the escape char!\n");
@@ -673,7 +686,7 @@ namespace octet
       ////////////////////////////////////////////////////////////////////////////////
       void process_name(){
         string name = read_word();
-        if (debuggingDDL) printf("It's the name %s !!\n", name);
+        if (debugging) printf("It's the name %s<!!\n", name);
       }
 
       ////////////////////////////////////////////////////////////////////////////////
@@ -717,7 +730,7 @@ namespace octet
       ////////////////////////////////////////////////////////////////////////////////
       bool process_properties(){
         bool no_error;
-
+        if(debugging) printf("Reading properties!\n");
         get_next_char();
         remove_comments_whitespaces();
         //process the first element
@@ -730,6 +743,10 @@ namespace octet
           if (*currentChar != 0x2C){ // 0x2C = ,   
             printf("\n\nERROR!! It was expecting a ',' and it found a %c instead.\n", *currentChar);
             return false;
+          }
+          else{
+            get_next_char();
+            remove_comments_whitespaces();
           }
           //now, keep on processing properties
           no_error = process_single_property();
@@ -1007,8 +1024,8 @@ namespace octet
           }
         }
         string temp((char*)(tempChar), sizeWord);
-        if (debuggingDDLMore) printf("Last symbol-> %x finding %s\n", currentChar[0], temp);
-        if (debuggingDDL) printf("Finding => %s ", temp);
+        if (debugging) printf("Last symbol-> %x finding %s\n", currentChar[0], temp);
+        if (debugging) printf("Finding => %s ", temp);
         return temp;
       }
 
@@ -1123,6 +1140,7 @@ namespace octet
         if (is_name()) process_name();
         //Later, check if it's ( and call something to check properties - telling the function which structure is this one
 
+        remove_comments_whitespaces();
         if (*currentChar == 0x28){ // 28 = (
           //call something to check properties          //expect a ) (if not, error)
           no_error = process_properties();
