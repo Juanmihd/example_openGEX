@@ -452,6 +452,12 @@ namespace octet
         return true;
       }
 
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief  This function check if the character is a hexadecimal digit
+      /// @param  c   Character to be tested
+      /// @return   True if it's an hexadecimal, false if it's not 8
+      ///   Note: Decimals are a subset of hexadecimal!
+      ////////////////////////////////////////////////////////////////////////////////
       bool is_hex_digit(char c){
         return (c >= 0x30) && (c <= 0x66) && !(c > 0x39 && c < 0x41) && !(c > 0x47 && c < 0x61);
       }
@@ -474,7 +480,7 @@ namespace octet
 
         const int i_limit = size - 1;
         int new_size = 0;
-        dynarray<char> new_word(i_limit-1);
+        dynarray<char> new_word(i_limit - 1);
         ++word;
         for (int i = 1; i < i_limit; ++i, ++word){
           caracter = *word;
@@ -486,61 +492,123 @@ namespace octet
               return false;
             }
             ++word;
-            if (*word == 0x78 && is_hex_digit(word[1]) && is_hex_digit(word[2])){ //78 = x , so is a escape-char with 2 hex-digit
+            switch (*word){
+            case 0x22: //22 = " means double quote 0x22
+            case 0x27: //27 = ' means Single quote 0x27
+            case 0x3F: //3f = ? means question mark 0x3f
+            case 0x5C: //5c = \ means blackslash 0x5c
+              caracter = *word;
+              break;
+            case 0x61: //61 = a means bell 0x07
+              caracter = 0x07;
+              break;
+            case 0x62: //62 = b means backspace 0x08
+              caracter = 0x08;
+              break;
+            case 0x66: //66 = f means formfeed 0x0c
+              caracter = 0x0c;
+              break;
+            case 0x6E: //6e = n means newline 0x0a
+              caracter = 0x0a;
+              break;
+            case 0x72: //72 = r means carriage return 0x0d
+              caracter = 0x0d;
+              break;
+            case 0x74: //74 = t means horizontal tab 0x09
+              caracter = 0x09;
+              break;
+            case 0x76: //76 = v means vertical tab 0x0b
+              caracter = 0x0b;
+              break;
+            case 0x78: //78 = x means is a especial escape char
               i += 2;
-              //obtain value of caracter)
-              new_word.data()[new_size] = caracter;
-              ++new_size;
+
+              break;
+            default:
+              printf("Error with the escape char!\n");
+              return false;
+              break;
             }
-            else{
-              switch (*word){
-              case 0x22: //22 = " means double quote 0x22
-                caracter = 0x22;
-                break;
-              case 0x27: //27 = ' means Single quote 0x27
-                caracter = 0x27;
-                break;
-              case 0x3F: //3f = ? means question mark 0x3f
-                caracter = 0x3f;
-                break;
-              case 0x5C: //5c = \ means blackslash 0x5c
-                caracter = 0x5c;
-                break;
-              case 0x61: //61 = a means bell 0x07
-                caracter = 0x07;
-                break;
-              case 0x62: //62 = b means backspace 0x08
-                caracter = 0x08;
-                break;
-              case 0x66: //66 = f means formfeed 0x0c
-                caracter = 0x0c;
-                break;
-              case 0x6E: //6e = n means newline 0x0a
-                caracter = 0x0a;
-                break;
-              case 0x72: //72 = r means carriage return 0x0d
-                caracter = 0x0d;
-                break;
-              case 0x74: //74 = t means horizontal tab 0x09
-                caracter = 0x09;
-                break;
-              case 0x76: //76 = v means vertical tab 0x0b
-                caracter = 0x0b;
-                break;
-              default:
-                printf("Error with the escape char!\n");
-                return false;
-                break;
-              }
-            }
+
           }
           //and then, once the escape char was tested (if it was a escapeChar) and if not the same caracter
           new_word.data()[new_size] = caracter;
           ++new_size;
         }
-        value = string(new_word.data(),new_size);
-        
+        value = string(new_word.data(), new_size);
+
         if (debuggingDDL) printf("%s\n", value);
+        return true;
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief  This function will check if it's a char-literal
+      /// @param  value   it returns the value of the char
+      /// @param  word    this is a pointer to the beginning of the word
+      /// @param  size    this is the size of the word readed
+      /// @return   True if everything went right, and false if something went wrong
+      ////////////////////////////////////////////////////////////////////////////////
+      bool get_char_literal(char &value, char *word, int size){
+        if (debuggingDDL) printf("Reading the string: ");
+        //first of all check if it's a correct char literal
+        if (size < 3 || size > 4){
+          printf("The size of the char literal is not correct!\n");
+          return false;
+        }
+        if (*word != 0x27 || word[size - 1] != 0x27){
+          return false; // ERROR!!!
+          printf("Error with the char! \n");
+        }
+        ++word;
+
+        if (*word == 0x5c){ //5c = '\' (it's a escape char)
+          if (debuggingDDL) printf("Escape char\n");
+          ++word;
+          if (*word == 0x78 && is_hex_digit(word[1]) && is_hex_digit(word[2])){ //78 = x , so is a escape-char with 2 hex-digit
+            value = *word; // get the value of the character
+          }
+          else{
+            switch (*word){
+            case 0x22: //22 = " means double quote 0x22
+            case 0x27: //27 = ' means Single quote 0x27
+            case 0x3F: //3f = ? means question mark 0x3f
+            case 0x5C: //5c = \ means blackslash 0x5c
+              value = *word;
+              break;
+            case 0x61: //61 = a means bell 0x07
+              value = 0x07;
+              break;
+            case 0x62: //62 = b means backspace 0x08
+              value = 0x08;
+              break;
+            case 0x66: //66 = f means formfeed 0x0c
+              value = 0x0c;
+              break;
+            case 0x6E: //6e = n means newline 0x0a
+              value = 0x0a;
+              break;
+            case 0x72: //72 = r means carriage return 0x0d
+              value = 0x0d;
+              break;
+            case 0x74: //74 = t means horizontal tab 0x09
+              value = 0x09;
+              break;
+            case 0x76: //76 = v means vertical tab 0x0b
+              value = 0x0b;
+              break;
+            default:
+              printf("Error with the escape char!\n");
+              return false;
+              break;
+            }
+          }
+        }
+        else{ //If it's not a escape char, just copy the char
+          value = *word;
+        }
+
+
+        if (debuggingDDL) printf("%c\n", value);
         return true;
       }
 
