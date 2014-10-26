@@ -351,8 +351,6 @@ namespace octet
           pos_negative = -1;
         }
 
-        resource_dict a;
-
         //It may be a binary-literal, hex-literal or float-literal (starting with 0 or .) or float-literal starting with any number
         if (word[initial_i] == 0x30){ //30 = 0
           //------CHECKING BINARY NUMBER
@@ -707,6 +705,10 @@ namespace octet
       ////////////////////////////////////////////////////////////////////////////////
       bool process_data_array(int type, int arraySize){
         //detect {
+        if (*currentChar == 0x2c){ //2c = ,
+          get_next_char();
+          remove_comments_whitespaces();
+        }
         if (*currentChar != 0x7b){ //7b = {
           printf("Problem reading the begining of the data array!!! \n");
           return false;
@@ -717,7 +719,6 @@ namespace octet
         int itemsLeft = arraySize;
         while (itemsLeft > 0){
           get_next_char();
-          remove_comments_whitespaces();
           ending = read_data_list_element(wordSize);
           process_data_list_element(type, wordSize);
           --itemsLeft;
@@ -728,6 +729,7 @@ namespace octet
           return false;
           printf("I Don't find the } inside process_data_array\n");
         }
+
         return true;
       }
 
@@ -741,14 +743,17 @@ namespace octet
       bool process_data_array_list(int type, int arraySize){
         bool no_error = true;
         if (*currentChar != 0x7b){ //7b = {
-          printf("Problem reading the begining of the data array!!! \n");
+          printf("Problem reading the begining of the data array list!!! \n");
           return false;
         }
+        get_next_char();
+        remove_comments_whitespaces();
 
         while (no_error && *currentChar != 0x7d){
+          no_error = process_data_array(type, arraySize); //This will have to start with {, read arraySize elements, read }
           get_next_char();
           remove_comments_whitespaces();
-          no_error = process_data_array(type, arraySize); //This will have to start with {, read arraySize elements, read }
+
           if (debuggingDDL) printf("After data array...%x\n", currentChar[0]);
         }
         //expect } (7d)
@@ -772,6 +777,7 @@ namespace octet
       int read_data_list_element(int &sizeWord){
         int to_return;
         sizeWord = 0;
+        remove_comments_whitespaces();
         tempChar = currentChar;
         while (*currentChar != 0x2c && *currentChar != 0x7d && !is_whiteSpace() && !is_comment()){
           if (debuggingDDLMore) printf("%x, ", currentChar[0]);
