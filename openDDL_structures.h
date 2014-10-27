@@ -113,8 +113,8 @@ namespace octet{
     class openDDL_identifier_structure : public openDDL_structure{
     protected:
       int identifierID;
-      dynarray<ref<openDDL_properties>> propertiesList;
-      dynarray<ref<openDDL_structure>> substructureList;
+      dynarray<openDDL_properties*> propertiesList;
+      dynarray<openDDL_structure*> substructureList;
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief This will initialize the structure with type "identifier"

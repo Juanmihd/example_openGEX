@@ -31,6 +31,8 @@ namespace octet
       dictionary<int> types_;
       // Dictionary of names
       dictionary<int> names_;
+      // Current amount of names;
+      int names_size;
       // Dictionary of symbols
       dictionary<int> symbols_;
       // Dictionary of references
@@ -47,7 +49,7 @@ namespace octet
       // Just to check nesting
       int nesting;
       // This will be the openDDL file being (just a series of structures)
-      dynarray<ref<openDDL_structure>> openDDL_file;
+      dynarray<openDDL_structure *> openDDL_file;
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief  This function will add an identifiers to the dictionary
@@ -686,11 +688,23 @@ namespace octet
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief  This functions process the name, and add it to the application
-      /// @return   True if everything went right, and false if something went wrong
+      /// @return   The ID of the name
       ////////////////////////////////////////////////////////////////////////////////
-      void process_name(){
-        string name = read_word();
-        if (debugging) printf("It's the name %s<!!\n", name);
+      int process_name(){
+        char *name;
+        int size_name = read_word_size();
+        name = new char[size_name];
+        for (int i = 0; i < size_name; ++i){
+          name[i] = tempChar[i];
+        }
+
+        int nameID = names_.get_index(name);
+        if (nameID < 0){
+          names_[name] = names_size;
+          ++names_size;
+        }
+        //if (debugging) printf("It's the name %s<!!\n", name);
+        return size_name;
       }
 
       ////////////////////////////////////////////////////////////////////////////////
@@ -1139,10 +1153,15 @@ namespace octet
         remove_comments_whitespaces();
 
         //Then it will read the first character, to see if its a (, or name, or {
-
+        int nameID = -1;
         //If its a name call to something to process name
-        if (is_name()) process_name();
+        if (is_name()){
+          nameID = process_name();
+        }
         //Later, check if it's ( and call something to check properties - telling the function which structure is this one
+
+        //Get ready the new structure
+        openDDL_identifier_structure * identifier_structure = new openDDL_identifier_structure(type, nameID);
 
         remove_comments_whitespaces();
         if (*currentChar == 0x28){ // 28 = (
@@ -1182,7 +1201,6 @@ namespace octet
         if (debugging) printf("\n-----------%x\t%c\n", *currentChar, *currentChar);
 
         // It's a real structure! But it can be IDENTIFIER or DATATYPE
-
         //remove_comments_whitespaces();
         word = read_word();
         if (debugging) printf("Finding => %s\n", word);
@@ -1222,6 +1240,7 @@ namespace octet
         for (int i = first_symbol(); i <= last_symbol(); ++i)
           add_symbol(token_name(i).c_str(), i);
         nesting = 0;
+        names_size = 0;
       }
     public:
       ////////////////////////////////////////////////////////////////////////////////

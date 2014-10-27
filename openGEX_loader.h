@@ -34,14 +34,16 @@ namespace octet { namespace loaders {
       bool loadFile(const char * name){
         app_utils::get_url(buffer, name);
         //Process the file (lexer) (return false if there was any problem)
-        printf("About to start the lexer process\n");
+        printf("Starting the lexer process\n");
         if (!lexer.lexer_file(buffer)){
           printf("Error loading the openGEX file!\n");
           return false;
         }
+        else
+          printf("\n\nThe lexer process has finished successfully!\n");
+
         //Import the file into octet (return false if there was any problem)
 
-        printf("\n\nThe lexer process has finished!\n");
         //If it has arrived there, it was ok! so return true
         return true;
       }
