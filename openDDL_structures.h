@@ -19,7 +19,8 @@ namespace octet{
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief This struct is represent a data_literal
 ////////////////////////////////////////////////////////////////////////////////
-    struct openDDL_data_literal{
+    class openDDL_data_literal : public resource{
+    public:
       enum { INT, BOOL, FLOAT, STRING, REF, TYPE };
       union {
         int integer_literal;
@@ -27,29 +28,40 @@ namespace octet{
         float float_literal;
         int reference_literal;
         int data_type_literal;
+        char * string_literal;
       };
-      ref<string> string_literal;
+      int size_string_literal;
+
+      openDDL_data_literal(){ 
+        size_string_literal = 0; 
+      }
     };
 
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief This struct is represent some properties in openDDL
 ////////////////////////////////////////////////////////////////////////////////
-    struct openDDL_properties{
+    struct openDDL_properties : public resource {
       int identifierID;
-      openDDL_data_literal data_literal;
+      union {
+        int integer_literal;
+        bool bool_literal;
+        float float_literal;
+        int reference_literal;
+        int data_type_literal;
+      };
     };
 
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief This struct is represent some data_list in openDDL
 ////////////////////////////////////////////////////////////////////////////////
-    struct openDDL_data_list{
+    struct openDDL_data_list : public resource{
       dynarray<ref<openDDL_data_literal>> data_list;
     };
 
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief This class represents structures in openDDL, it will be a parent class for the different types of structures
 ////////////////////////////////////////////////////////////////////////////////
-    class openDDL_structure{
+    class openDDL_structure : public resource{
     protected:
       structureType type;
       int nameID; 
