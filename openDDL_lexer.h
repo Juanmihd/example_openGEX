@@ -697,27 +697,29 @@ namespace octet
         for (int i = 0; i < size_name; ++i){
           name[i] = tempChar[i];
         }
+        if (debugging) printf("It's the name %s<!!\n", name);
 
         int nameID = names_.get_index(name);
         if (nameID < 0){
           names_[name] = names_size;
           ++names_size;
         }
-        //if (debugging) printf("It's the name %s<!!\n", name);
-        return size_name;
+
+        if (debugging) printf( (nameID < 0) ? "And it does not exist!\n" : "And it exists!\n" );
+        return nameID;
       }
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief  This functions process one single property
       /// @return   True if everything went right, and false if something went wrong
       ////////////////////////////////////////////////////////////////////////////////
-      bool process_single_property(){
+      bool process_single_property(openDDL_properties * new_property){
         string word;
 
         //Now it has to find a identifier
         word = read_word();
         int type = is_identifier(word);
-
+        new_property->identifierID = type;
         //Now check if it's a correct property
         if (type < 0){
           printf("\n\nERROR: It's not a proper property!!!\n");
@@ -746,13 +748,16 @@ namespace octet
       /// @brief  This functions process the properties, and add it to the application
       /// @return   True if everything went right, and false if something went wrong
       ////////////////////////////////////////////////////////////////////////////////
-      bool process_properties(){
+      bool process_properties(openDDL_identifier_structure * structure){
         bool no_error;
         if(debugging) printf("Reading properties!\n");
         get_next_char();
         remove_comments_whitespaces();
+
         //process the first element
-        no_error = process_single_property();
+        openDDL_properties * new_property = new openDDL_properties();
+        no_error = process_single_property(new_property);
+        //structure->add_property(new_property);
 
         //it will have to expect more properties as long as it's not a )
         while (*currentChar != 0x29){ // 0x29 = )
@@ -767,10 +772,11 @@ namespace octet
             remove_comments_whitespaces();
           }
           //now, keep on processing properties
-          no_error = process_single_property();
+          //openDDL_properties * new_property = new openDDL_properties();
+          no_error = process_single_property(new_property);
+          //structure->add_property(new_property);
         }
         get_next_char();
-
         return true;
       }
 
@@ -1061,7 +1067,7 @@ namespace octet
           sizeWord = 1;
         else{
           while (!is_symbol() && !is_whiteSpace() && !is_comment()){
-            
+            get_next_char();
             ++sizeWord;
           }
           //if (is_symbol()) get_previous_char();
@@ -1166,7 +1172,7 @@ namespace octet
         remove_comments_whitespaces();
         if (*currentChar == 0x28){ // 28 = (
           //call something to check properties          //expect a ) (if not, error)
-          no_error = process_properties();
+          no_error = process_properties(identifier_structure);
         }
 
         remove_comments_whitespaces();

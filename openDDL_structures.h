@@ -17,15 +17,15 @@ namespace octet{
 ////////////////////////////////////////////////////////////////////////////////
     struct openDDL_data_literal : public resource{
     public:
-      enum { INT, BOOL, FLOAT, STRING, REF, TYPE };
-      union {
+      enum { INT, BOOL, FLOAT, STRING, REF, TYPE } value_type;
+      union my_literal {
         int integer_literal;
         bool bool_literal;
         float float_literal;
         int reference_literal;
         int data_type_literal;
         char * string_literal;
-      };
+      } value_literal;
       int size_string_literal;
     };
 
@@ -34,13 +34,7 @@ namespace octet{
 ////////////////////////////////////////////////////////////////////////////////
     struct openDDL_properties : public resource {
       int identifierID;
-      union {
-        int integer_literal;
-        bool bool_literal;
-        float float_literal;
-        int reference_literal;
-        int data_type_literal;
-      };
+      openDDL_data_literal value;
     };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -123,7 +117,6 @@ namespace octet{
         type = identifier_structure;
       }
     public:
-
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief Default constructor, with no identificator, no name, but calling init () (type identifier)
       ////////////////////////////////////////////////////////////////////////////////
@@ -158,6 +151,10 @@ namespace octet{
       ////////////////////////////////////////////////////////////////////////////////
       void set_identifierID(int n_identifierID){
         identifierID = n_identifierID;
+      }
+
+      void add_property(openDDL_properties * new_property){
+        propertiesList.push_back(new_property);
       }
     };
 
