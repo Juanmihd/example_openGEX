@@ -17,17 +17,33 @@ namespace octet{
     enum structureType { not_yet_type = -1, identifier_structure = 0, data_type_structure = 1};
 
 ////////////////////////////////////////////////////////////////////////////////
-/// @brief This class is represent some properties in openDDL
+/// @brief This struct is represent a data_literal
 ////////////////////////////////////////////////////////////////////////////////
-    class openDDL_properties{
-
+    struct openDDL_data_literal{
+      enum { INT, BOOL, FLOAT, STRING, REF, TYPE };
+      union {
+        int integer_literal;
+        bool bool_literal;
+        float float_literal;
+        int reference_literal;
+        int data_type_literal;
+      };
+      ref<string> string_literal;
     };
 
 ////////////////////////////////////////////////////////////////////////////////
-/// @brief This class is represent some data_list in openDDL
+/// @brief This struct is represent some properties in openDDL
 ////////////////////////////////////////////////////////////////////////////////
-    class openDDL_data_list{
+    struct openDDL_properties{
+      int identifierID;
+      openDDL_data_literal data_literal;
+    };
 
+////////////////////////////////////////////////////////////////////////////////
+/// @brief This struct is represent some data_list in openDDL
+////////////////////////////////////////////////////////////////////////////////
+    struct openDDL_data_list{
+      dynarray<ref<openDDL_data_literal>> data_list;
     };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -148,7 +164,7 @@ namespace octet{
     protected:
       int typeID;
       int integer_literal;
-      dynarray<openDDL_data_list> data_list_array;
+      dynarray<ref<openDDL_data_list>> data_list_array;
       
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief This will initialize the structure with type "data_ñtype"
