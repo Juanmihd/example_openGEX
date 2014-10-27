@@ -46,6 +46,8 @@ namespace octet
       int sizeRead;
       // Just to check nesting
       int nesting;
+      // This will be the openDDL file being (just a series of structures)
+      dynarray<ref<openDDL_structure>> openDDL_file;
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief  This function will add an identifiers to the dictionary

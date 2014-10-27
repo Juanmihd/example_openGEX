@@ -8,10 +8,6 @@
 #ifndef OPENDDL_STRUCTURES_INCLUDED
 #define OPENDDL_STRUCTURES_INCLUDED
 
-////////////////////////////////////////////////////////////////////////////////
-/// @brief This class is the openDDLstructure, it contains the classes and sublcasses to store all the info of the openDDL file
-////////////////////////////////////////////////////////////////////////////////
-
 namespace octet{
   namespace loaders{
     enum structureType { not_yet_type = -1, identifier_structure = 0, data_type_structure = 1};
@@ -19,7 +15,7 @@ namespace octet{
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief This struct is represent a data_literal
 ////////////////////////////////////////////////////////////////////////////////
-    class openDDL_data_literal : public resource{
+    struct openDDL_data_literal : public resource{
     public:
       enum { INT, BOOL, FLOAT, STRING, REF, TYPE };
       union {
@@ -31,10 +27,6 @@ namespace octet{
         char * string_literal;
       };
       int size_string_literal;
-
-      openDDL_data_literal(){ 
-        size_string_literal = 0; 
-      }
     };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -55,7 +47,7 @@ namespace octet{
 /// @brief This struct is represent some data_list in openDDL
 ////////////////////////////////////////////////////////////////////////////////
     struct openDDL_data_list : public resource{
-      dynarray<ref<openDDL_data_literal>> data_list;
+      dynarray<openDDL_data_literal> data_list;
     };
 
 ////////////////////////////////////////////////////////////////////////////////
