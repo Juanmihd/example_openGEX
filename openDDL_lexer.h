@@ -13,6 +13,7 @@
 #ifndef OPENDDL_LEXER_INCLUDED
 #define OPENDDL_LEXER_INCLUDED
 #include "openDDL_tokens.h"
+#include "openDDL_structures.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief This class is the openGEX lexer, it will read the array of characters and get tokes
