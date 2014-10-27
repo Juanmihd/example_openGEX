@@ -16,17 +16,24 @@ namespace octet{
   namespace loaders{
     enum structureType { not_yet_type = -1, identifier_structure = 0, data_type_structure = 1};
 
-    ////////////////////////////////////////////////////////////////////////////////
-    /// @brief This class is represent some properties in openDDL
-    ////////////////////////////////////////////////////////////////////////////////
-    class openDDLproperties{
+////////////////////////////////////////////////////////////////////////////////
+/// @brief This class is represent some properties in openDDL
+////////////////////////////////////////////////////////////////////////////////
+    class openDDL_properties{
 
     };
 
-    ////////////////////////////////////////////////////////////////////////////////
-    /// @brief This class represents structures in openDDL, it will be a parent class for the different types of structures
-    ////////////////////////////////////////////////////////////////////////////////
-    class openDDLstructure{
+////////////////////////////////////////////////////////////////////////////////
+/// @brief This class is represent some data_list in openDDL
+////////////////////////////////////////////////////////////////////////////////
+    class openDDL_data_list{
+
+    };
+
+////////////////////////////////////////////////////////////////////////////////
+/// @brief This class represents structures in openDDL, it will be a parent class for the different types of structures
+////////////////////////////////////////////////////////////////////////////////
+    class openDDL_structure{
     protected:
       structureType type;
       int nameID; 
@@ -43,7 +50,7 @@ namespace octet{
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief This is the default constructor, will call init() (no type and no name)
       ////////////////////////////////////////////////////////////////////////////////
-      openDDLstructure(){
+      openDDL_structure(){
         init();
       }
 
@@ -83,11 +90,11 @@ namespace octet{
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief This class represents structures with identifier, it may have properties and it will have substructures
 ////////////////////////////////////////////////////////////////////////////////
-    class openDDL_identifier_structure : public openDDLstructure{
+    class openDDL_identifier_structure : public openDDL_structure{
     protected:
       int identifierID;
-      dynarray<ref<openDDLproperties>> propertiesList;
-      dynarray<ref<openDDLstructure>> substructureList;
+      dynarray<ref<openDDL_properties>> propertiesList;
+      dynarray<ref<openDDL_structure>> substructureList;
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief This will initialize the structure with type "identifier"
@@ -137,10 +144,11 @@ namespace octet{
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief This class represents structures of data type, it may be data_list or data_list_array
 ////////////////////////////////////////////////////////////////////////////////
-    class openDDL_data_type_structure : public openDDLstructure{
+    class openDDL_data_type_structure : public openDDL_structure{
     protected:
       int typeID;
       int integer_literal;
+      dynarray<openDDL_data_list> data_list_array;
       
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief This will initialize the structure with type "data_ñtype"
