@@ -80,14 +80,14 @@ namespace octet{
       }
     };
 
-    ////////////////////////////////////////////////////////////////////////////////
-    /// @brief This class represents structures with identifier, it may have properties and it will have substructures
-    ////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+/// @brief This class represents structures with identifier, it may have properties and it will have substructures
+////////////////////////////////////////////////////////////////////////////////
     class openDDL_identifier_structure : public openDDLstructure{
     protected:
       int identifierID;
-      dynarray<openDDLproperties> propertiesList;
-      dynarray<openDDLstructure> substructureList;
+      dynarray<ref<openDDLproperties>> propertiesList;
+      dynarray<ref<openDDLstructure>> substructureList;
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief This will initialize the structure with type "identifier"
@@ -116,11 +116,27 @@ namespace octet{
         identifierID = n_identifierID;
         nameID = n_nameID;
       }
+
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief This will get the identifier of the structure
+      /// @return The identificator of the identifier. If it has no identifier it will return -1
+      ////////////////////////////////////////////////////////////////////////////////
+      int get_identifierID(){
+        return identifierID;
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief This will set the identifier of the structure
+      /// @param  n_nameID  The new identificator of the identifier
+      ////////////////////////////////////////////////////////////////////////////////
+      void set_identifierID(int n_identifierID){
+        identifierID = n_identifierID;
+      }
     };
 
-    ////////////////////////////////////////////////////////////////////////////////
-    /// @brief This class represents structures of data type, it may be data_list or data_list_array
-    ////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+/// @brief This class represents structures of data type, it may be data_list or data_list_array
+////////////////////////////////////////////////////////////////////////////////
     class openDDL_data_type_structure : public openDDLstructure{
     protected:
       int typeID;
@@ -155,6 +171,38 @@ namespace octet{
         typeID = n_typeID;
         integer_literal = n_integer_literal;
         nameID = n_nameID;
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief This will get the data type of the structure
+      /// @return The identificator of the data type. If it has no data type it will return -1
+      ////////////////////////////////////////////////////////////////////////////////
+      int get_typeID(){
+        return typeID;
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief This will set the data type of the structure
+      /// @param  n_nameID  The new identificator of the data type
+      ////////////////////////////////////////////////////////////////////////////////
+      void set_typeID(int n_typeID){
+        typeID = n_typeID;
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief This will get the integer_literal of the structure
+      /// @return The identificator of the integer_literal. If it has no integer_literal it will return -1
+      ////////////////////////////////////////////////////////////////////////////////
+      int get_integer_literal(){
+        return integer_literal;
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief This will set the integer_literal of the structure
+      /// @param  n_nameID  The new identificator of the integer_literal
+      ////////////////////////////////////////////////////////////////////////////////
+      void set_integer_literal(int n_integer_literal){
+        integer_literal = n_integer_literal;
       }
     };
   }
