@@ -45,8 +45,15 @@ namespace octet
       // Just to check nesting
       int nesting;
       // This will be the openDDL file being (just a series of structures)
-      dynarray<openDDL_structure *> openDDL_file;
+      dynarray<openDDL_structure *> openDDL_file; 
+      openDDL_data_list * current_data_list;
       openDDL_structure * currentStructure;
+      bool valueBool;
+      int valueInt;
+      float valueFloat;
+      string valueString;
+      int valueRef;
+      int valueType;
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief  This function will add an identifiers to the dictionary
@@ -986,7 +993,6 @@ namespace octet
         switch (type){
         case token_type::tok_bool:
         {
-          bool valueBool;
           no_error = get_bool_literal(valueBool, (char*)tempChar, size);
           break;
         }
@@ -999,32 +1005,27 @@ namespace octet
         case token_type::tok_uint32:
         case token_type::tok_uint64:
         {
-          int valueInt;
           no_error = get_integer_literal(valueInt, (char*)tempChar, size);
           break;
         }
         case token_type::tok_float:
         case token_type::tok_double:
         {
-          float valueFloat;
           no_error = get_float_literal(valueFloat, (char*)tempChar, size);
           break;
         }
         case token_type::tok_string:
         {
-          string valueString;
           no_error = get_string_literal(valueString, (char*)tempChar, size);
           break;
         }
         case token_type::tok_ref:
         {
-          int valueRef;
           no_error = get_value_reference(valueRef, (char*)tempChar, size);
           break;
         }
         case token_type::tok_type:
         {
-          int valueType;
           no_error = get_value_data_type(valueType, (char*)tempChar, size);
           break;
         }
@@ -1042,6 +1043,15 @@ namespace octet
       bool process_data_list(int type){
         int ending, size;
 
+        remove_comments_whitespaces();
+        if (*currentChar == 0x7d){ //7d = },  if the next character is }, that means that it's empty!!!
+          return true;
+        }
+
+        current_data_list = new openDDL_data_list;
+        //This powerfull line  converts from the numeration given in openDDL_tokes for types to the one given in value_type_DDL
+        current_data_list->value_type = (value_type_DDL) ((type>8)? (type-6): ((type>4)? 0: (type == 0)?2:1));
+
         //Read the first element and process it
         ending = read_data_list_element(size);
         process_data_list_element(type, size);
@@ -1049,10 +1059,13 @@ namespace octet
         //If there are more elements...
         while (ending == 1){ //keep on reading while there are more elements
           get_next_char();
+          remove_comments_whitespaces();
           ending = read_data_list_element(size);
           process_data_list_element(type, size);
         }
         if (debuggingDDL) printf("\n");
+
+        ((openDDL_data_type_structure *)currentStructure)->add_data_list(current_data_list);
 
         return true;
       }
@@ -1138,7 +1151,6 @@ namespace octet
       int read_data_list_element(int &sizeWord, bool charString = false){
         int to_return;
         sizeWord = 0;
-        remove_comments_whitespaces();
         tempChar = currentChar;
         //If the element to read is a char literal or a string literal, we cannot ignore all whitespaces, so we will
         // have to use a different way to stop it with whitespaces
@@ -1338,6 +1350,7 @@ namespace octet
             if (debugging) printf("It's a data list!\n");
             get_next_char();
             remove_comments_whitespaces();
+            currentStructure = data_type_structure;
             no_error = process_data_list(type);  //expect a } (if not, error)
             if (!no_error) printf("---SOMETHING WENT WRONG WITH DATA LIST\n");
           }

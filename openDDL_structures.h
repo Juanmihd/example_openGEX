@@ -59,6 +59,7 @@ namespace octet{
 /// @brief This struct is represent some data_list in openDDL
 ////////////////////////////////////////////////////////////////////////////////
     struct openDDL_data_list : public resource{
+      value_type_DDL value_type;
       dynarray<openDDL_data_literal> data_list;
     };
 
@@ -245,7 +246,6 @@ namespace octet{
         type = dataTypeStructureType;
       }
     public:
-
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief Default constructor, with no data_type, no name, but calling init () (type identifier)
       ////////////////////////////////////////////////////////////////////////////////
@@ -301,6 +301,14 @@ namespace octet{
       ////////////////////////////////////////////////////////////////////////////////
       void set_integer_literal(int n_integer_literal){
         integer_literal = n_integer_literal;
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief This will add a new data_list to the structure
+      /// @param  new_data_list  The new data_list to add
+      ////////////////////////////////////////////////////////////////////////////////
+      void add_data_list(openDDL_data_list * new_data_list){
+        data_list_array.push_back(new_data_list);
       }
     };
   }
