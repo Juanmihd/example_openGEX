@@ -23,7 +23,7 @@ namespace octet
 /// @brief This class is the openGEX lexer, it will read the array of characters and get tokes
 ////////////////////////////////////////////////////////////////////////////////
     class openDDL_lexer : ddl_token{
-      enum { debuggingDDL = 0, debuggingDDLMore = 0, debugging = 0, debuggingMore = 0 };
+      enum { MIN_RESERVING_DATA_LIST = 10, debuggingDDL = 0, debuggingDDLMore = 0, debugging = 0, debuggingMore = 0 };
     protected:
       // Dictionary of identifiers of the openDDL language we are using
       dictionary<int> identifiers_;
@@ -1044,21 +1044,29 @@ namespace octet
         if (*currentChar == 0x7d){ //7d = },  if the next character is }, that means that it's empty!!!
           return true;
         }
-
+        
+        // Initializing the new data_list
         current_data_list = new openDDL_data_list;
         //This powerfull line  converts from the numeration given in openDDL_tokes for types to the one given in value_type_DDL
-        current_data_list->value_type = (value_type_DDL) ((type>8)? (type-6): ((type>4)? 0: (type == 0)?2:1));
+        current_data_list->value_type = (value_type_DDL)((type>8) ? (type - 6) : ((type>4) ? 0 : (type == 0) ? 2 : 1));
+        // Reserve some space prior to start
+        //current_data_list->data_list.reserve(MIN_RESERVING_DATA_LIST);
 
-        //Read the first element and process it
+        //Read the first element, process it and add it to data_list
         ending = read_data_list_element(size);
         process_data_list_element(type, size);
+        current_literal.value_type = current_data_list->value_type;
+        //current_data_list->data_list.push_back(current_literal);
 
         //If there are more elements...
         while (ending == 1){ //keep on reading while there are more elements
           get_next_char();
           remove_comments_whitespaces();
+          //Read next element, process it, and add it to data_list
           ending = read_data_list_element(size);
           process_data_list_element(type, size);
+          current_literal.value_type = current_data_list->value_type;
+          //current_data_list->data_list.push_back(current_literal);
         }
         if (debuggingDDL) printf("\n");
 
@@ -1090,6 +1098,7 @@ namespace octet
         int itemsLeft = arraySize;
         while (itemsLeft > 0){
           get_next_char();
+          remove_comments_whitespaces();
           ending = read_data_list_element(wordSize);
           process_data_list_element(type, wordSize);
           --itemsLeft;
@@ -1146,7 +1155,7 @@ namespace octet
       ///     The starting position of the word is tempChar!
       ////////////////////////////////////////////////////////////////////////////////
       int read_data_list_element(int &sizeWord, bool charString = false){
-        int to_return;
+        int to_return = -2;
         sizeWord = 0;
         tempChar = currentChar;
         //If the element to read is a char literal or a string literal, we cannot ignore all whitespaces, so we will
