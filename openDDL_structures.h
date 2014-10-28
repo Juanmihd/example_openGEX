@@ -11,8 +11,8 @@
 namespace octet{
   namespace loaders{
     enum structureType { not_yet_type = -1, identifier_structure = 0, data_type_structure = 1 };
-    enum value_type_DDL   { INT, BOOL, FLOAT, STRING, REF, TYPE };
-
+    enum value_type_DDL   { UINT = 0, INT = 1, BOOL = 2, FLOAT = 3, STRING = 4, REF = 5, TYPE = 6};
+    
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief This struct is represent a data_literal
 ////////////////////////////////////////////////////////////////////////////////
@@ -20,6 +20,7 @@ namespace octet{
     public:
       value_type_DDL value_type;
       union my_literal {
+        unsigned int uns_integer_literal;
         int integer_literal;
         bool bool_literal;
         float float_literal;
@@ -51,16 +52,21 @@ namespace octet{
     class openDDL_structure : public resource{
     protected:
       structureType type;
-      int nameID; 
+      int nameID;
+      openDDL_identifier_structure * father_structure;
       
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief This will initialize the structure with no name and no type
       ////////////////////////////////////////////////////////////////////////////////
       void init(){
+        father_structure = NULL;
         nameID = -1;
         type = not_yet_type;
       }
     public:
+      //Local names and references
+      dictionary<openDDL_structure *> names_;
+      dictionary<openDDL_structure *> references_;
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief This is the default constructor, will call init() (no type and no name)
@@ -87,7 +93,7 @@ namespace octet{
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief This will get the type of the structure
-      /// @return The type of the structure. Being 
+      /// @return The type of the structure.  
       ////////////////////////////////////////////////////////////////////////////////
       structureType get_type_structure(){
         return type;
@@ -99,6 +105,22 @@ namespace octet{
       ////////////////////////////////////////////////////////////////////////////////
       void set_type_structure(structureType n_type){
         type = n_type;
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief This will get the father_structure of the structure
+      /// @return The father_structure of the structure.  
+      ////////////////////////////////////////////////////////////////////////////////
+      openDDL_identifier_structure * get_father_structure(){
+        return father_structure;
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief This will set the name father_structure of the class
+      /// @param  n_father_structure  The new father_structure of the name
+      ////////////////////////////////////////////////////////////////////////////////
+      void set_father_structure(openDDL_identifier_structure * n_father_structure){
+        father_structure = n_father_structure;
       }
     };
 
@@ -125,6 +147,7 @@ namespace octet{
         init();
         identifierID = -1;
         nameID = -1;
+        father_structure = NULL;
       }
 
       ////////////////////////////////////////////////////////////////////////////////
@@ -132,10 +155,11 @@ namespace octet{
       /// @param  n_identifierID  This will represent the type of the identifier
       /// @param  n_nameID  This is an optional parameter (by default -1) that represent the name of the structure
       ////////////////////////////////////////////////////////////////////////////////
-      openDDL_identifier_structure(int n_identifierID, int n_nameID = -1){
+      openDDL_identifier_structure(int n_identifierID, openDDL_identifier_structure * father, int n_nameID = -1){
         init();
         identifierID = n_identifierID;
         nameID = n_nameID;
+        father_structure = father;
       }
 
       ////////////////////////////////////////////////////////////////////////////////
@@ -184,6 +208,7 @@ namespace octet{
         typeID = -1;
         nameID = -1;
         integer_literal = -1;
+        father_structure = NULL;
       }
 
       ////////////////////////////////////////////////////////////////////////////////
@@ -192,11 +217,12 @@ namespace octet{
       /// @param  n_integer_literal It will receive also a integer that represent the number of elements (if data_list_array) or -1 if it's only a data_list
       /// @param  n_nameID  This is an optional parameter (by default -1) that represent the name of the structure
       ////////////////////////////////////////////////////////////////////////////////
-      openDDL_data_type_structure(int n_typeID, int n_integer_literal, int n_nameID = -1){
+      openDDL_data_type_structure(int n_typeID, int n_integer_literal, openDDL_identifier_structure * father, int n_nameID = -1){
         init();
         typeID = n_typeID;
         integer_literal = n_integer_literal;
         nameID = n_nameID;
+        father_structure = father;
       }
 
       ////////////////////////////////////////////////////////////////////////////////
@@ -230,6 +256,15 @@ namespace octet{
       void set_integer_literal(int n_integer_literal){
         integer_literal = n_integer_literal;
       }
+    };
+
+
+////////////////////////////////////////////////////////////////////////////////
+/// @brief This struct represents names. It has an id, and a pointer to the structure it represent
+////////////////////////////////////////////////////////////////////////////////
+    struct openDDL_name : public resource{
+      int id;
+      openDDL_structure * structure;
     };
   }
 }

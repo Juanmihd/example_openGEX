@@ -30,13 +30,11 @@ namespace octet
       // Dictionary of types of openDDL
       dictionary<int> types_;
       // Dictionary of names
-      dictionary<int> names_;
-      // Current amount of names;
-      int names_size;
+      dictionary<openDDL_structure *> names_;
       // Dictionary of symbols
       dictionary<int> symbols_;
       // Dictionary of references
-      dictionary<int> references_;
+      dictionary<openDDL_structure *> references_;
       // This are the current character and the next character after the token
       uint8_t * currentChar;
       uint8_t * tempChar;
@@ -50,6 +48,7 @@ namespace octet
       int nesting;
       // This will be the openDDL file being (just a series of structures)
       dynarray<openDDL_structure *> openDDL_file;
+      openDDL_structure * currentStructure;
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief  This function will add an identifiers to the dictionary
@@ -772,9 +771,10 @@ namespace octet
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief  This functions process the name, and add it to the application
+      /// @param  structure   This is a pointer to the structure that will have this name
       /// @return   The ID of the name
       ////////////////////////////////////////////////////////////////////////////////
-      int process_name(){
+      int process_name(openDDL_structure * structure){
         char *name;
         int size_name = read_word_size();
         name = new char[size_name];
@@ -782,11 +782,27 @@ namespace octet
           name[i] = tempChar[i];
         }
         if (debugging) printf("It's the name %s<!!\n", name);
-
-        int nameID = names_.get_index(name);
-        if (nameID < 0){
-          names_[name] = names_size;
-          ++names_size;
+        
+        int nameID;
+        if (*name == 0x24){ //It's a global name
+          nameID = names_.get_index(name);
+          if (nameID < 0){
+            names_[name] = structure;
+          }
+          else{
+            printf("This global name already exists!\n");
+            return -1;
+          }
+        }
+        else if (*name == 0x25){ //It's a local name
+          nameID = currentStructure->names_.get_index(name);
+          if (nameID < 0){
+            currentStructure->names_[name] = structure;
+          }
+          else{
+            printf("This global name already exists!\n");
+            return -1;
+          }
         }
 
         if (debugging) printf( (nameID < 0) ? "And it does not exist!\n" : "And it exists!\n" );
@@ -874,6 +890,34 @@ namespace octet
         // This means that the type is known!!
         else{
           //process accordinglt to the type
+          new_property->value.value_type = (value_type_DDL) type_known;
+          switch (type_known){
+          case value_type_DDL::UINT:
+            break;
+          case value_type_DDL::INT:
+            break;
+          case value_type_DDL::BOOL:
+            bool bool_value;
+            get_bool_literal(bool_value, (char*)tempChar, size);
+            new_property->value.value_literal.bool_literal = bool_value;
+            break;
+          case value_type_DDL::FLOAT:
+            break;
+          case value_type_DDL::STRING:
+            //Get ready the data to store the size
+            char * new_string = new char[size];
+            int new_size;
+            // Obtain the string from the property
+            get_string_literal(new_string, new_size, (char*)tempChar, size);
+            // Set new property with the new value as string!
+            new_property->value.value_literal.string_literal = new_string;
+            new_property->value.size_string_literal = new_size;
+            break;
+          case value_type_DDL::REF:
+            break;
+          case value_type_DDL::TYPE:
+            break;
+          }
         }
 
 
@@ -1225,7 +1269,7 @@ namespace octet
       /// @return True if everthing went well, false if there was some error
       ///     This function will create the structure to be stored in the file!
       ////////////////////////////////////////////////////////////////////////////////
-      bool process_structureData(int type){
+      bool process_structureData(int type, openDDL_identifier_structure * father){
         bool no_error = true;
         int arraySize;
         if (debugging) printf("\t----TYPE n: %i!!----\n", type);
@@ -1246,7 +1290,7 @@ namespace octet
 
           //it may receive a name (optional)
           if (is_name()){
-            process_name();
+            process_name(father);
             get_next_char();
           }
 
@@ -1265,7 +1309,7 @@ namespace octet
         else{
           if (is_name()){ // check if there is a name, and process it
             if (debugging) printf("It's a name + data list!\n");
-            process_name();
+            process_name(father);
             get_next_char();
           }
 
@@ -1289,11 +1333,12 @@ namespace octet
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief  This function will lexer the next words, considering to be a "structureIdentifier"
-      /// @param  It will receive the type of identifier that has been read
+      /// @param  type  It will receive the type of identifier that has been read
+      /// @param  father  This is a pointer to the father structure
       /// @return True if everything went well, false if there was some error
       ///     This function will create the structure to be stored in the file!
       ////////////////////////////////////////////////////////////////////////////////
-      bool process_structureIdentifier(int type){
+      bool process_structureIdentifier(int type, openDDL_identifier_structure * father){
         bool no_error = true;
         if (debugging) printf("\t----IDENTIFIER n. %i!!----\n", type);
 
@@ -1304,12 +1349,12 @@ namespace octet
         int nameID = -1;
         //If its a name call to something to process name
         if (is_name()){
-          nameID = process_name();
+          nameID = process_name(father);
         }
         //Later, check if it's ( and call something to check properties - telling the function which structure is this one
 
         //Get ready the new structure
-        openDDL_identifier_structure * identifier_structure = new openDDL_identifier_structure(type, nameID);
+        openDDL_identifier_structure * identifier_structure = new openDDL_identifier_structure(type, father, nameID);
 
         remove_comments_whitespaces();
         if (*currentChar == 0x28){ // 28 = (
@@ -1339,9 +1384,10 @@ namespace octet
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief  This function will process the currentChar to look for the next token and study it
+      /// @param  father  Is a pointer to the father structure. If there is no father, it's set to NULL
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool process_structure(){
+      bool process_structure(openDDL_identifier_structure * father = NULL){
         bool no_error = true;
         if (is_end_file()) return true; //If we arrived to the end of the file, let's finish this!
         string word;
@@ -1358,14 +1404,14 @@ namespace octet
         //check if it's a type and return it's index (if its negative it's not a type)
         int type = is_dataType(word);
         if (type >= 0){ //As it's a Data type, now it can be single data list or data array list!
-          process_structureData(types_.get_value(type));
+          process_structureData(types_.get_value(type),father);
         }
 
         else{
           //check if it's a identifier and return it's index (if its negative it's not a identifier)
           type = is_identifier(word);
           if (type >= 0){ //As it's a Identifier type, now check name? properties? and then { structure(s)? }
-            process_structureIdentifier(identifiers_.get_value(type));
+            process_structureIdentifier(identifiers_.get_value(type),father);
           }
 
           else{ //if it's nothing of the above is an error
@@ -1388,7 +1434,6 @@ namespace octet
         for (int i = first_symbol(); i <= last_symbol(); ++i)
           add_symbol(token_name(i).c_str(), i);
         nesting = 0;
-        names_size = 0;
       }
     public:
       ////////////////////////////////////////////////////////////////////////////////
