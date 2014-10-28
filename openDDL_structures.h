@@ -2,7 +2,15 @@
 /// @file openDDL_structures.h
 /// @author Juanmi Huertas Delgado
 /// @brief This file containts the data object for structures
-///
+///     A list of the classes that this file containts is:
+///   class openDDL_structure;
+///   class openDDL_identifier_structure;
+///   class openDDL_data_type_structure;
+///   class openDDL_structure;
+///   struct openDDL_data_list;
+///   struct openDDL_properties;
+///   struct openDDL_data_literal;
+///     It contains also some enums (for structureType, and value_type_DDL)
 ////////////////////////////////////////////////////////////////////////////////
 
 #ifndef OPENDDL_STRUCTURES_INCLUDED
@@ -18,7 +26,7 @@ namespace octet{
     struct openDDL_properties;
     struct openDDL_data_literal;
     
-    enum structureType { not_yet_type = -1, identifier_structure = 0, data_type_structure = 1 };
+    enum structureType { notYetType = -1, identifierStructureType = 0, dataTypeStructureType = 1 };
     enum value_type_DDL   { UINT = 0, INT = 1, BOOL = 2, FLOAT = 3, STRING = 4, REF = 5, TYPE = 6};
     
 ////////////////////////////////////////////////////////////////////////////////
@@ -71,7 +79,7 @@ namespace octet{
       void init(){
         father_structure = NULL;
         nameID = -1;
-        type = not_yet_type;
+        type = notYetType;
       }
     public:
       ////////////////////////////////////////////////////////////////////////////////
@@ -163,7 +171,7 @@ namespace octet{
       /// @brief This will initialize the structure with type "identifier"
       ////////////////////////////////////////////////////////////////////////////////
       void init(){
-        type = identifier_structure;
+        type = identifierStructureType;
       }
     public:
       ////////////////////////////////////////////////////////////////////////////////
@@ -204,8 +212,20 @@ namespace octet{
         identifierID = n_identifierID;
       }
 
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief This will add a new property to the structure
+      /// @param  new_property  The new property to add
+      ////////////////////////////////////////////////////////////////////////////////
       void add_property(openDDL_properties * new_property){
         propertiesList.push_back(new_property);
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief This will add a new structure to the structure
+      /// @param  new_structure  The new structure to add
+      ////////////////////////////////////////////////////////////////////////////////
+      void add_structure(openDDL_structure * new_structure){
+        substructureList.push_back(new_structure);
       }
     };
 
@@ -222,7 +242,7 @@ namespace octet{
       /// @brief This will initialize the structure with type "data_ñtype"
       ////////////////////////////////////////////////////////////////////////////////
       void init(){
-        type = data_type_structure;
+        type = dataTypeStructureType;
       }
     public:
 
@@ -283,7 +303,6 @@ namespace octet{
         integer_literal = n_integer_literal;
       }
     };
-
   }
 }
 

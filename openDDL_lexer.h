@@ -941,7 +941,7 @@ namespace octet
       /// @return   True if everything went right, and false if something went wrong
       ////////////////////////////////////////////////////////////////////////////////
       bool process_properties(openDDL_identifier_structure * structure){
-        bool no_error;
+        bool no_error = true;
         if(debugging) printf("Reading properties!\n");
         get_next_char();
         remove_comments_whitespaces();
@@ -953,7 +953,7 @@ namespace octet
         structure->add_property(new_property);
 
         //it will have to expect more properties as long as it's not a )
-        while (*currentChar != 0x29){ // 0x29 = )
+        while (*currentChar != 0x29 && no_error){ // 0x29 = )
           if (debuggingDDL) printf("More properties!\n");
           //before going on, check that it's a proper list of properties, that's so, it has to have a ,
           if (*currentChar != 0x2C){ // 0x2C = ,   
@@ -971,7 +971,7 @@ namespace octet
           structure->add_property(new_property);
         }
         get_next_char();
-        return true;
+        return no_error;
       }
 
       ////////////////////////////////////////////////////////////////////////////////
@@ -1279,7 +1279,7 @@ namespace octet
       /// @return True if everthing went well, false if there was some error
       ///     This function will create the structure to be stored in the file!
       ////////////////////////////////////////////////////////////////////////////////
-      bool process_structureData(int type, openDDL_identifier_structure * father){
+      openDDL_data_type_structure * process_structureData(int type, openDDL_identifier_structure * father){
         bool no_error = true;
         int arraySize;
         if (debugging) printf("\t----TYPE n: %i!!----\n", type);
@@ -1287,6 +1287,7 @@ namespace octet
         remove_comments_whitespaces();
         if (debuggingMore) printf("%x\n", currentChar[0]);
 
+        openDDL_data_type_structure * data_type_structure;
         //Then it will read the first character, to see if its a [, or {, or name
         //if name it is a only dataList, so call to process_dataList() and tell that function if has a name or not
         if (*currentChar == 0x5b){ // 5b = [
@@ -1299,14 +1300,19 @@ namespace octet
           remove_comments_whitespaces();
 
           //it may receive a name (optional)
+          int nameID = -1;
           if (is_name()){
-            process_name(father);
+            nameID = process_name(father);
             get_next_char();
           }
+
+          // Get ready to create a new structure of data_type
+          data_type_structure = new openDDL_data_type_structure(type, arraySize, father, nameID);
 
           remove_comments_whitespaces();
 
           //expect a { (if not, error)
+          currentStructure = data_type_structure;
           if (*currentChar == 0x7b) //7b = {
             no_error = process_data_array_list(type, arraySize);
           else{ //call to process data array list, it will check the }
@@ -1317,11 +1323,15 @@ namespace octet
 
         //now check the other option (name) { data-list* }
         else{
+          int nameID = -1;
           if (is_name()){ // check if there is a name, and process it
             if (debugging) printf("It's a name + data list!\n");
-            process_name(father);
+            nameID = process_name(father);
             get_next_char();
           }
+
+          // Get ready to create a new structure of data_type (it has an array size of -1, because it's not array_size
+          data_type_structure = new openDDL_data_type_structure(type, -1, father, nameID);
 
           //After the optional name, it expects a {, and analize the data_list
           if (*currentChar == 0x7b){ // 7b = {
@@ -1337,8 +1347,11 @@ namespace octet
           }
         }
         if (debugging) printf("Expect a } ... %c\n", *currentChar);
-
-        return no_error;
+        
+        if (no_error)
+          return data_type_structure;
+        else
+          return NULL;
       }
 
       ////////////////////////////////////////////////////////////////////////////////
@@ -1348,7 +1361,7 @@ namespace octet
       /// @return True if everything went well, false if there was some error
       ///     This function will create the structure to be stored in the file!
       ////////////////////////////////////////////////////////////////////////////////
-      bool process_structureIdentifier(int type, openDDL_identifier_structure * father){
+      openDDL_identifier_structure * process_structureIdentifier(int type, openDDL_identifier_structure * father){
         bool no_error = true;
         if (debugging) printf("\t----IDENTIFIER n. %i!!----\n", type);
 
@@ -1389,7 +1402,11 @@ namespace octet
           printf("\nERROR: No substructure!!!\n\n");
         }
         if (debugging) printf("Expect a } ... %c\n", *currentChar);
-        return no_error;
+
+        if (no_error)
+          return identifier_structure;
+        else
+          return NULL;
       }
 
       ////////////////////////////////////////////////////////////////////////////////
@@ -1403,7 +1420,7 @@ namespace octet
         string word;
         ++nesting;
         if (debugging) printf("\n-----------%x\t%c\n", *currentChar, *currentChar);
-
+        openDDL_structure * processing_structure = NULL;
         // It's a real structure! But it can be IDENTIFIER or DATATYPE
         //remove_comments_whitespaces();
         word = read_word();
@@ -1414,14 +1431,14 @@ namespace octet
         //check if it's a type and return it's index (if its negative it's not a type)
         int type = is_dataType(word);
         if (type >= 0){ //As it's a Data type, now it can be single data list or data array list!
-          process_structureData(types_.get_value(type),father);
+          processing_structure = process_structureData(types_.get_value(type),father);
         }
 
         else{
           //check if it's a identifier and return it's index (if its negative it's not a identifier)
           type = is_identifier(word);
           if (type >= 0){ //As it's a Identifier type, now check name? properties? and then { structure(s)? }
-            process_structureIdentifier(identifiers_.get_value(type),father);
+            processing_structure = process_structureIdentifier(identifiers_.get_value(type), father);
           }
 
           else{ //if it's nothing of the above is an error
@@ -1431,6 +1448,15 @@ namespace octet
         if (debugging) printf("Expect a } ... %c\n", *currentChar);
         get_next_char();
         --nesting;
+        if (processing_structure == NULL)
+          no_error = false;
+        else{
+          if (father == NULL) //Doesn't have a father, then it's a global structure
+            openDDL_file.push_back(processing_structure);
+          else //It has a father, so add it to the father
+            father->add_structure(processing_structure);
+          no_error = true;
+        }
         return no_error;
       }
       
