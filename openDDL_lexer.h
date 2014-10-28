@@ -47,13 +47,8 @@ namespace octet
       // This will be the openDDL file being (just a series of structures)
       dynarray<openDDL_structure *> openDDL_file; 
       openDDL_data_list * current_data_list;
-      openDDL_structure * currentStructure;
-      bool valueBool;
-      int valueInt;
-      float valueFloat;
-      string valueString;
-      int valueRef;
-      int valueType;
+      openDDL_structure * current_structure;
+      openDDL_data_literal current_literal;
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief  This function will add an identifiers to the dictionary
@@ -799,8 +794,8 @@ namespace octet
         if (*name == 0x24){ //It's a global name
           nameID = names_.get_index(name);
           if (nameID < 0){
-            names_[name] = currentStructure;
-            currentStructure->set_nameID(names_.get_index(name));
+            names_[name] = current_structure;
+            current_structure->set_nameID(names_.get_index(name));
           }
           else{
             printf("This global name already exists!\n");
@@ -810,8 +805,8 @@ namespace octet
         else if (*name == 0x25){ //It's a local name
           nameID = father_structure->get_index(name);
           if (nameID < 0){
-            father_structure->add_name(name,currentStructure);
-            currentStructure->set_nameID(father_structure->get_index(name));
+            father_structure->add_name(name,current_structure);
+            current_structure->set_nameID(father_structure->get_index(name));
           }
           else{
             printf("This global name already exists!\n");
@@ -868,33 +863,33 @@ namespace octet
             // Obtain the string from the property
             get_string_literal(new_string, new_size, (char*) tempChar, size);
             // Set new property with the new value as string!
-            new_property->value.value_type = value_type_DDL::STRING;
-            new_property->value.value_literal.string_literal = new_string;
-            new_property->value.size_string_literal = new_size;
+            new_property->literal.value_type = value_type_DDL::STRING;
+            new_property->literal.value.string_ = new_string;
+            new_property->literal.size_string_ = new_size;
           }
           //Check if it's a data_type
           else{
             int type = 1;
             if (type >= 0){
               // Set new property with the new value as data_type
-              new_property->value.value_type = value_type_DDL::TYPE;
-              new_property->value.value_literal.data_type_literal = type;
+              new_property->literal.value_type = value_type_DDL::TYPE;
+              new_property->literal.value.type_ = type;
             }
           //Check if it's a reference
             else{
               type = 1;
               if (type >= 0){
                 // Set new property with the new value as reference
-                new_property->value.value_type = value_type_DDL::REF;
-                new_property->value.value_literal.reference_literal = type;
+                new_property->literal.value_type = value_type_DDL::REF;
+                new_property->literal.value.ref_ = type;
               }
               //Check if it's a bool
               else{
                 bool bool_value;
                 if (get_bool_literal(bool_value, (char*)tempChar, size)){
                   // Set new property with the new value as bool!
-                  new_property->value.value_type = value_type_DDL::BOOL;
-                  new_property->value.value_literal.bool_literal = bool_value;
+                  new_property->literal.value_type = value_type_DDL::BOOL;
+                  new_property->literal.value.bool_ = bool_value;
                 }
               }
             }
@@ -905,7 +900,7 @@ namespace octet
         else{
           char * new_string;
           //process accordinglt to the type
-          new_property->value.value_type = (value_type_DDL) type_known;
+          new_property->literal.value_type = (value_type_DDL)type_known;
           switch (type_known){
           case value_type_DDL::UINT:
             break;
@@ -914,7 +909,7 @@ namespace octet
           case value_type_DDL::BOOL:
             bool bool_value;
             get_bool_literal(bool_value, (char*)tempChar, size);
-            new_property->value.value_literal.bool_literal = bool_value;
+            new_property->literal.value.bool_ = bool_value;
             break;
           case value_type_DDL::FLOAT:
             break;
@@ -925,8 +920,8 @@ namespace octet
             // Obtain the string from the property
             get_string_literal(new_string, new_size, (char*)tempChar, size);
             // Set new property with the new value as string!
-            new_property->value.value_literal.string_literal = new_string;
-            new_property->value.size_string_literal = new_size;
+            new_property->literal.value.string_ = new_string;
+            new_property->literal.size_string_ = new_size;
             break;
           case value_type_DDL::REF:
             break;
@@ -955,7 +950,7 @@ namespace octet
 
         //process the first element
         openDDL_properties * new_property = new openDDL_properties();
-        currentStructure = structure;
+        current_structure = structure;
         no_error = process_single_property(new_property);
         structure->add_property(new_property);
 
@@ -973,7 +968,7 @@ namespace octet
           }
           //now, keep on processing properties
           new_property = new openDDL_properties();
-          currentStructure = structure;
+          current_structure = structure;
           no_error = process_single_property(new_property);
           structure->add_property(new_property);
         }
@@ -993,6 +988,7 @@ namespace octet
         switch (type){
         case token_type::tok_bool:
         {
+          bool valueBool;
           no_error = get_bool_literal(valueBool, (char*)tempChar, size);
           break;
         }
@@ -1005,28 +1001,29 @@ namespace octet
         case token_type::tok_uint32:
         case token_type::tok_uint64:
         {
-          no_error = get_integer_literal(valueInt, (char*)tempChar, size);
+          no_error = get_integer_literal(current_literal.value.integer_, (char*)tempChar, size);
           break;
         }
         case token_type::tok_float:
         case token_type::tok_double:
         {
-          no_error = get_float_literal(valueFloat, (char*)tempChar, size);
+          no_error = get_float_literal(current_literal.value.float_, (char*)tempChar, size);
           break;
         }
         case token_type::tok_string:
         {
+          string valueString;
           no_error = get_string_literal(valueString, (char*)tempChar, size);
           break;
         }
         case token_type::tok_ref:
         {
-          no_error = get_value_reference(valueRef, (char*)tempChar, size);
+          no_error = get_value_reference(current_literal.value.ref_, (char*)tempChar, size);
           break;
         }
         case token_type::tok_type:
         {
-          no_error = get_value_data_type(valueType, (char*)tempChar, size);
+          no_error = get_value_data_type(current_literal.value.type_, (char*)tempChar, size);
           break;
         }
         default:
@@ -1065,7 +1062,7 @@ namespace octet
         }
         if (debuggingDDL) printf("\n");
 
-        ((openDDL_data_type_structure *)currentStructure)->add_data_list(current_data_list);
+        ((openDDL_data_type_structure *)current_structure)->add_data_list(current_data_list);
 
         return true;
       }
@@ -1324,7 +1321,7 @@ namespace octet
           remove_comments_whitespaces();
 
           //expect a { (if not, error)
-          currentStructure = data_type_structure;
+          current_structure = data_type_structure;
           if (*currentChar == 0x7b) //7b = {
             no_error = process_data_array_list(type, arraySize);
           else{ //call to process data array list, it will check the }
@@ -1350,7 +1347,7 @@ namespace octet
             if (debugging) printf("It's a data list!\n");
             get_next_char();
             remove_comments_whitespaces();
-            currentStructure = data_type_structure;
+            current_structure = data_type_structure;
             no_error = process_data_list(type);  //expect a } (if not, error)
             if (!no_error) printf("---SOMETHING WENT WRONG WITH DATA LIST\n");
           }

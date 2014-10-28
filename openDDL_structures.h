@@ -36,15 +36,15 @@ namespace octet{
     public:
       value_type_DDL value_type;
       union my_literal {
-        unsigned int uns_integer_literal;
-        int integer_literal;
-        bool bool_literal;
-        float float_literal;
-        char * string_literal;
-        int reference_literal;
-        int data_type_literal;
-      } value_literal;
-      int size_string_literal;
+        unsigned int u_integer_literal;
+        int integer_;
+        bool bool_;
+        float float_;
+        char * string_;
+        int ref_;
+        int type_;
+      } value;
+      int size_string_;
     };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -52,7 +52,7 @@ namespace octet{
 ////////////////////////////////////////////////////////////////////////////////
     struct openDDL_properties : public resource {
       int identifierID;
-      openDDL_data_literal value;
+      openDDL_data_literal literal;
     };
 
 ////////////////////////////////////////////////////////////////////////////////
