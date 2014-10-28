@@ -258,14 +258,6 @@ namespace octet{
       }
     };
 
-
-////////////////////////////////////////////////////////////////////////////////
-/// @brief This struct represents names. It has an id, and a pointer to the structure it represent
-////////////////////////////////////////////////////////////////////////////////
-    struct openDDL_name : public resource{
-      int id;
-      openDDL_structure * structure;
-    };
   }
 }
 
