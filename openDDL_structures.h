@@ -66,7 +66,6 @@ namespace octet{
     public:
       //Local names and references
       dictionary<openDDL_structure *> names_;
-      dictionary<openDDL_structure *> references_;
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief This is the default constructor, will call init() (no type and no name)

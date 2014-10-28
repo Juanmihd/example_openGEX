@@ -33,8 +33,6 @@ namespace octet
       dictionary<openDDL_structure *> names_;
       // Dictionary of symbols
       dictionary<int> symbols_;
-      // Dictionary of references
-      dictionary<openDDL_structure *> references_;
       // This are the current character and the next character after the token
       uint8_t * currentChar;
       uint8_t * tempChar;
@@ -733,7 +731,16 @@ namespace octet
         // If it's not the null value...
         else{
           // it can be also a name
-          
+          if (*word == 0x44){ // 44 = $, that means it's a global name
+            //first step is to look if the global name exists
+            //if exist, add the same pointer
+            //if it does not exist, pointer = NULL
+          }
+          else if (*word == 0x45){ // 45 = %, that means it's a local name
+            //first step is to look if the local name exists
+            //if exist, add the same pointer
+            //if it does not exist, pointer = NULL
+          }
           // followed optionally for some identifiers
           string new_word;
           while (*currentChar != 0x7d && *currentChar != 0x2c){ //While the current char is not the } or , there must be more references to this reference
@@ -938,6 +945,7 @@ namespace octet
 
         //process the first element
         openDDL_properties * new_property = new openDDL_properties();
+        currentStructure = structure;
         no_error = process_single_property(new_property);
         structure->add_property(new_property);
 
@@ -955,6 +963,7 @@ namespace octet
           }
           //now, keep on processing properties
           new_property = new openDDL_properties();
+          currentStructure = structure;
           no_error = process_single_property(new_property);
           structure->add_property(new_property);
         }
@@ -1238,8 +1247,8 @@ namespace octet
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief It will read and return the size of the next word
       /// @return Integer with the<size of the word
-      ///     NOTICE: This will let "currentChar" at the begining of the next token
-      ///             To use the word, it has to work with tempChar and the size that this
+      ///     NOTICE: - This will let "currentChar" at the begining of the next token
+      ///             - To use the word, it has to work with tempChar and the size that this
       ///             function returns as an integer
       ////////////////////////////////////////////////////////////////////////////////
       int read_word_size(){
@@ -1367,7 +1376,7 @@ namespace octet
           remove_comments_whitespaces();
 
           while (*currentChar != 0x7d){ //7d = } (keep on looking for new substructures while it does not find }
-            no_error = process_structure();  //call to process structure
+            no_error = process_structure(identifier_structure);  //call to process structure
             //Later expect a }, if not return error
             remove_comments_whitespaces();
           }
