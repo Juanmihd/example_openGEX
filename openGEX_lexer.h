@@ -52,7 +52,7 @@ namespace octet
         printf("Starting to reading the file containin %i megaStructures:\n", numStructures);
         for (int i = 0; i < numStructures; ++i){
           bigStructure = openDDL_file[i];
-          printf("\n-- Structure %i:\n", i);
+          printf("\n-- Structure %i:\n", i+1);
           printf("Type: ");
           printf((bigStructure->get_type_structure() == 0 ? "identificator\n" : "data_type\n"));
           tempID = ((openDDL_identifier_structure*)bigStructure)->get_identifierID();
