@@ -795,9 +795,14 @@ namespace octet
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief  This functions process one single property
+      /// @param  new_property  it's a pointer to a openDDL_properties, it will be use to store the content of the property
+      /// @param  type_known    This is an int with the data_type expected. If it's not known it will be -1   
       /// @return   True if everything went right, and false if something went wrong
+      ///     This function is able to detect the type of the data that the property has inside, anyway there is
+      ///     the possibility to add that information as "type_known". If it has the correct value that the property
+      ///     is expecting it will store properly the property. If it's not correct, it will print an error reading the file
       ////////////////////////////////////////////////////////////////////////////////
-      bool process_single_property(openDDL_properties * new_property){
+      bool process_single_property(openDDL_properties * new_property, int type_known = -1){
         string word;
 
         //Now it has to find a identifier
@@ -822,46 +827,57 @@ namespace octet
         //Not it has to find a literal, that might be (bool, int, float, string, ref or type)
         int size;
         read_data_property(size);
-        //Check if it's a string
-        if (*tempChar == 0x22){
-          //Get ready the data to store the size
-          char * new_string = new char[size];
-          int new_size;
-          // Obtain the string from the property
-          get_string_literal(new_string, new_size, (char*) tempChar, size);
-          // Set new property with the new value as string!
-          new_property->value.value_type = value_type_DDL::STRING;
-          new_property->value.value_literal.string_literal = new_string;
-          new_property->value.size_string_literal = new_size;
-        }
-        //Check if it's a data_type
-        else{
-          int type = 1;
-          if (type >= 0){
-            // Set new property with the new value as data_type
-            new_property->value.value_type = value_type_DDL::TYPE;
-            new_property->value.value_literal.data_type_literal = type;
+
+        // first check if the type is known or unkonw. 
+          //If it's unkown try to identify it
+        if (type_known = -1){
+          // Check if it's a string
+          if (*tempChar == 0x22){
+            //Get ready the data to store the size
+            char * new_string = new char[size];
+            int new_size;
+            // Obtain the string from the property
+            get_string_literal(new_string, new_size, (char*) tempChar, size);
+            // Set new property with the new value as string!
+            new_property->value.value_type = value_type_DDL::STRING;
+            new_property->value.value_literal.string_literal = new_string;
+            new_property->value.size_string_literal = new_size;
           }
-        //Check if it's a reference
+          //Check if it's a data_type
           else{
-            type = 1;
+            int type = 1;
             if (type >= 0){
-              // Set new property with the new value as reference
-              new_property->value.value_type = value_type_DDL::REF;
-              new_property->value.value_literal.reference_literal = type;
+              // Set new property with the new value as data_type
+              new_property->value.value_type = value_type_DDL::TYPE;
+              new_property->value.value_literal.data_type_literal = type;
             }
-            //Check if it's a bool
+          //Check if it's a reference
             else{
-              bool bool_value;
-              if (get_bool_literal(bool_value, (char*)tempChar, size)){
-                // Set new property with the new value as bool!
-                new_property->value.value_type = value_type_DDL::BOOL;
-                new_property->value.value_literal.bool_literal = bool_value;
+              type = 1;
+              if (type >= 0){
+                // Set new property with the new value as reference
+                new_property->value.value_type = value_type_DDL::REF;
+                new_property->value.value_literal.reference_literal = type;
+              }
+              //Check if it's a bool
+              else{
+                bool bool_value;
+                if (get_bool_literal(bool_value, (char*)tempChar, size)){
+                  // Set new property with the new value as bool!
+                  new_property->value.value_type = value_type_DDL::BOOL;
+                  new_property->value.value_literal.bool_literal = bool_value;
+                }
               }
             }
           }
+          //Check if it's a integer or float
         }
-        //Check if it's a integer or float
+        // This means that the type is known!!
+        else{
+          //process accordinglt to the type
+        }
+
+
 
         if (debugging) printf("\n\tCurrent character after the word %s!! %c\n\n", string((char*)tempChar, size), *currentChar);
 
@@ -870,6 +886,7 @@ namespace octet
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief  This functions process the properties, and add it to the application
+      /// @param  structure   This is a pointer to the structure where to include the properties readed in this function
       /// @return   True if everything went right, and false if something went wrong
       ////////////////////////////////////////////////////////////////////////////////
       bool process_properties(openDDL_identifier_structure * structure){
@@ -1207,6 +1224,7 @@ namespace octet
       /// @brief  This function will lexer the next words, considering to be a "structureData"
       /// @param  It will receive the type of the data that it has been read
       /// @return True if everthing went well, false if there was some error
+      ///     This function will create the structure to be stored in the file!
       ////////////////////////////////////////////////////////////////////////////////
       bool process_structureData(int type){
         bool no_error = true;
@@ -1274,6 +1292,7 @@ namespace octet
       /// @brief  This function will lexer the next words, considering to be a "structureIdentifier"
       /// @param  It will receive the type of identifier that has been read
       /// @return True if everything went well, false if there was some error
+      ///     This function will create the structure to be stored in the file!
       ////////////////////////////////////////////////////////////////////////////////
       bool process_structureIdentifier(int type){
         bool no_error = true;
