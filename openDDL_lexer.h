@@ -48,7 +48,7 @@ namespace octet
       dynarray<openDDL_structure *> openDDL_file; 
       openDDL_data_list * current_data_list;
       openDDL_structure * current_structure;
-      openDDL_data_literal current_literal;
+      openDDL_data_literal* current_literal;
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief  This function will add an identifiers to the dictionary
@@ -1001,13 +1001,13 @@ namespace octet
         case token_type::tok_uint32:
         case token_type::tok_uint64:
         {
-          no_error = get_integer_literal(current_literal.value.integer_, (char*)tempChar, size);
+          no_error = get_integer_literal(current_literal->value.integer_, (char*)tempChar, size);
           break;
         }
         case token_type::tok_float:
         case token_type::tok_double:
         {
-          no_error = get_float_literal(current_literal.value.float_, (char*)tempChar, size);
+          no_error = get_float_literal(current_literal->value.float_, (char*)tempChar, size);
           break;
         }
         case token_type::tok_string:
@@ -1018,12 +1018,12 @@ namespace octet
         }
         case token_type::tok_ref:
         {
-          no_error = get_value_reference(current_literal.value.ref_, (char*)tempChar, size);
+          no_error = get_value_reference(current_literal->value.ref_, (char*)tempChar, size);
           break;
         }
         case token_type::tok_type:
         {
-          no_error = get_value_data_type(current_literal.value.type_, (char*)tempChar, size);
+          no_error = get_value_data_type(current_literal->value.type_, (char*)tempChar, size);
           break;
         }
         default:
@@ -1050,23 +1050,25 @@ namespace octet
         //This powerfull line  converts from the numeration given in openDDL_tokes for types to the one given in value_type_DDL
         current_data_list->value_type = (value_type_DDL)((type>8) ? (type - 6) : ((type>4) ? 0 : (type == 0) ? 2 : 1));
         // Reserve some space prior to start
-        //current_data_list->data_list.reserve(MIN_RESERVING_DATA_LIST);
+        current_data_list->data_list.reserve(MIN_RESERVING_DATA_LIST);
 
         //Read the first element, process it and add it to data_list
+        current_literal = new openDDL_data_literal;
         ending = read_data_list_element(size);
         process_data_list_element(type, size);
-        current_literal.value_type = current_data_list->value_type;
-        //current_data_list->data_list.push_back(current_literal);
+        current_literal->value_type = current_data_list->value_type;
+        current_data_list->data_list.push_back(current_literal);
 
         //If there are more elements...
         while (ending == 1){ //keep on reading while there are more elements
           get_next_char();
           remove_comments_whitespaces();
           //Read next element, process it, and add it to data_list
+          current_literal = new openDDL_data_literal;
           ending = read_data_list_element(size);
           process_data_list_element(type, size);
-          current_literal.value_type = current_data_list->value_type;
-          //current_data_list->data_list.push_back(current_literal);
+          current_literal->value_type = current_data_list->value_type;
+          current_data_list->data_list.push_back(current_literal);
         }
         if (debuggingDDL) printf("\n");
 
