@@ -228,7 +228,7 @@ namespace octet
       /// @return   True if it's a symbol, and false if it's not a symbol
       ////////////////////////////////////////////////////////////////////////////////
       bool is_symbol(){
-        string character ((char*)currentChar,1);
+        string character((char*)currentChar, 1);
         return symbols_.contains(character.c_str());
       }
 
@@ -553,6 +553,90 @@ namespace octet
       }
 
       ////////////////////////////////////////////////////////////////////////////////
+      /// @brief  This function will check if it's a string-literal
+      /// @param  new_word   this will be the pointer to the new word in a char*
+      /// @param  new_size   this will be the new size of the char*
+      /// @param  word    this is a pointer to the beginning of the word
+      /// @param  size    this is the size of the word readed
+      /// @return   True if everything went right, and false if something went wrong
+      ///   The pointer new_word has to be previously initialized in memory with "size" 
+      ///   reserved in memory. 
+      ////////////////////////////////////////////////////////////////////////////////
+      bool get_string_literal(char * new_word, int &new_size, char *word, int size){
+        if (debuggingDDL) printf("Reading the string: ");
+        char caracter;
+        //first of all check if it's a correct string
+        if (*word != 0x22 || word[size - 1] != 0x22){
+          return false; // ERROR!!!
+          printf("Error with the string! \n");
+        }
+
+        const int i_limit = size - 1;
+        new_size = 0;
+        ++word;
+        for (int i = 1; i < i_limit; ++i, ++word){
+          caracter = *word;
+          if (caracter == 0x5c){ //5c = '\'
+            if (debuggingDDL) printf("Escape char\n");
+            ++i;
+            if (i >= i_limit){
+              printf("There is an error with the string\n");
+              return false;
+            }
+            ++word;
+            switch (*word){
+            case 0x22: //22 = " means double quote 0x22
+            case 0x27: //27 = ' means Single quote 0x27
+            case 0x3F: //3f = ? means question mark 0x3f
+            case 0x5C: //5c = \ means blackslash 0x5c
+              caracter = *word;
+              break;
+            case 0x61: //61 = a means bell 0x07
+              caracter = 0x07;
+              break;
+            case 0x62: //62 = b means backspace 0x08
+              caracter = 0x08;
+              break;
+            case 0x66: //66 = f means formfeed 0x0c
+              caracter = 0x0c;
+              break;
+            case 0x6E: //6e = n means newline 0x0a
+              caracter = 0x0a;
+              break;
+            case 0x72: //72 = r means carriage return 0x0d
+              caracter = 0x0d;
+              break;
+            case 0x74: //74 = t means horizontal tab 0x09
+              caracter = 0x09;
+              break;
+            case 0x76: //76 = v means vertical tab 0x0b
+              caracter = 0x0b;
+              break;
+            case 0x78: //78 = x means is a especial escape char
+              i += 2;
+              if (is_hex_digit(word[1]) && is_hex_digit(word[2])){
+                caracter = (word[1] - (word[1]<0x39 ? '0' : (word[1]<0x60 ? 'A' : 'a'))) * 16 + (word[2] - (word[2]<0x39 ? '0' : (word[2]<0x60 ? 'A' : 'a')));
+              }
+              else{
+                printf("Error with the escpace char, it's not a hexadecimal!\n");
+              }
+              break;
+            default:
+              printf("Error with the escape char!\n");
+              return false;
+              break;
+            }
+
+          }
+          //and then, once the escape char was tested (if it was a escapeChar) and if not the same caracter
+          new_word[new_size] = caracter;
+          ++new_size;
+        }
+
+        return true;
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////
       /// @brief  This function will check if it's a char-literal
       /// @param  value   it returns the value of the char
       /// @param  word    this is a pointer to the beginning of the word
@@ -738,7 +822,47 @@ namespace octet
         //Not it has to find a literal, that might be (bool, int, float, string, ref or type)
         int size;
         read_data_property(size);
-        
+        //Check if it's a string
+        if (*tempChar == 0x22){
+          //Get ready the data to store the size
+          char * new_string = new char[size];
+          int new_size;
+          // Obtain the string from the property
+          get_string_literal(new_string, new_size, (char*) tempChar, size);
+          // Set new property with the new value as string!
+          new_property->value.value_type = value_type_DDL::STRING;
+          new_property->value.value_literal.string_literal = new_string;
+          new_property->value.size_string_literal = new_size;
+        }
+        //Check if it's a data_type
+        else{
+          int type = 1;
+          if (type >= 0){
+            // Set new property with the new value as data_type
+            new_property->value.value_type = value_type_DDL::TYPE;
+            new_property->value.value_literal.data_type_literal = type;
+          }
+        //Check if it's a reference
+          else{
+            type = 1;
+            if (type >= 0){
+              // Set new property with the new value as reference
+              new_property->value.value_type = value_type_DDL::REF;
+              new_property->value.value_literal.reference_literal = type;
+            }
+            //Check if it's a bool
+            else{
+              bool bool_value;
+              if (get_bool_literal(bool_value, (char*)tempChar, size)){
+                // Set new property with the new value as bool!
+                new_property->value.value_type = value_type_DDL::BOOL;
+                new_property->value.value_literal.bool_literal = bool_value;
+              }
+            }
+          }
+        }
+        //Check if it's a integer or float
+
         if (debugging) printf("\n\tCurrent character after the word %s!! %c\n\n", string((char*)tempChar, size), *currentChar);
 
         return true;
@@ -757,7 +881,7 @@ namespace octet
         //process the first element
         openDDL_properties * new_property = new openDDL_properties();
         no_error = process_single_property(new_property);
-        //structure->add_property(new_property);
+        structure->add_property(new_property);
 
         //it will have to expect more properties as long as it's not a )
         while (*currentChar != 0x29){ // 0x29 = )
@@ -772,9 +896,9 @@ namespace octet
             remove_comments_whitespaces();
           }
           //now, keep on processing properties
-          //openDDL_properties * new_property = new openDDL_properties();
+          new_property = new openDDL_properties();
           no_error = process_single_property(new_property);
-          //structure->add_property(new_property);
+          structure->add_property(new_property);
         }
         get_next_char();
         return true;

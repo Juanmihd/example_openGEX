@@ -10,21 +10,22 @@
 
 namespace octet{
   namespace loaders{
-    enum structureType { not_yet_type = -1, identifier_structure = 0, data_type_structure = 1};
+    enum structureType { not_yet_type = -1, identifier_structure = 0, data_type_structure = 1 };
+    enum value_type_DDL   { INT, BOOL, FLOAT, STRING, REF, TYPE };
 
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief This struct is represent a data_literal
 ////////////////////////////////////////////////////////////////////////////////
     struct openDDL_data_literal : public resource{
     public:
-      enum { INT, BOOL, FLOAT, STRING, REF, TYPE } value_type;
+      value_type_DDL value_type;
       union my_literal {
         int integer_literal;
         bool bool_literal;
         float float_literal;
+        char * string_literal;
         int reference_literal;
         int data_type_literal;
-        char * string_literal;
       } value_literal;
       int size_string_literal;
     };
