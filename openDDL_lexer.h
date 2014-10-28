@@ -278,7 +278,7 @@ namespace octet
         }
 
 
-        //It may be a binary-literal, hex-literal or float-literal (starting with 0 or .) or float-literal starting with any number
+        //It may be a binary-literal, hex-literal, int-literal or char-literal
         if (word[initial_i] == 0x30){ //30 = 0
           if (word[initial_i + 1] == 0x42 || word[initial_i + 1] == 0x62){ //42 = B, 62 = b, that meaning, it's a binary number
             pow = 2;
@@ -721,15 +721,13 @@ namespace octet
       /// @param  size    this is the size of the word readed
       /// @return   True if everything went right, and false if something went wrong
       ////////////////////////////////////////////////////////////////////////////////
-      bool get_value_reference(string &value, char *word, int size){
+      bool get_value_reference(int &ref, char *word, int size){
         if (debuggingDDL) printf("Reading the reference: ");
         
-        value = string(word, size);
-
         // A reference can be the identificator or name 'null'
         if (size == 4){ //null size is 4
           if (word[0] == 'n' && word[1] == 'u' && word[2] == 'l' && word[3] == 'l'){
-            value = string(word,size); //assing 'null' to the value 
+            ref = -1;
           }
         }
         // If it's not the null value...
@@ -754,7 +752,7 @@ namespace octet
           }
         }
 
-        if (debuggingDDL) printf("%s\n", value);
+        if (debuggingDDL) printf("Reference with id: %i\n", ref);
         return true;
       }
 
@@ -765,7 +763,7 @@ namespace octet
       /// @param  size    this is the size of the word readed
       /// @return   True if everything went right, and false if something went wrong
       ////////////////////////////////////////////////////////////////////////////////
-      bool get_value_data_type(string &value, char *word, int size){
+      bool get_value_data_type(int &type, char *word, int size){
         return true;
       }
 
@@ -1008,13 +1006,13 @@ namespace octet
         }
         case token_type::tok_ref:
         {
-          string valueRef;
+          int valueRef;
           no_error = get_value_reference(valueRef, (char*)tempChar, size);
           break;
         }
         case token_type::tok_type:
         {
-          string valueType;
+          int valueType;
           no_error = get_value_data_type(valueType, (char*)tempChar, size);
           break;
         }
