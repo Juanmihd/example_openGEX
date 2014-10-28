@@ -829,8 +829,7 @@ namespace octet
         read_data_property(size);
 
         // first check if the type is known or unkonw. 
-          //If it's unkown try to identify it
-        if (type_known = -1){
+        if (type_known = -1){ //If it's unkown try to identify it
           // Check if it's a string
           if (*tempChar == 0x22){
             //Get ready the data to store the size

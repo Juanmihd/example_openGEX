@@ -128,28 +128,28 @@ namespace octet{
           "Translation",    // identificator 33
           "Value",          // identificator 34
           "VertexArray",    // identificator 35
-          "attrib",         // identificator 36
-          "begin",          // identificator 37
-          "clip",           // identificator 38
-          "curve",          // identificator 39
-          "end",            // identificator 40
-          "front",          // identificator 41
-          "index",          // identificator 42
-          "key",            // identificator 43
-          "kind",           // identificator 44
-          "lod",            // identificator 45
-          "material",       // identificator 46
-          "morph",          // identificator 47
-          "motion_blur",    // identificator 48
-          "object",         // identificator 49
-          "primitive",      // identificator 50
-          "restart",        // identificator 51
-          "shadow",         // identificator 52
-          "target",         // identificator 53
-          "texcoord",       // identificator 54
-          "two_sided",      // identificator 55
-          "type",           // identificator 56
-          "visible"         // identificator 57
+          "attrib",         // identificator 36	string (check Material, LightObject)
+          "begin",          // identificator 37	float
+          "clip",           // identificator 38	int (0)
+          "curve",          // identificator 39	string	Atten("linear", "smooth", "inverse", "inverse_square") Time("linear","bezier") Value("linear","bezier","tcb")
+          "end",            // identificator 40	float
+          "front",          // identificator 41	string	("ccw", "cw")
+          "index",          // identificator 42	unsigned_int (0)
+          "key",            // identificator 43	string	Metric("distance" (1.0),"angle" (1.0),"time" (1.0),"up" ("z"))
+          "kind",           // identificator 44	string Atten("distance", "angle", "cos_angle") Key("value","-control","+control","tension","continuity","bias") Rotation("axis","x,"y","z","quaternion") Scale,Translation("xyz","x","y","z")
+          "lod",            // identificator 45	unsigned_int (0)
+          "material",       // identificator 46	unsigned_int (0)
+          "morph",          // identificator 47	unsigned_int (0)
+          "motion_blur",    // identificator 48	bool GeometryObject(true)
+          "object",         // identificator 49	bool Rotation,Scale,Transform,Translation(false)
+          "primitive",      // identificator 50	string Mesh("triangles","points","lines","line_strip","triangle_strip","quads")
+          "restart",        // identificator 51	unsigned_int
+          "shadow",         // identificator 52	bool GeometryObject,LightObject(true)
+          "target",         // identificator 53	ref	(-,Transform,Translation,Rotation,Scale,Morph)
+          "texcoord",       // identificator 54	unsigned_int Texture(0)
+          "two_sided",      // identificator 55	bool Material(false)
+          "type",           // identificator 56	string LightObject(-,"infinite","point","spot")
+          "visible"         // identificator 57	bool GeometryObject(true)
         };
         // It will be an error if we try to call a token bigger than our current token list!
         assert((t < ident_last) && "Calling a token bigger than the token list!");
