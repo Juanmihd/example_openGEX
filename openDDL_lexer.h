@@ -1064,7 +1064,7 @@ namespace octet
           get_next_char();
           remove_comments_whitespaces();
           //Read next element, process it, and add it to data_list
-          current_literal = new openDDL_data_literal;
+          current_literal = new openDDL_data_literal();
           ending = read_data_list_element(size);
           process_data_list_element(type, size);
           current_literal->value_type = current_data_list->value_type;
@@ -1101,8 +1101,10 @@ namespace octet
         while (itemsLeft > 0){
           get_next_char();
           remove_comments_whitespaces();
+          current_literal = new openDDL_data_literal();
           ending = read_data_list_element(wordSize);
           process_data_list_element(type, wordSize);
+          current_literal->value_type = current_data_list->value_type;
           --itemsLeft;
         }
         //detect }
@@ -1124,6 +1126,7 @@ namespace octet
       ////////////////////////////////////////////////////////////////////////////////
       bool process_data_array_list(int type, int arraySize){
         bool no_error = true;
+        value_type_DDL translated_type = (value_type_DDL)((type>8) ? (type - 6) : ((type>4) ? 0 : (type == 0) ? 2 : 1));;
         if (*currentChar != 0x7b){ //7b = {
           printf("Problem reading the begining of the data array list!!! \n");
           return false;
@@ -1132,10 +1135,12 @@ namespace octet
         remove_comments_whitespaces();
 
         while (no_error && *currentChar != 0x7d){
+          current_data_list = new openDDL_data_list();
+          current_data_list->value_type = translated_type;
           no_error = process_data_array(type, arraySize); //This will have to start with {, read arraySize elements, read }
           get_next_char();
           remove_comments_whitespaces();
-
+          ((openDDL_data_type_structure *)current_structure)->add_data_list(current_data_list);
           if (debuggingDDL) printf("After data array...%x\n", currentChar[0]);
         }
         //expect } (7d)
@@ -1505,14 +1510,17 @@ namespace octet
       ////////////////////////////////////////////////////////////////////////////////
       bool lexer_file(dynarray<uint8_t> file){
         bool no_error = true;
+        int completeBufferSize;
         sizeRead = 0;
         buffer = file;
         currentChar = &buffer[0];
         bufferSize = buffer.size();
-
+        completeBufferSize = bufferSize;
+        printf("Starting lexer to openDDL process:\n");
         // It's starting to process all the array of characters starting with the first
         // Will do this until the end of the file
         while (!is_end_file() && no_error){
+          printf("%4.2f %%\n", 100*((1.0f*(completeBufferSize-bufferSize))/(1.0f*completeBufferSize)));
           remove_comments_whitespaces();
           if (!is_end_file()){
             //Process token (in openDDL is a structure) when you find it
@@ -1521,6 +1529,7 @@ namespace octet
             if(debugging) printf("-----------%x\n", *currentChar);
           }
         }
+        printf("Finished process.\n");
 
         return no_error;
       }
