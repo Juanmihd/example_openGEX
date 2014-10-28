@@ -10,6 +10,14 @@
 
 namespace octet{
   namespace loaders{
+    class openDDL_structure;
+    class openDDL_identifier_structure;
+    class openDDL_data_type_structure;
+    class openDDL_structure;
+    struct openDDL_data_list;
+    struct openDDL_properties;
+    struct openDDL_data_literal;
+    
     enum structureType { not_yet_type = -1, identifier_structure = 0, data_type_structure = 1 };
     enum value_type_DDL   { UINT = 0, INT = 1, BOOL = 2, FLOAT = 3, STRING = 4, REF = 5, TYPE = 6};
     
@@ -54,6 +62,8 @@ namespace octet{
       structureType type;
       int nameID;
       openDDL_identifier_structure * father_structure;
+      //Local names and references
+      dictionary<openDDL_structure *> names_;
       
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief This will initialize the structure with no name and no type
@@ -64,9 +74,6 @@ namespace octet{
         type = not_yet_type;
       }
     public:
-      //Local names and references
-      dictionary<openDDL_structure *> names_;
-
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief This is the default constructor, will call init() (no type and no name)
       ////////////////////////////////////////////////////////////////////////////////
@@ -121,6 +128,26 @@ namespace octet{
       void set_father_structure(openDDL_identifier_structure * n_father_structure){
         father_structure = n_father_structure;
       }
+
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief This will get the index of the name
+      /// @param  name  A char pointer that contains the name
+      /// @return -1 if the name has not been initialized yet or the index of the name
+      ////////////////////////////////////////////////////////////////////////////////
+      int get_index(char *name){
+        return names_.get_index(name);
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief This will get the index of the name
+      /// @param  name  A char pointer that contains the name
+      /// @return -1 if the name has not been initialized yet or the index of the name
+      ////////////////////////////////////////////////////////////////////////////////
+      int add_name(char *name, openDDL_structure * structure){
+        names_[name] = structure;
+        return names_.get_index(name);
+      }
+
     };
 
 ////////////////////////////////////////////////////////////////////////////////

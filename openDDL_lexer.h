@@ -779,7 +779,7 @@ namespace octet
       /// @param  structure   This is a pointer to the structure that will have this name
       /// @return   The ID of the name
       ////////////////////////////////////////////////////////////////////////////////
-      int process_name(openDDL_structure * structure){
+      int process_name(openDDL_structure * father_structure){
         char *name;
         int size_name = read_word_size();
         name = new char[size_name];
@@ -792,7 +792,8 @@ namespace octet
         if (*name == 0x24){ //It's a global name
           nameID = names_.get_index(name);
           if (nameID < 0){
-            names_[name] = structure;
+            names_[name] = currentStructure;
+            currentStructure->set_nameID(names_.get_index(name));
           }
           else{
             printf("This global name already exists!\n");
@@ -800,9 +801,10 @@ namespace octet
           }
         }
         else if (*name == 0x25){ //It's a local name
-          nameID = currentStructure->names_.get_index(name);
+          nameID = father_structure->get_index(name);
           if (nameID < 0){
-            currentStructure->names_[name] = structure;
+            father_structure->add_name(name,currentStructure);
+            currentStructure->set_nameID(father_structure->get_index(name));
           }
           else{
             printf("This global name already exists!\n");
@@ -894,6 +896,7 @@ namespace octet
         }
         // This means that the type is known!!
         else{
+          char * new_string;
           //process accordinglt to the type
           new_property->value.value_type = (value_type_DDL) type_known;
           switch (type_known){
@@ -910,7 +913,7 @@ namespace octet
             break;
           case value_type_DDL::STRING:
             //Get ready the data to store the size
-            char * new_string = new char[size];
+            new_string = new char[size];
             int new_size;
             // Obtain the string from the property
             get_string_literal(new_string, new_size, (char*)tempChar, size);
