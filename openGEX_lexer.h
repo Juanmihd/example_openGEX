@@ -40,6 +40,39 @@ namespace octet
         init_ddl();
         init_gex();
       }
+
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief Constructor of lexer
+      /// @return True if everything went well, false if there was some problem
+      ////////////////////////////////////////////////////////////////////////////////
+      bool openGEX_data(){
+        int numStructures = openDDL_file.size();
+        int tempID;
+        openDDL_structure * bigStructure;
+        printf("Starting to reading the file containin %i megaStructures:\n", numStructures);
+        for (int i = 0; i < numStructures; ++i){
+          bigStructure = openDDL_file[i];
+          printf("\n-- Structure %i:\n", i);
+          printf("Type: ");
+          printf((bigStructure->get_type_structure() == 0 ? "identificator\n" : "data_type\n"));
+          tempID = ((openDDL_identifier_structure*)bigStructure)->get_identifierID();
+          if (tempID < 0)
+            printf("(((ERROR)))\n");
+          else{
+            printf("The identifier is: ");
+            printf("%s", gex_ident::ident_name(tempID).c_str());
+            printf("\n");
+          }
+          tempID = bigStructure->get_nameID();
+          if (tempID >= 0){
+            printf("The name is ");
+            printf("%s", names_.get_key(tempID));
+            printf("\n");
+          }
+        }
+        printf("\n");
+        return true;
+      }
     };
   }
 }

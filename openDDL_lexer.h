@@ -784,18 +784,23 @@ namespace octet
       int process_name(openDDL_structure * father_structure){
         char *name;
         int size_name = read_word_size();
-        name = new char[size_name];
+        name = new char[size_name+1];
         for (int i = 0; i < size_name; ++i){
           name[i] = tempChar[i];
         }
-        if (debugging) printf("It's the name %s<!!\n", name);
+        name[size_name] = '\0';
+        if(debugging) printf("It's the name %s<<!!\n", name);
         
         int nameID;
         if (*name == 0x24){ //It's a global name
+          if (debugging) printf("Globaling name\n");
           nameID = names_.get_index(name);
+          if (debugging) printf("Name ID is %i\n", nameID);
           if (nameID < 0){
             names_[name] = current_structure;
-            current_structure->set_nameID(names_.get_index(name));
+            nameID = names_.get_index(name);
+            if (debugging) printf("Name ID is %i\n", nameID);
+            current_structure->set_nameID(nameID);
           }
           else{
             printf("This global name already exists!\n");
@@ -814,7 +819,7 @@ namespace octet
           }
         }
 
-        if (debugging) printf( (nameID < 0) ? "And it does not exist!\n" : "And it exists!\n" );
+        if (debugging) printf((nameID < 0) ? "And it does not exist!\n" : "And it exists!\n");
         return nameID;
       }
 
@@ -1396,15 +1401,16 @@ namespace octet
 
         //Then it will read the first character, to see if its a (, or name, or {
         int nameID = -1;
+        //Get ready the new structure
+        openDDL_identifier_structure * identifier_structure = new openDDL_identifier_structure(type, father);
+        current_structure = identifier_structure;
+
         //If its a name call to something to process name
         if (is_name()){
           nameID = process_name(father);
         }
+
         //Later, check if it's ( and call something to check properties - telling the function which structure is this one
-
-        //Get ready the new structure
-        openDDL_identifier_structure * identifier_structure = new openDDL_identifier_structure(type, father, nameID);
-
         remove_comments_whitespaces();
         if (*currentChar == 0x28){ // 28 = (
           //call something to check properties          //expect a ) (if not, error)
@@ -1510,17 +1516,13 @@ namespace octet
       ////////////////////////////////////////////////////////////////////////////////
       bool lexer_file(dynarray<uint8_t> file){
         bool no_error = true;
-        int completeBufferSize;
         sizeRead = 0;
         buffer = file;
         currentChar = &buffer[0];
         bufferSize = buffer.size();
-        completeBufferSize = bufferSize;
-        printf("Starting lexer to openDDL process:\n");
         // It's starting to process all the array of characters starting with the first
         // Will do this until the end of the file
         while (!is_end_file() && no_error){
-          printf("%4.2f %%\n", 100*((1.0f*(completeBufferSize-bufferSize))/(1.0f*completeBufferSize)));
           remove_comments_whitespaces();
           if (!is_end_file()){
             //Process token (in openDDL is a structure) when you find it
@@ -1529,7 +1531,6 @@ namespace octet
             if(debugging) printf("-----------%x\n", *currentChar);
           }
         }
-        printf("Finished process.\n");
 
         return no_error;
       }

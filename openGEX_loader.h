@@ -36,14 +36,19 @@ namespace octet { namespace loaders {
         //Process the file (lexer) (return false if there was any problem)
         printf("Starting the lexer process\n");
         if (!lexer.lexer_file(buffer)){
-          printf("Error loading the openGEX file!\n");
+          printf("Error loading the openGEX file (openDDL process)!\n");
           return false;
         }
-        else
-          printf("\n\nThe lexer process has finished successfully!\n");
-
-        //Import the file into octet (return false if there was any problem)
-
+        else{
+          printf("The lexer DDL process has finished successfully!\nAnd now start the openGEX process...\n");
+          if (!lexer.openGEX_data()){
+            printf("Error loading the openGEX file (openGEX process)!\n");
+            return false;
+          }
+          else
+            printf("The openGEX lecture of data went great!\n");
+          //Import the file into octet (return false if there was any problem)
+        }
         //If it has arrived there, it was ok! so return true
         return true;
       }
