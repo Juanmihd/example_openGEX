@@ -103,12 +103,26 @@ namespace octet
         int integer_literal = structure->get_integer_literal();
         if (integer_literal > 0){
           if (debugStructure) printfNesting();
-          if (debugStructure) printf("Is an array with %i elements.\n", integer_literal);
+          if (debugStructure) printf("Is an array with %i elements ", integer_literal);
         }
         else{
           if (debugStructure) printfNesting();
-          if (debugStructure) printf("Is a single data_list.\n");
+          if (debugStructure) printf("Is a single data_list ");
         }
+        
+        //Check now the data inside the data type structure
+        int numLists = structure->get_number_lists();
+        if (numLists < 0){
+          printf("___Weird error with the ammount of data_lists!\n");
+        }
+        else{
+          openDDL_data_list * currentDataList;
+          printf("%i occurencies.\n", numLists);
+          for (int i = 0; i < numLists; ++i){
+            currentDataList = structure->get_data_list(i);
+          }
+        }
+
         return true;
       }
 

@@ -344,6 +344,23 @@ namespace octet{
       void add_data_list(openDDL_data_list * new_data_list){
         data_list_array.push_back(new_data_list);
       }
+
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief This obtain the number of data_lists (or arrays) in the structure
+      /// @returns The ammount of data_lists inside the structure
+      ////////////////////////////////////////////////////////////////////////////////
+      int get_number_lists(){
+        return data_list_array.size();
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief This get a data_list by a given index
+      /// @param  index  The index of the data_list requested
+      /// @returns A pointer to the asked data_list
+      ////////////////////////////////////////////////////////////////////////////////
+      openDDL_data_list * get_data_list(int index){
+        return data_list_array[index];
+      }
     };
   }
 }
