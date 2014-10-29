@@ -19,6 +19,7 @@
 namespace octet
 {
   namespace loaders{
+    enum { debugDATA = 0, debugStructure = 1};
     class openGEX_lexer : public openDDL_lexer{
       typedef gex_ident::gex_ident_enum gex_ident_list;
 
@@ -32,6 +33,10 @@ namespace octet
         }
       }
 
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief This function prints properly a openDDL_data_literal!
+      /// @param  value The literal to be printed
+      ////////////////////////////////////////////////////////////////////////////////
       void printfDDLliteral(openDDL_data_literal value){
         switch (value.value_type){
         case value_type_DDL::UINT:
@@ -77,21 +82,32 @@ namespace octet
         int tempID;
         //Obtaining the data_type of the structure
         printfNesting();
-        printf("The type is: ");
+        if(debugStructure) printf("The type is: ");
         tempID = (structure)->get_typeID();
         if (tempID < 0)
           printf("(((ERROR)))\n");
         else{
-          printf("%s", ddl_token::token_name(tempID).c_str());
-          printf("\n");
+          if(debugStructure) printf("%s", ddl_token::token_name(tempID).c_str());
+          if(debugStructure) printf("\n");
         }
         //Check the name of the structure!
         tempID = structure->get_nameID();
         if (tempID >= 0){
-          printfNesting();
-          printf("The name is ");
-          printf("%s", names_.get_key(tempID));
-          printf("\n");
+          if (debugStructure) printfNesting();
+          if (debugStructure) printf("The name is ");
+          if (debugStructure) printf("%s", names_.get_key(tempID));
+          if (debugStructure) printf("\n");
+        }
+
+        //Check what kind of data_type is (if it has integer_literal or not!)
+        int integer_literal = structure->get_integer_literal();
+        if (integer_literal > 0){
+          if (debugStructure) printfNesting();
+          if (debugStructure) printf("Is an array with %i elements.\n", integer_literal);
+        }
+        else{
+          if (debugStructure) printfNesting();
+          if (debugStructure) printf("Is a single data_list.\n");
         }
         return true;
       }
@@ -104,46 +120,46 @@ namespace octet
         int tempID;
         //Obtaining the identifier of the structure
         printfNesting();
-        printf("The identifier is: ");
+        if (debugStructure) printf("The identifier is: ");
         tempID = (structure)->get_identifierID();
         if (tempID < 0)
           printf("(((ERROR)))\n");
         else{
-          printf("%s", gex_ident::ident_name(tempID).c_str());
-          printf("\n");
+          if (debugStructure) printf("%s", gex_ident::ident_name(tempID).c_str());
+          if (debugStructure) printf("\n");
         }
         //Check the name of the structure!
         tempID = structure->get_nameID();
         if (tempID >= 0){
-          printfNesting();
-          printf("The name is ");
-          printf("%s", names_.get_key(tempID));
-          printf("\n");
+          if (debugStructure) printfNesting();
+          if (debugStructure) printf("The name is ");
+          if (debugStructure) printf("%s", names_.get_key(tempID));
+          if (debugStructure) printf("\n");
         }
         //Check the properties
         int numProperties = structure->get_number_properties();
         if (numProperties > 0){
           openDDL_properties * currentProperty;
           //Let's work with all the properties!
-          printfNesting();
-          printf("The ammount of properties is: %i\n", numProperties);
+          if (debugStructure) printfNesting();
+          if (debugStructure) printf("The ammount of properties is: %i\n", numProperties);
           for (int i = 0; i < numProperties; ++i){
             currentProperty = structure->get_property(i);
-            printfNesting();
-            printf("Property <");
+            if (debugStructure) printfNesting();
+            if (debugStructure) printf("Property <");
             tempID = currentProperty->identifierID;
-            printf("%s", identifiers_.get_key(tempID));
-            printf("> with value <");
-            printfDDLliteral(currentProperty->literal);
-            printf(">\n");
+            if (debugStructure) printf("%s", identifiers_.get_key(tempID));
+            if (debugStructure) printf("> with value <");
+            if (debugStructure) printfDDLliteral(currentProperty->literal);
+            if (debugStructure) printf(">\n");
           }
         }
 
         //Check the substructures
         int numSubstructures = structure->get_number_substructures();
         if (numSubstructures > 0){
-          printfNesting();
-          printf("The ammount of substructures is: %i\n", numSubstructures);
+          if (debugStructure) printfNesting();
+          if (debugStructure) printf("The ammount of substructures is: %i\n", numSubstructures);
           for (int i = 0; i < numSubstructures; ++i){
             openGEX_structure(structure->get_substructure(i));
           }
@@ -158,6 +174,7 @@ namespace octet
       ////////////////////////////////////////////////////////////////////////////////
       bool openGEX_structure(openDDL_structure * structure){
         ++nesting;
+        printf("\n");
         bool no_error = true;
         //Check the type of the structure!
         if (structure->get_type_structure() == 0){ //That means that it's a identifier structure!
@@ -186,16 +203,16 @@ namespace octet
       bool openGEX_data(){
         int numStructures = openDDL_file.size();
         openDDL_structure * topLevelStructure;
-        printf("Starting to reading the file containin %i top-level structures:\n", numStructures);
+        if (debugStructure) printf("Starting to reading the file containin %i top-level structures:\n", numStructures);
         for (int i = 0; i < numStructures; ++i){
           //Get next structure
           nesting = 0;
           topLevelStructure = openDDL_file[i];
           //Check the type of the structure and the identificator or data_type!
-          printf("\n-- Top-level structure %i:\n", i+1);
+          if (debugStructure) printf("\n-- Top-level structure %i:\n", i + 1);
           openGEX_structure(topLevelStructure);
         }
-        printf("\n");
+        if (debugStructure) printf("\n");
         return true;
       }
     };
