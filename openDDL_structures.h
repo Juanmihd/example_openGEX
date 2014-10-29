@@ -36,7 +36,7 @@ namespace octet{
     public:
       value_type_DDL value_type;
       union my_literal {
-        unsigned int u_integer_literal;
+        unsigned int u_integer_literal_;
         int integer_;
         bool bool_;
         float float_;
@@ -244,6 +244,23 @@ namespace octet{
       ////////////////////////////////////////////////////////////////////////////////
       void add_structure(openDDL_structure * new_structure){
         substructureList.push_back(new_structure);
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief This will return the size of the substructures list in the structure
+      /// @return Int with the ammount of substructures
+      ////////////////////////////////////////////////////////////////////////////////
+      int get_number_substructures(){
+        return substructureList.size();
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief This will return a given substructure by an index
+      /// @param  index The index of the substructure to get
+      /// @return A pointer to the given substructure
+      ////////////////////////////////////////////////////////////////////////////////
+      openDDL_structure * get_substructure(int index){
+        return substructureList[index];
       }
     };
 

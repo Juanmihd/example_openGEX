@@ -32,6 +32,35 @@ namespace octet
         }
       }
 
+      void printfDDLliteral(openDDL_data_literal value){
+        switch (value.value_type){
+        case value_type_DDL::UINT:
+          printf("%u", value.value.u_integer_literal_);
+          break;
+        case value_type_DDL::INT:
+          printf("%i", value.value.integer_);
+          break;
+        case value_type_DDL::BOOL:
+          printf("%s", value.value.bool_ ? "true" : "false");
+          break;
+        case value_type_DDL::FLOAT:
+          printf("%f", value.value.float_);
+          break;
+        case value_type_DDL::STRING:
+          printf("%.*s", value.size_string_, value.value.string_);
+          break;
+        case value_type_DDL::REF:
+          printf("Reference?");
+          break;
+        case value_type_DDL::TYPE:
+          printf("Type?");
+          break;
+        default:
+          printf("...ERROR...");
+          break;
+        }
+      }
+
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief This is an aux function to print the nesting!
       ////////////////////////////////////////////////////////////////////////////////
@@ -73,7 +102,6 @@ namespace octet
       ////////////////////////////////////////////////////////////////////////////////
       bool openGEX_identifier_structure(openDDL_identifier_structure * structure){
         int tempID;
-        int numProperties;
         //Obtaining the identifier of the structure
         printfNesting();
         printf("The identifier is: ");
@@ -92,21 +120,35 @@ namespace octet
           printf("%s", names_.get_key(tempID));
           printf("\n");
         }
-        //Check the number of properties
-        numProperties = structure->get_number_properties();
+        //Check the properties
+        int numProperties = structure->get_number_properties();
         if (numProperties > 0){
           openDDL_properties * currentProperty;
+          //Let's work with all the properties!
           printfNesting();
           printf("The ammount of properties is: %i\n", numProperties);
           for (int i = 0; i < numProperties; ++i){
             currentProperty = structure->get_property(i);
             printfNesting();
-            printf("Property ");
+            printf("Property <");
             tempID = currentProperty->identifierID;
             printf("%s", identifiers_.get_key(tempID));
-            printf("\n");
+            printf("> with value <");
+            printfDDLliteral(currentProperty->literal);
+            printf(">\n");
           }
         }
+
+        //Check the substructures
+        int numSubstructures = structure->get_number_substructures();
+        if (numSubstructures > 0){
+          printfNesting();
+          printf("The ammount of substructures is: %i\n", numSubstructures);
+          for (int i = 0; i < numSubstructures; ++i){
+            openGEX_structure(structure->get_substructure(i));
+          }
+        }
+         
         return true;
       }
 
@@ -122,7 +164,7 @@ namespace octet
           no_error = openGEX_identifier_structure((openDDL_identifier_structure*) structure);
         }
         else{// That means that it's a data_type structure!!
-
+          no_error = openGEX_data_type_structure((openDDL_data_type_structure*) structure);
         }
         --nesting;
         return true;
@@ -143,15 +185,15 @@ namespace octet
       ////////////////////////////////////////////////////////////////////////////////
       bool openGEX_data(){
         int numStructures = openDDL_file.size();
-        openDDL_structure * bigStructure;
-        printf("Starting to reading the file containin %i megaStructures:\n", numStructures);
+        openDDL_structure * topLevelStructure;
+        printf("Starting to reading the file containin %i top-level structures:\n", numStructures);
         for (int i = 0; i < numStructures; ++i){
           //Get next structure
           nesting = 0;
-          bigStructure = openDDL_file[i];
+          topLevelStructure = openDDL_file[i];
           //Check the type of the structure and the identificator or data_type!
-          printf("\n-- Structure %i:\n", i+1);
-          openGEX_structure(bigStructure);
+          printf("\n-- Top-level structure %i:\n", i+1);
+          openGEX_structure(topLevelStructure);
         }
         printf("\n");
         return true;
