@@ -28,7 +28,11 @@ namespace octet{
     
     enum structureType { notYetType = -1, identifierStructureType = 0, dataTypeStructureType = 1 };
     enum value_type_DDL   { UINT = 0, INT = 1, BOOL = 2, FLOAT = 3, STRING = 4, REF = 5, TYPE = 6};
-    
+
+
+    int convert_type_token_to_DDL(int token){
+      return (token == 0 ? 2 : (token < 5 ? 1 : (token < 9 ? 0 : (token < 11 ? 3 : token - 7))));
+    }
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief This struct is represent a data_literal
 ////////////////////////////////////////////////////////////////////////////////

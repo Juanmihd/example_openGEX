@@ -101,14 +101,6 @@ namespace octet
 
         //Check what kind of data_type is (if it has integer_literal or not!)
         int integer_literal = structure->get_integer_literal();
-        if (integer_literal > 0){
-          if (debugStructure) printfNesting();
-          if (debugStructure) printf("Is an array with %i elements.\n", integer_literal);
-        }
-        else{
-          if (debugStructure) printfNesting();
-          if (debugStructure) printf("Is a single data_list.\n");
-        }
         
         //Check now the data inside the data type structure
         int numLists = structure->get_number_lists();
@@ -140,6 +132,7 @@ namespace octet
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
       bool openGEX_identifier_structure(openDDL_identifier_structure * structure){
+        printf("\n");
         int tempID;
         //Obtaining the identifier of the structure
         printfNesting();
@@ -197,7 +190,6 @@ namespace octet
       ////////////////////////////////////////////////////////////////////////////////
       bool openGEX_structure(openDDL_structure * structure){
         ++nesting;
-        printf("\n");
         bool no_error = true;
         //Check the type of the structure!
         if (structure->get_type_structure() == 0){ //That means that it's a identifier structure!

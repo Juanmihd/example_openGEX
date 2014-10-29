@@ -1017,8 +1017,15 @@ namespace octet
         }
         case token_type::tok_string:
         {
-          string valueString;
-          no_error = get_string_literal(valueString, (char*)tempChar, size);
+          char * new_string = new char[size];
+          int new_size;
+          // Obtain the string from the property
+          no_error = get_string_literal(new_string, new_size, (char*)tempChar, size);
+          // Set new property with the new value as string!
+          current_literal->value_type = value_type_DDL::STRING;
+          current_literal->value.string_ = new_string;
+          current_literal->size_string_ = new_size;
+          
           break;
         }
         case token_type::tok_ref:
@@ -1053,7 +1060,7 @@ namespace octet
         // Initializing the new data_list
         current_data_list = new openDDL_data_list;
         //This powerfull line  converts from the numeration given in openDDL_tokes for types to the one given in value_type_DDL
-        current_data_list->value_type = (value_type_DDL)((type>8) ? (type - 6) : ((type>4) ? 0 : (type == 0) ? 2 : 1));
+        current_data_list->value_type = (value_type_DDL) convert_type_token_to_DDL(type);
         // Reserve some space prior to start
         current_data_list->data_list.reserve(MIN_RESERVING_DATA_LIST);
 
