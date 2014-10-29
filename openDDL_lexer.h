@@ -22,7 +22,7 @@ namespace octet
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief This class is the openGEX lexer, it will read the array of characters and get tokes
 ////////////////////////////////////////////////////////////////////////////////
-    class openDDL_lexer : ddl_token{
+    class openDDL_lexer : public ddl_token{
       enum { MIN_RESERVING_DATA_LIST = 10, debuggingDDL = 0, debuggingDDLMore = 0, debugging = 0, debuggingMore = 0 };
     protected:
       // Dictionary of identifiers of the openDDL language we are using
