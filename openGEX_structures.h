@@ -10,10 +10,12 @@
 
 namespace octet{
   namespace loaders{
+
     struct openGEX_property{
       int propertyID;
       openDDL_data_literal default;
     };
+
     struct openGEX_structure{
       bool identifier;
       int structureID;

@@ -96,25 +96,25 @@ namespace octet{
           "Atten",          // identificator 01
           "BoneCountArray", // identificator 02
           "BoneIndexArray", // identificator 03
-          "BoneNode",       // identificator 04
+            "BoneNode",       // identificator 04 TL
           "BoneRefArray",   // identificator 05
           "BoneWeightArray",// identificator 06
-          "CameraNode",     // identificator 07
-          "CameraObject",   // identificator 08
+            "CameraNode",     // identificator 07 TL
+            "CameraObject",   // identificator 08 TL
           "Color",          // identificator 09
-            "GeometryNode",   // identificator 10
-            "GeometryObject", // identificator 11
+              "GeometryNode",   // identificator 10 TL
+              "GeometryObject", // identificator 11 TL
           "IndexArray",     // identificator 12
           "Key",            // identificator 13
-          "LightNode",      // identificator 14
-          "LightObject",    // identificator 15
-            "Material",       // identificator 16
+            "LightNode",      // identificator 14 TL
+            "LightObject",    // identificator 15 TL
+              "Material",       // identificator 16 TL
           "MaterialRef",    // identificator 17
           "Mesh",           // identificator 18
-            "Metric",         // identificator 19
+              "Metric",         // identificator 19 TL
           "Morph",          // identificator 20
           "Name",           // identificator 21
-          "Node",           // identificator 22
+            "Node",           // identificator 22 TL
           "ObjectRef",      // identificator 23
           "Param",          // identificator 24
           "Rotation",       // identificator 25
@@ -135,7 +135,7 @@ namespace octet{
           "end",            // identificator 40	float
           "front",          // identificator 41	string	("ccw", "cw")
           "index",          // identificator 42	unsigned_int (0)
-          "key",            // identificator 43	string	Metric("distance" (1.0),"angle" (1.0),"time" (1.0),"up" ("z"))
+            "key",            // identificator 43	string	Metric("distance" (1.0),"angle" (1.0),"time" (1.0),"up" ("z"))
           "kind",           // identificator 44	string Atten("distance", "angle", "cos_angle") Key("value","-control","+control","tension","continuity","bias") Rotation("axis","x,"y","z","quaternion") Scale,Translation("xyz","x","y","z")
           "lod",            // identificator 45	unsigned_int (0)
           "material",       // identificator 46	unsigned_int (0)

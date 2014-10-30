@@ -98,7 +98,7 @@ namespace octet
       /// @brief This will print the data type structure (previously analized by openDDL lexer)
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool printf_openGEX_data_type_structure(openDDL_data_type_structure * structure){
+      bool printf_data_type_structure(openDDL_data_type_structure * structure){
         currentStructure = structure;
         int tempID;
         //Obtaining the data_type of the structure
@@ -157,7 +157,7 @@ namespace octet
       /// @brief This will print the identifier structure (previously analized by openDDL lexer)
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool printf_openGEX_identifier_structure(openDDL_identifier_structure * structure){
+      bool printf_identifier_structure(openDDL_identifier_structure * structure){
         currentStructure = structure;
         if (DEBUGSTRUCTURE) printf("\n");
         int tempID;
@@ -215,8 +215,84 @@ namespace octet
         return true;
       }
 
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief This will print the identifier structure (previously analized by openDDL lexer)
+      /// @return True if everything went well, false if there was some problem
+      ////////////////////////////////////////////////////////////////////////////////
       bool openGEX_Metric(openDDL_identifier_structure * structure){
-
+        int tempID;
+        //Check the properties
+        int numProperties = structure->get_number_properties();
+        if (numProperties == 1){
+          openDDL_properties * currentProperty;
+          currentProperty = structure->get_property(0);
+          //Check that the property is correct!
+          tempID = identifiers_.get_value(currentProperty->identifierID);
+          if (tempID != 43){ // 43 = key
+            printf("(((ERROR: The property in Metric has to be key and it's %i)))\n",tempID);
+            return false;
+          }
+          else{
+            //Check the value of the property key (distance, angle, time or up)
+            char * value = currentProperty->literal.value.string_;
+            int size = currentProperty->literal.size_string_;
+            //Now it has to check which key is. So let's check the size first (faster!)
+            switch (size){
+            case 2: //check with up
+              if (same_word(value, size, "up", size)){
+                printf("Up\n");
+              }
+              else{
+                printf("(((ERROR: The property key in Metric has a wrong value!)))\n");
+              }
+              break;
+            case 4: //check with time
+              if (same_word(value, size, "time", size)){
+                printf("Time\n");
+              }
+              else{
+                printf("(((ERROR: The property key in Metric has a wrong value!)))\n");
+              }
+              break;
+            case 5: //check with angle
+              if (same_word(value, size, "angle", size)){
+                printf("Angle\n");
+              }
+              else{
+                printf("(((ERROR: The property key in Metric has a wrong value!)))\n");
+              }
+              break;
+            case 8: //check with distance
+              if (same_word(value, size, "distance", size)){
+                printf("Distance\n");
+              }
+              else{
+                printf("(((ERROR: The property key in Metric has a wrong value!)))\n");
+              }
+              break;
+            default:
+              {
+                printf("(((ERROR: The property key in Metric has a wrong value!)))\n");
+              }
+              break;
+            }
+          }
+          for (int i = 0; i < numProperties; ++i){
+            currentProperty = structure->get_property(i);
+            if (DEBUGSTRUCTURE) printfNesting();
+            if (DEBUGSTRUCTURE) printf("Property <");
+            tempID = currentProperty->identifierID;
+            if (DEBUGSTRUCTURE) printf("%s", identifiers_.get_key(tempID));
+            if (DEBUGSTRUCTURE) printf("> with value <");
+            if (DEBUGSTRUCTURE) printfDDLliteral(currentProperty->literal);
+            if (DEBUGSTRUCTURE) printf(">\n");
+          }
+        }
+        //If it has a different number of properties, it's an error!
+        else{
+          printf("(((ERROR: Metric has a wrong number of properties)))\n");
+          return false;
+        }
         return true;
       }
 
@@ -256,7 +332,7 @@ namespace octet
             break;
           }
         }
-
+        /*
         //Check the name of the structure!
         tempID = structure->get_nameID();
         if (tempID >= 0){
@@ -297,7 +373,7 @@ namespace octet
             openGEX_structure(structure->get_substructure(i));
           }
         }
-
+        */
         return true;
       }
 
@@ -310,10 +386,11 @@ namespace octet
         bool no_error = true;
         //Check the type of the structure!
         if (structure->get_type_structure() == 0){ //That means that it's a identifier structure!
-          if (DEBUGSTRUCTURE) no_error = printf_openGEX_identifier_structure((openDDL_identifier_structure*) structure);
+          if (DEBUGSTRUCTURE) no_error = printf_identifier_structure((openDDL_identifier_structure*)structure); 
+          no_error = openGEX_identifier_structure((openDDL_identifier_structure*)structure);
         }
         else{// That means that it's a data_type structure!!
-          if (DEBUGSTRUCTURE) no_error = printf_openGEX_data_type_structure((openDDL_data_type_structure*)structure);
+          if (DEBUGSTRUCTURE) no_error = printf_data_type_structure((openDDL_data_type_structure*)structure);
         }
         --nesting;
         return true;

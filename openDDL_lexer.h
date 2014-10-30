@@ -117,17 +117,20 @@ namespace octet
       }
 
       ////////////////////////////////////////////////////////////////////////////////
-      /// @brief This will check if the current char is equal the string
-      /// @param  word  , This is the word that has to be checked
-      /// @returns  True if the word /word is equal to the first characters from the current character
-      ///     ToDO: Is this function useful? Check if it has been used later
-      ///  (deprecated)
+      /// @brief This will check to words are equal
+      /// @param  word1  This is one of the words to be checked
+      /// @param  size1  This is the size of the first word that has to be checked
+      /// @param  word2  This is the other of the words to be checked
+      /// @param  size2  This is the size of the second word that has to be checked
+      /// @returns  True if the two words are equal
       ////////////////////////////////////////////////////////////////////////////////
-      bool char_word_is(string word){
-        sizeRead = 0;
-        while ((sizeRead < word.size()) && (currentChar[sizeRead] == (uint8_t)word[sizeRead]))
-          ++sizeRead;
-        return sizeRead == word.size();
+      bool same_word(char *word1, int size1, char *word2, int size2){
+        bool equal = true;
+        if (size1 != size2) equal = false;
+        for (int i = 0; equal && i < size1; ++i){
+          equal = (word1[i] == word2[i]);
+        }
+        return equal;
       }
       
       ////////////////////////////////////////////////////////////////////////////////
