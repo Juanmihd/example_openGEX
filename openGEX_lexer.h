@@ -12,6 +12,7 @@
 
 #include "openDDL_lexer.h"
 #include "openGEX_identifiers.h"
+#include "openGEX_structures.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief This class is the openGEX lexer, it will read the array of characters and get tokes
@@ -19,10 +20,19 @@
 namespace octet
 {
   namespace loaders{
-    enum { DEBUGDATA = 1, DEBUGSTRUCTURE = 1};
+    enum { DEBUGDATA = 0, DEBUGSTRUCTURE = 0, DEBUGOPENGEX = 1 };
     class openGEX_lexer : public openDDL_lexer{
       typedef gex_ident::gex_ident_enum gex_ident_list;
+      
+      //Some values needed to process correctly the file
+      //This are the values that are obtained by Metric structures and that define the measurement and orientation
+      float distance_multiplier; //default value = 1.0f
+      float angle_multiplier; //default value = 1.0f
+      float time_multiplier; //default value = 1.0f
+      bool z_up_direction; //default value = true  (z), if false (y)
+      //This will be used to be able to access to the currentStructure while working with the data_lists.
       openDDL_structure * currentStructure;
+
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief This will initialize some structures of the lexer (dictionary of identifiers of openGEX)
       ////////////////////////////////////////////////////////////////////////////////
@@ -31,6 +41,11 @@ namespace octet
         for (int i = gex_ident_list::id_Animation; i != gex_ident_list::ident_last; ++i){
           add_identifier(gex_ident::ident_name(i).c_str(), i);
         }
+        //Set the default values of the Metric structures
+        distance_multiplier = 1.0f;
+        angle_multiplier = 1.0f;
+        time_multiplier = 1.0f;
+        z_up_direction = true;
       }
 
       ////////////////////////////////////////////////////////////////////////////////
@@ -80,10 +95,10 @@ namespace octet
       }
 
       ////////////////////////////////////////////////////////////////////////////////
-      /// @brief This will process with openGEX info a data type structure (previously analized by openDDL lexer)
+      /// @brief This will print the data type structure (previously analized by openDDL lexer)
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_data_type_structure(openDDL_data_type_structure * structure){
+      bool printf_openGEX_data_type_structure(openDDL_data_type_structure * structure){
         currentStructure = structure;
         int tempID;
         //Obtaining the data_type of the structure
@@ -139,10 +154,10 @@ namespace octet
       }
 
       ////////////////////////////////////////////////////////////////////////////////
-      /// @brief This will process with openGEX info a identifier structure (previously analized by openDDL lexer)
+      /// @brief This will print the identifier structure (previously analized by openDDL lexer)
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_identifier_structure(openDDL_identifier_structure * structure){
+      bool printf_openGEX_identifier_structure(openDDL_identifier_structure * structure){
         currentStructure = structure;
         if (DEBUGSTRUCTURE) printf("\n");
         int tempID;
@@ -200,6 +215,92 @@ namespace octet
         return true;
       }
 
+      bool openGEX_Metric(openDDL_identifier_structure * structure){
+
+        return true;
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief This will process the identifier structure and store it info into octet (previously analized by openDDL lexer)
+      /// @return True if everything went well, false if there was some problem
+      ////////////////////////////////////////////////////////////////////////////////
+      bool openGEX_identifier_structure(openDDL_identifier_structure * structure){
+        currentStructure = structure;
+        bool no_error = true;
+        int tempID;
+        //Obtaining the identifier of the structure
+        tempID = (structure)->get_identifierID();
+        if (tempID < 0){
+          printf("(((ERROR: The identifier of the structure is invalid!)))\n");
+          return false;
+        }
+
+        if (structure->get_father_structure() == NULL){ //It's a top-level structure!
+          switch (tempID){
+          case 19: //Metric 
+            if (DEBUGOPENGEX) printf("Metric\n");
+            //Process Metric structure
+            no_error = openGEX_Metric(structure);
+            break;
+          case 10: //GeometryNode 
+            if (DEBUGOPENGEX) printf("GeometryNode\n");
+            //Process GeometryNode structure
+            break;
+          case 11: //GeometryObject
+            if (DEBUGOPENGEX) printf("GeometryObject\n");
+            //Process GeometryObject structure
+            break;
+          case 16: //Material
+            if (DEBUGOPENGEX) printf("Material\n");
+            //Process Material structure
+            break;
+          }
+        }
+
+        //Check the name of the structure!
+        tempID = structure->get_nameID();
+        if (tempID >= 0){
+          if (DEBUGSTRUCTURE) printfNesting();
+          if (DEBUGSTRUCTURE) printf("The name is ");
+          if (DEBUGSTRUCTURE) printf("%s", structure->get_name());
+          if (DEBUGSTRUCTURE) printf("\n");
+        }
+        else{
+          //if (DEBUGSTRUCTURE) printfNesting();
+          //if (DEBUGSTRUCTURE) printf("It has no name! (CHECK!)\n");
+        }
+        //Check the properties
+        int numProperties = structure->get_number_properties();
+        if (numProperties > 0){
+          openDDL_properties * currentProperty;
+          //Let's work with all the properties!
+          if (DEBUGSTRUCTURE) printfNesting();
+          if (DEBUGSTRUCTURE) printf("The ammount of properties is: %i\n", numProperties);
+          for (int i = 0; i < numProperties; ++i){
+            currentProperty = structure->get_property(i);
+            if (DEBUGSTRUCTURE) printfNesting();
+            if (DEBUGSTRUCTURE) printf("Property <");
+            tempID = currentProperty->identifierID;
+            if (DEBUGSTRUCTURE) printf("%s", identifiers_.get_key(tempID));
+            if (DEBUGSTRUCTURE) printf("> with value <");
+            if (DEBUGSTRUCTURE) printfDDLliteral(currentProperty->literal);
+            if (DEBUGSTRUCTURE) printf(">\n");
+          }
+        }
+
+        //Check the substructures
+        int numSubstructures = structure->get_number_substructures();
+        if (numSubstructures > 0){
+          if (DEBUGSTRUCTURE) printfNesting();
+          if (DEBUGSTRUCTURE) printf("The ammount of substructures is: %i\n", numSubstructures);
+          for (int i = 0; i < numSubstructures; ++i){
+            openGEX_structure(structure->get_substructure(i));
+          }
+        }
+
+        return true;
+      }
+
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief This will check which type of structure to openGEX (previously analized by openDDL lexer)
       /// @return True if everything went well, false if there was some problem
@@ -209,10 +310,10 @@ namespace octet
         bool no_error = true;
         //Check the type of the structure!
         if (structure->get_type_structure() == 0){ //That means that it's a identifier structure!
-          no_error = openGEX_identifier_structure((openDDL_identifier_structure*) structure);
+          if (DEBUGSTRUCTURE) no_error = printf_openGEX_identifier_structure((openDDL_identifier_structure*) structure);
         }
         else{// That means that it's a data_type structure!!
-          no_error = openGEX_data_type_structure((openDDL_data_type_structure*) structure);
+          if (DEBUGSTRUCTURE) no_error = printf_openGEX_data_type_structure((openDDL_data_type_structure*)structure);
         }
         --nesting;
         return true;
@@ -247,6 +348,7 @@ namespace octet
         return true;
       }
     };
+
   }
 }
 

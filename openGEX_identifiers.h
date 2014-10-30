@@ -102,16 +102,16 @@ namespace octet{
           "CameraNode",     // identificator 07
           "CameraObject",   // identificator 08
           "Color",          // identificator 09
-          "GeometryNode",   // identificator 10
-          "GeometryObject", // identificator 11
+            "GeometryNode",   // identificator 10
+            "GeometryObject", // identificator 11
           "IndexArray",     // identificator 12
           "Key",            // identificator 13
           "LightNode",      // identificator 14
           "LightObject",    // identificator 15
-          "Material",       // identificator 16
+            "Material",       // identificator 16
           "MaterialRef",    // identificator 17
           "Mesh",           // identificator 18
-          "Metric",         // identificator 19
+            "Metric",         // identificator 19
           "Morph",          // identificator 20
           "Name",           // identificator 21
           "Node",           // identificator 22
