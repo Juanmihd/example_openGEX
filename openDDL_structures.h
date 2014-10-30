@@ -111,7 +111,7 @@ namespace octet{
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief This will get the name identificator of the class
-      /// @return The identificator of the name. If it has no name it will return -1
+      /// @return A char pointer to the name
       ////////////////////////////////////////////////////////////////////////////////
       char * get_name(){
         return name;
@@ -127,7 +127,7 @@ namespace octet{
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief This will set the name identificator of the class
-      /// @param  n_nameID  The new identificator of the name
+      /// @param  n_name  The name as a char pointer
       ////////////////////////////////////////////////////////////////////////////////
       void set_name(char * n_name){
         name = n_name;
