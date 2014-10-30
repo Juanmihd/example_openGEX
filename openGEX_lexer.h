@@ -19,10 +19,10 @@
 namespace octet
 {
   namespace loaders{
-    enum { DEBUGDATA = 0, DEBUGSTRUCTURE = 0};
+    enum { DEBUGDATA = 1, DEBUGSTRUCTURE = 1};
     class openGEX_lexer : public openDDL_lexer{
       typedef gex_ident::gex_ident_enum gex_ident_list;
-
+      openDDL_structure * currentStructure;
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief This will initialize some structures of the lexer (dictionary of identifiers of openGEX)
       ////////////////////////////////////////////////////////////////////////////////
@@ -55,7 +55,12 @@ namespace octet
           printf("%.*s", value.size_string_, value.value.string_);
           break;
         case value_type_DDL::REF:
-          printf("%i", value.value.ref_);
+          if (value.global_ref_){
+            printf("Global ->");
+          }
+          else{
+            printf("Local ->");
+          }
           break;
         case value_type_DDL::TYPE:
           printf("%i", value.value.type_);
@@ -79,9 +84,10 @@ namespace octet
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
       bool openGEX_data_type_structure(openDDL_data_type_structure * structure){
+        currentStructure = structure;
         int tempID;
         //Obtaining the data_type of the structure
-        printfNesting();
+        if (DEBUGSTRUCTURE) printfNesting();
         if (DEBUGSTRUCTURE) printf("The type is: ");
         tempID = (structure)->get_typeID();
         if (tempID < 0)
@@ -96,7 +102,12 @@ namespace octet
           if (DEBUGSTRUCTURE) printfNesting();
           if (DEBUGSTRUCTURE) printf("The name is ");
           if (DEBUGSTRUCTURE) printf("%s", names_.get_key(tempID));
+          if (DEBUGSTRUCTURE) printf(" = %s", structure->get_name());
           if (DEBUGSTRUCTURE) printf("\n");
+        }
+        else{
+          //if (DEBUGSTRUCTURE) printfNesting();
+          //if (DEBUGSTRUCTURE) printf("It has no name! (CHECK!)\n");
         }
 
         //Check what kind of data_type is (if it has integer_literal or not!)
@@ -113,7 +124,7 @@ namespace octet
           for (int i = 0; i < numLists; ++i){
             currentDataList = structure->get_data_list(i);
             sizeDataList = currentDataList->data_list.size();
-            printfNesting();
+            if(DEBUGDATA) printfNesting();
             if(DEBUGDATA) printf("Occurency %i with %i elements.\n", i+1, sizeDataList);
             for (int j = 0; j < sizeDataList; ++j){
               if (DEBUGDATA) printfNesting();
@@ -132,10 +143,11 @@ namespace octet
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
       bool openGEX_identifier_structure(openDDL_identifier_structure * structure){
+        currentStructure = structure;
         if (DEBUGSTRUCTURE) printf("\n");
         int tempID;
         //Obtaining the identifier of the structure
-        printfNesting();
+        if (DEBUGSTRUCTURE) printfNesting();
         if (DEBUGSTRUCTURE) printf("The identifier is: ");
         tempID = (structure)->get_identifierID();
         if (tempID < 0)
@@ -149,8 +161,12 @@ namespace octet
         if (tempID >= 0){
           if (DEBUGSTRUCTURE) printfNesting();
           if (DEBUGSTRUCTURE) printf("The name is ");
-          if (DEBUGSTRUCTURE) printf("%s", names_.get_key(tempID));
+          if (DEBUGSTRUCTURE) printf("%s", structure->get_name());
           if (DEBUGSTRUCTURE) printf("\n");
+        }
+        else{
+          //if (DEBUGSTRUCTURE) printfNesting();
+          //if (DEBUGSTRUCTURE) printf("It has no name! (CHECK!)\n");
         }
         //Check the properties
         int numProperties = structure->get_number_properties();

@@ -721,41 +721,46 @@ namespace octet
       /// @param  size    this is the size of the word readed
       /// @return   True if everything went right, and false if something went wrong
       ////////////////////////////////////////////////////////////////////////////////
-      bool get_value_reference(int &ref, char *word, int size){
+      bool get_value_reference(char *ref, bool &global, char *word, int size){
         if(DEBUGGING) printf("Reading the reference %s: ",word);
         
         // A reference can be the identificator or name 'null'
         if (size == 4){ //null size is 4
           if (word[0] == 'n' && word[1] == 'u' && word[2] == 'l' && word[3] == 'l'){
-            ref = -1;
+            ref = "NULL";
           }
         }
         // If it's not the null value...
         else{
           // it can be also a name
           if (*word == 0x24){ // 24 = $, that means it's a global name
+            global = true;
             //first step is to look if the global name exists
-            printf("Looking for global ");
-            printf("%s", word);
-            printf("\n");
             int nameID = names_.get_index(word);
             //if exist, add the same pointer
             if (nameID >= 0){
-              ref = nameID;
+              ref = word;
             }
             //if it does not exist, pointer = NULL
             else{
               names_[word] = NULL;
-              ref = names_.get_index(word);
+              ref = word;
             }
           }
           else if (*word == 0x25){ // 25 = %, that means it's a local name
+            global = false;
             //first step is to look if the local name exists
-            printf("Looking for local ");
-            printf("%s", word);
-            printf("\n");
+            openDDL_identifier_structure * father = current_structure->get_father_structure();
+            int nameID = father->get_local_index(word);
             //if exist, add the same pointer
+            if (nameID >= 0){
+              ref = word;
+            }
             //if it does not exist, pointer = NULL
+            else {
+              father->set_local_name(word, NULL);
+              ref = word;
+            }
           }
           // followed optionally for some identifiers
           string new_word;
@@ -775,7 +780,7 @@ namespace octet
           }
         }
 
-        if (DEBUGGINGDDL) printf("Reference with id: %i\n", ref);
+        if (DEBUGGINGDDL) printf("Reference with id: %s\n", ref);
         return true;
       }
 
@@ -813,12 +818,16 @@ namespace octet
           if (nameID < 0){
             names_[name] = current_structure;
             nameID = names_.get_index(name);
-            if (DEBUGGING) printf("Name ID is %i\n", nameID);
+            if (DEBUGGING) printf("NEW Name ID is %i\n", nameID);
             current_structure->set_nameID(nameID);
+            current_structure->set_name(name);
           }
           else{
+            current_structure->set_nameID(nameID);
+            current_structure->set_name(name);
             if (names_[name] == NULL){
-
+              if (DEBUGGING) printf("Adding new content to name\n");
+              names_[name] = current_structure;
             }
             else{
               printf("This global name already exists!\n");
@@ -827,18 +836,30 @@ namespace octet
           }
         }
         else if (*name == 0x25){ //It's a local name
-          nameID = father_structure->get_index(name);
+          if (DEBUGGING) printf("Localing name\n");
+          nameID = father_structure->get_local_index(name);
+          if (DEBUGGING) printf("Name ID is %i\n", nameID);
           if (nameID < 0){
-            father_structure->add_name(name,current_structure);
-            current_structure->set_nameID(father_structure->get_index(name));
+            father_structure->set_local_name(name, current_structure);
+            nameID = father_structure->get_local_index(name);
+            current_structure->set_nameID(father_structure->get_local_index(name));
+            current_structure->set_name(name);
+            if (DEBUGGING) printf("NEW Name ID is %i\n", father_structure->get_local_index(name));
           }
           else{
+            current_structure->set_nameID(father_structure->get_local_index(name));
+            current_structure->set_name(name);
+            nameID = father_structure->get_local_index(name);
+            if (father_structure->get_local_name(name) == NULL){
+              if (DEBUGGING) printf("Adding new content to name\n");
+              father_structure->set_local_name(name, current_structure);
+            }
             printf("This local name already exists!\n");
             return -1;
           }
         }
-
-        if (DEBUGGING) printf((nameID < 0) ? "And it does not exist!\n" : "And it exists!\n");
+        
+        if (nameID < 0) printf("ERROR!!!!!!!! At this point the name has to exist!\n\n");
         return nameID;
       }
 
@@ -903,9 +924,15 @@ namespace octet
             else{
               type = 1;
               if (type >= 0){
+                //Get ready the data to store the size
+                char * new_string = new char[size];
+                bool global;
+                // Obtain the ref from the property
+                get_value_reference(new_string, global, (char*)tempChar, size);
                 // Set new property with the new value as reference
                 new_property->literal.value_type = value_type_DDL::REF;
-                new_property->literal.value.ref_ = type;
+                new_property->literal.value.ref_ = new_string;
+                new_property->literal.global_ref_ = global;
               }
               //Check if it's a bool
               else{
@@ -1049,7 +1076,7 @@ namespace octet
         }
         case token_type::tok_ref:
         {
-          no_error = get_value_reference(current_literal->value.ref_, word, size);
+          no_error = get_value_reference(current_literal->value.ref_, current_literal->global_ref_, word, size);
           break;
         }
         case token_type::tok_type:

@@ -50,10 +50,11 @@ namespace octet{
         bool bool_;
         float float_;
         char * string_;
-        int ref_;
+        char * ref_;
         int type_;
       } value;
       int size_string_;
+      bool global_ref_;
     };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -79,6 +80,7 @@ namespace octet{
     protected:
       structureType type;
       int nameID;
+      char * name;
       openDDL_identifier_structure * father_structure;
       //Local names and references
       dictionary<openDDL_structure *> names_;
@@ -108,11 +110,27 @@ namespace octet{
       }
 
       ////////////////////////////////////////////////////////////////////////////////
+      /// @brief This will get the name identificator of the class
+      /// @return The identificator of the name. If it has no name it will return -1
+      ////////////////////////////////////////////////////////////////////////////////
+      char * get_name(){
+        return name;
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////
       /// @brief This will set the name identificator of the class
       /// @param  n_nameID  The new identificator of the name
       ////////////////////////////////////////////////////////////////////////////////
       void set_nameID(int n_nameID){
         nameID = n_nameID;
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief This will set the name identificator of the class
+      /// @param  n_nameID  The new identificator of the name
+      ////////////////////////////////////////////////////////////////////////////////
+      void set_name(char * n_name){
+        name = n_name;
       }
 
       ////////////////////////////////////////////////////////////////////////////////
@@ -152,7 +170,7 @@ namespace octet{
       /// @param  name  A char pointer that contains the name
       /// @return -1 if the name has not been initialized yet or the index of the name
       ////////////////////////////////////////////////////////////////////////////////
-      int get_index(char *name){
+      int get_local_index(char *name){
         return names_.get_index(name);
       }
 
@@ -161,9 +179,36 @@ namespace octet{
       /// @param  name  A char pointer that contains the name
       /// @return -1 if the name has not been initialized yet or the index of the name
       ////////////////////////////////////////////////////////////////////////////////
-      int add_name(char *name, openDDL_structure * structure){
+      int set_local_name(char *name, openDDL_structure * structure){
         names_[name] = structure;
         return names_.get_index(name);
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief This will get the structure being part of a local name (by index)
+      /// @param  index The index to the local name willing to obtain
+      /// @return The pointer to the structure with that name
+      ////////////////////////////////////////////////////////////////////////////////
+      openDDL_structure * get_local_name(int index){
+        return names_.get_value(index);
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief This will get the structure being part of a local name (by name)
+      /// @param  name  A char pointer that contains the name
+      /// @return The pointer to the structure with that name
+      ////////////////////////////////////////////////////////////////////////////////
+      openDDL_structure * get_local_name(char *name){
+        return names_[name];
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief This will get the structure being part of a local name (by index)
+      /// @param  index The index to the local name willing to obtain
+      /// @return The pointer to the char of the name
+      ////////////////////////////////////////////////////////////////////////////////
+      const char * get_local_name_char(int index){
+        return names_.get_key(index);
       }
 
     };
