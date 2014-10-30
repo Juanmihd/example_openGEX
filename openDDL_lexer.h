@@ -1117,6 +1117,7 @@ namespace octet
           ending = read_data_list_element(wordSize);
           process_data_list_element(type, wordSize);
           current_literal->value_type = current_data_list->value_type;
+          current_data_list->data_list.push_back(current_literal);
           --itemsLeft;
         }
         //detect }

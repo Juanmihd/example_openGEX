@@ -29,10 +29,10 @@ namespace octet{
     enum structureType { notYetType = -1, identifierStructureType = 0, dataTypeStructureType = 1 };
     enum value_type_DDL   { UINT = 0, INT = 1, BOOL = 2, FLOAT = 3, STRING = 4, REF = 5, TYPE = 6};
 
-
     ////////////////////////////////////////////////////////////////////////////////
     /// @brief This is a handy function that converts from openDDL_token to this literal type
-    /// @param  token This is the token from 
+    /// @param  token This is the type in "token mode"
+    /// @return The integer with the type in "literal mode"
     ////////////////////////////////////////////////////////////////////////////////
     int convert_type_token_to_DDL(int token){
       return (token == 0 ? 2 : (token < 5 ? 1 : (token < 9 ? 0 : (token < 11 ? 3 : token - 7))));
