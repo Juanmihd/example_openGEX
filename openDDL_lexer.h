@@ -23,7 +23,7 @@ namespace octet
 /// @brief This class is the openGEX lexer, it will read the array of characters and get tokes
 ////////////////////////////////////////////////////////////////////////////////
     class openDDL_lexer : public ddl_token{
-      enum { MIN_RESERVING_DATA_LIST = 10, debuggingDDL = 0, debuggingDDLMore = 0, debugging = 0, debuggingMore = 0 };
+      enum { MIN_RESERVING_DATA_LIST = 10, DEBUGGINGDDL = 0, DEBUGGINGDDLMORE = 0, DEBUGGING = 0, DEBUGGINGMORE = 0 };
     protected:
       // Dictionary of identifiers of the openDDL language we are using
       dictionary<int> identifiers_;
@@ -168,30 +168,30 @@ namespace octet
 
         switch (*currentChar){
         case 0x2F: // 0x2f = /  as it comes from another / that means that it's a // comment
-          if (debuggingDDLMore) printf("(//comment)");
+          if (DEBUGGINGDDLMORE) printf("(//comment)");
           get_next_char();
           while (*currentChar != 0x0D && *currentChar != 0x0A){
-            if (debuggingDDLMore) printf("%c", *currentChar);
+            if (DEBUGGINGDDLMORE) printf("%c", *currentChar);
             get_next_char();
           }
-          if (debuggingDDLMore) printf("_%c", *currentChar);
+          if (DEBUGGINGDDLMORE) printf("_%c", *currentChar);
           break;
         case 0x2A: // 0x2a = * as it comes from another / that means that it's a /* comment
-          if (debuggingDDLMore) printf("(/**/comment)");
+          if (DEBUGGINGDDLMORE) printf("(/**/comment)");
           get_next_char();
           while (*currentChar != 0x2A && currentChar[1] != 0x2f){ // until next characters are * and / 
-            if (debuggingDDLMore) printf("%c", *currentChar);
+            if (DEBUGGINGDDLMORE) printf("%c", *currentChar);
             get_next_char();
             if (is_end_file()) assert(0 && "It's missing the */ of a comment");
           }
-          if (debuggingDDLMore) printf("_%c", *currentChar);
+          if (DEBUGGINGDDLMORE) printf("_%c", *currentChar);
           get_next_char();
-          if (debuggingDDLMore) printf("_%c", *currentChar);
+          if (DEBUGGINGDDLMORE) printf("_%c", *currentChar);
           get_next_char();
           break;
         }
         while (is_whiteSpace()) get_next_char();
-        if (debuggingDDLMore) printf("\n%x\n", *currentChar);
+        if (DEBUGGINGDDLMORE) printf("\n%x\n", *currentChar);
       }
 
       ////////////////////////////////////////////////////////////////////////////////
@@ -389,7 +389,7 @@ namespace octet
                 return false; //ERROR!
             }
             value = u.f;
-            if (debuggingDDLMore) printf("===> %f, %8x <==== Is this right?\n", u.f, u.i);
+            if (DEBUGGINGDDLMORE) printf("===> %f, %8x <==== Is this right?\n", u.f, u.i);
           }
         }
 
@@ -453,7 +453,7 @@ namespace octet
 
         //Now construct the number knowing value, pos_negative, decimal, pow, exponential!
         value = value*pos_negative / decimal;
-        if (debuggingDDL) printf("Number-> %f ", value);
+        if (DEBUGGINGDDL) printf("Number-> %f ", value);
         return true;
       }
 
@@ -475,7 +475,7 @@ namespace octet
       /// @return   True if everything went right, and false if something went wrong
       ////////////////////////////////////////////////////////////////////////////////
       bool get_string_literal(string &value, char *word, int size){
-        if (debuggingDDL) printf("Reading the string: ");
+        if (DEBUGGINGDDL) printf("Reading the string: ");
         char caracter;
         //first of all check if it's a correct string
         if (*word != 0x22 || word[size - 1] != 0x22){
@@ -490,7 +490,7 @@ namespace octet
         for (int i = 1; i < i_limit; ++i, ++word){
           caracter = *word;
           if (caracter == 0x5c){ //5c = '\'
-            if (debuggingDDL) printf("Escape char\n");
+            if (DEBUGGINGDDL) printf("Escape char\n");
             ++i;
             if (i >= i_limit){
               printf("There is an error with the string\n");
@@ -547,7 +547,7 @@ namespace octet
         }
         value = string(new_word.data(), new_size);
 
-        if (debuggingDDL) printf("%s\n", value);
+        if (DEBUGGINGDDL) printf("%s\n", value);
         return true;
       }
 
@@ -562,7 +562,7 @@ namespace octet
       ///   reserved in memory. 
       ////////////////////////////////////////////////////////////////////////////////
       bool get_string_literal(char * new_word, int &new_size, char *word, int size){
-        if (debuggingDDL) printf("Reading the string: ");
+        if (DEBUGGINGDDL) printf("Reading the string: ");
         char caracter;
         //first of all check if it's a correct string
         if (*word != 0x22 || word[size - 1] != 0x22){
@@ -576,7 +576,7 @@ namespace octet
         for (int i = 1; i < i_limit; ++i, ++word){
           caracter = *word;
           if (caracter == 0x5c){ //5c = '\'
-            if (debuggingDDL) printf("Escape char\n");
+            if (DEBUGGINGDDL) printf("Escape char\n");
             ++i;
             if (i >= i_limit){
               printf("There is an error with the string\n");
@@ -643,7 +643,7 @@ namespace octet
       /// @return   True if everything went right, and false if something went wrong
       ////////////////////////////////////////////////////////////////////////////////
       bool get_char_literal(char &value, char *word, int size){
-        if (debuggingDDL) printf("Reading the string: ");
+        if (DEBUGGINGDDL) printf("Reading the string: ");
         //first of all check if it's a correct char literal
         if (size < 3 || size > 5){
           printf("The size of the char literal is not correct!\n");
@@ -656,7 +656,7 @@ namespace octet
         ++word;
 
         if (*word == 0x5c){ //5c = '\' (it's a escape char)
-          if (debuggingDDL) printf("Escape char\n");
+          if (DEBUGGINGDDL) printf("Escape char\n");
           ++word;
           if (*word == 0x78 && is_hex_digit(word[1]) && is_hex_digit(word[2])){ //78 = x , so is a escape-char with 2 hex-digit
             value = *word; // get the value of the character
@@ -710,7 +710,7 @@ namespace octet
         }
 
 
-        if (debuggingDDL) printf("%c\n", value);
+        if (DEBUGGINGDDL) printf("%c\n", value);
         return true;
       }
 
@@ -722,7 +722,7 @@ namespace octet
       /// @return   True if everything went right, and false if something went wrong
       ////////////////////////////////////////////////////////////////////////////////
       bool get_value_reference(int &ref, char *word, int size){
-        if (debuggingDDL) printf("Reading the reference: ");
+        if(DEBUGGING) printf("Reading the reference %s: ",word);
         
         // A reference can be the identificator or name 'null'
         if (size == 4){ //null size is 4
@@ -733,13 +733,27 @@ namespace octet
         // If it's not the null value...
         else{
           // it can be also a name
-          if (*word == 0x44){ // 44 = $, that means it's a global name
+          if (*word == 0x24){ // 24 = $, that means it's a global name
             //first step is to look if the global name exists
+            printf("Looking for global ");
+            printf("%s", word);
+            printf("\n");
+            int nameID = names_.get_index(word);
             //if exist, add the same pointer
+            if (nameID >= 0){
+              ref = nameID;
+            }
             //if it does not exist, pointer = NULL
+            else{
+              names_[word] = NULL;
+              ref = names_.get_index(word);
+            }
           }
-          else if (*word == 0x45){ // 45 = %, that means it's a local name
+          else if (*word == 0x25){ // 25 = %, that means it's a local name
             //first step is to look if the local name exists
+            printf("Looking for local ");
+            printf("%s", word);
+            printf("\n");
             //if exist, add the same pointer
             //if it does not exist, pointer = NULL
           }
@@ -750,18 +764,18 @@ namespace octet
               get_next_char();
               remove_comments_whitespaces();
               new_word = read_word();
-              if (debugging) printf(" %s ", new_word);
+              if (DEBUGGING) printf(" %s ", new_word);
               get_next_char();
               remove_comments_whitespaces();
             }
             else{
-              if (debugging) printf(" %c ", *currentChar);
+              if (DEBUGGING) printf(" %c ", *currentChar);
               remove_comments_whitespaces(); 
             }
           }
         }
 
-        if (debuggingDDL) printf("Reference with id: %i\n", ref);
+        if (DEBUGGINGDDL) printf("Reference with id: %i\n", ref);
         return true;
       }
 
@@ -789,22 +803,27 @@ namespace octet
           name[i] = tempChar[i];
         }
         name[size_name] = '\0';
-        if(debugging) printf("It's the name %s<<!!\n", name);
+        if(DEBUGGING) printf("It's the name %s<<!!\n", name);
         
         int nameID;
         if (*name == 0x24){ //It's a global name
-          if (debugging) printf("Globaling name\n");
+          if (DEBUGGING) printf("Globaling name\n");
           nameID = names_.get_index(name);
-          if (debugging) printf("Name ID is %i\n", nameID);
+          if (DEBUGGING) printf("Name ID is %i\n", nameID);
           if (nameID < 0){
             names_[name] = current_structure;
             nameID = names_.get_index(name);
-            if (debugging) printf("Name ID is %i\n", nameID);
+            if (DEBUGGING) printf("Name ID is %i\n", nameID);
             current_structure->set_nameID(nameID);
           }
           else{
-            printf("This global name already exists!\n");
-            return -1;
+            if (names_[name] == NULL){
+
+            }
+            else{
+              printf("This global name already exists!\n");
+              return -1;
+            }
           }
         }
         else if (*name == 0x25){ //It's a local name
@@ -814,12 +833,12 @@ namespace octet
             current_structure->set_nameID(father_structure->get_index(name));
           }
           else{
-            printf("This global name already exists!\n");
+            printf("This local name already exists!\n");
             return -1;
           }
         }
 
-        if (debugging) printf((nameID < 0) ? "And it does not exist!\n" : "And it exists!\n");
+        if (DEBUGGING) printf((nameID < 0) ? "And it does not exist!\n" : "And it exists!\n");
         return nameID;
       }
 
@@ -937,7 +956,7 @@ namespace octet
 
 
 
-        if (debugging) printf("\n\tCurrent character after the word %s!! %c\n\n", string((char*)tempChar, size), *currentChar);
+        if (DEBUGGING) printf("\n\tCurrent character after the word %s!! %c\n\n", string((char*)tempChar, size), *currentChar);
 
         return true;
       }
@@ -949,7 +968,7 @@ namespace octet
       ////////////////////////////////////////////////////////////////////////////////
       bool process_properties(openDDL_identifier_structure * structure){
         bool no_error = true;
-        if(debugging) printf("Reading properties!\n");
+        if(DEBUGGING) printf("Reading properties!\n");
         get_next_char();
         remove_comments_whitespaces();
 
@@ -961,7 +980,7 @@ namespace octet
 
         //it will have to expect more properties as long as it's not a )
         while (*currentChar != 0x29 && no_error){ // 0x29 = )
-          if (debuggingDDL) printf("More properties!\n");
+          if (DEBUGGINGDDL) printf("More properties!\n");
           //before going on, check that it's a proper list of properties, that's so, it has to have a ,
           if (*currentChar != 0x2C){ // 0x2C = ,   
             printf("\n\nERROR!! It was expecting a ',' and it found a %c instead.\n", *currentChar);
@@ -986,7 +1005,7 @@ namespace octet
       /// @param  type  represent the type of element that it's expecting
       /// @param  size  The size of the word to read (starting with tempChar)
       ////////////////////////////////////////////////////////////////////////////////
-      void process_data_list_element(int type, int size){
+      void process_data_list_element(int type, char* word, int size){
         bool no_error = true;
         //string word((char*)tempChar, size);
         //Check the type, and call to the appropriate processor function
@@ -1006,13 +1025,13 @@ namespace octet
         case token_type::tok_uint32:
         case token_type::tok_uint64:
         {
-          no_error = get_integer_literal(current_literal->value.integer_, (char*)tempChar, size);
+          no_error = get_integer_literal(current_literal->value.integer_, word, size);
           break;
         }
         case token_type::tok_float:
         case token_type::tok_double:
         {
-          no_error = get_float_literal(current_literal->value.float_, (char*)tempChar, size);
+          no_error = get_float_literal(current_literal->value.float_, word, size);
           break;
         }
         case token_type::tok_string:
@@ -1020,7 +1039,7 @@ namespace octet
           char * new_string = new char[size];
           int new_size;
           // Obtain the string from the property
-          no_error = get_string_literal(new_string, new_size, (char*)tempChar, size);
+          no_error = get_string_literal(new_string, new_size, word, size);
           // Set new property with the new value as string!
           current_literal->value_type = value_type_DDL::STRING;
           current_literal->value.string_ = new_string;
@@ -1030,12 +1049,12 @@ namespace octet
         }
         case token_type::tok_ref:
         {
-          no_error = get_value_reference(current_literal->value.ref_, (char*)tempChar, size);
+          no_error = get_value_reference(current_literal->value.ref_, word, size);
           break;
         }
         case token_type::tok_type:
         {
-          no_error = get_value_data_type(current_literal->value.type_, (char*)tempChar, size);
+          no_error = get_value_data_type(current_literal->value.type_, word, size);
           break;
         }
         default:
@@ -1051,6 +1070,7 @@ namespace octet
       ////////////////////////////////////////////////////////////////////////////////
       bool process_data_list(int type){
         int ending, size;
+        char *word = NULL;
 
         remove_comments_whitespaces();
         if (*currentChar == 0x7d){ //7d = },  if the next character is }, that means that it's empty!!!
@@ -1067,7 +1087,11 @@ namespace octet
         //Read the first element, process it and add it to data_list
         current_literal = new openDDL_data_literal;
         ending = read_data_list_element(size);
-        process_data_list_element(type, size);
+        word = new char[size + 1];
+        for (int i = 0; i < size; ++i)
+          word[i] = tempChar[i];
+        word[size] = '\0';
+        process_data_list_element(type, word, size);
         current_literal->value_type = current_data_list->value_type;
         current_data_list->data_list.push_back(current_literal);
 
@@ -1078,11 +1102,15 @@ namespace octet
           //Read next element, process it, and add it to data_list
           current_literal = new openDDL_data_literal();
           ending = read_data_list_element(size);
-          process_data_list_element(type, size);
+          word = new char[size + 1];
+          for (int i = 0; i < size; ++i)
+            word[i] = tempChar[i];
+          word[size] = '\0';
+          process_data_list_element(type, word, size);
           current_literal->value_type = current_data_list->value_type;
           current_data_list->data_list.push_back(current_literal);
         }
-        if (debuggingDDL) printf("\n");
+        if (DEBUGGINGDDL) printf("\n");
 
         ((openDDL_data_type_structure *)current_structure)->add_data_list(current_data_list);
 
@@ -1097,6 +1125,7 @@ namespace octet
       ///  This function will keep on checking data until it finds a }. 
       ////////////////////////////////////////////////////////////////////////////////
       bool process_data_array(int type, int arraySize){
+        char * word;
         //detect {
         if (*currentChar == 0x2c){ //2c = ,
           get_next_char();
@@ -1115,13 +1144,17 @@ namespace octet
           remove_comments_whitespaces();
           current_literal = new openDDL_data_literal();
           ending = read_data_list_element(wordSize);
-          process_data_list_element(type, wordSize);
+          word = new char[wordSize + 1];
+          for (int i = 0; i < wordSize; ++i)
+            word[i] = tempChar[i];
+          word[wordSize] = '\0';
+          process_data_list_element(type, word, wordSize);
           current_literal->value_type = current_data_list->value_type;
           current_data_list->data_list.push_back(current_literal);
           --itemsLeft;
         }
         //detect }
-        if (debuggingDDL) printf("_%x\n", currentChar[0]);
+        if (DEBUGGINGDDL) printf("_%x\n", currentChar[0]);
         if (*currentChar != 0x7d){ //7d = }
           return false;
           printf("I Don't find the } inside process_data_array\n");
@@ -1154,7 +1187,7 @@ namespace octet
           get_next_char();
           remove_comments_whitespaces();
           ((openDDL_data_type_structure *)current_structure)->add_data_list(current_data_list);
-          if (debuggingDDL) printf("After data array...%x\n", currentChar[0]);
+          if (DEBUGGINGDDL) printf("After data array...%x\n", currentChar[0]);
         }
         //expect } (7d)
 
@@ -1182,19 +1215,18 @@ namespace octet
         // have to use a different way to stop it with whitespaces
         if (*currentChar == 0x27 || *currentChar == 0x22){ //27 = ' and 22 = "
           while (*currentChar != 0x2c && *currentChar != 0x7d && !(*currentChar != 0x20 && is_whiteSpace()) && !is_comment()){
-            if (debuggingDDLMore) printf("%c, ", *currentChar);
+            if (DEBUGGINGDDLMORE) printf("%c, ", *currentChar);
             get_next_char();
             ++sizeWord;
           }
         }
         else{
           while (*currentChar != 0x2c && *currentChar != 0x7d && !is_whiteSpace() && !is_comment()){
-            if (debuggingDDLMore) printf("%x, ", currentChar[0]);
+            if (DEBUGGINGDDLMORE) printf("%x, ", currentChar[0]);
             get_next_char();
             ++sizeWord;
           }
         }
-
         remove_comments_whitespaces();
 
         switch (*currentChar){
@@ -1223,7 +1255,7 @@ namespace octet
         size = 0;
         tempChar = currentChar;
         while (*currentChar != 0x2C && *currentChar != 0x29 && !is_whiteSpace() && !is_comment()){
-          if (debuggingDDLMore) printf("%x, ", *currentChar);
+          if (DEBUGGINGDDLMORE) printf("%x, ", *currentChar);
           ++size;
           get_next_char();
         }
@@ -1247,7 +1279,7 @@ namespace octet
           get_next_char();
           ++sizeNumber;
         }
-        if (debuggingDDLMore) printf("\n");
+        if (DEBUGGINGDDLMORE) printf("\n");
         --sizeNumber;
         for (int i = 0; i <= sizeNumber; ++i){
           number += pow*((int)tempChar[sizeNumber-i]-48);
@@ -1280,8 +1312,8 @@ namespace octet
           }
         }
         string temp((char*)(tempChar), sizeWord);
-        if (debugging) printf("Last symbol-> %x finding %s\n", currentChar[0], temp);
-        if (debugging) printf("Finding => %s ", temp);
+        if (DEBUGGING) printf("Last symbol-> %x finding %s\n", currentChar[0], temp);
+        if (DEBUGGING) printf("Finding => %s ", temp);
         return temp;
       }
 
@@ -1320,20 +1352,20 @@ namespace octet
       openDDL_data_type_structure * process_structureData(int type, openDDL_identifier_structure * father){
         bool no_error = true;
         int arraySize;
-        if (debugging) printf("\t----TYPE n: %i!!----\n", type);
+        if (DEBUGGING) printf("\t----TYPE n: %i!!----\n", type);
         //First step is remove whiteSpace and comments
         remove_comments_whitespaces();
-        if (debuggingMore) printf("%x\n", currentChar[0]);
+        if (DEBUGGINGMORE) printf("%x\n", currentChar[0]);
 
         openDDL_data_type_structure * data_type_structure;
         //Then it will read the first character, to see if its a [, or {, or name
         //if name it is a only dataList, so call to process_dataList() and tell that function if has a name or not
         if (*currentChar == 0x5b){ // 5b = [
-          if (debugging) printf("It's a data array list!\n");
+          if (DEBUGGING) printf("It's a data array list!\n");
           //check integer-literal (for a data array list)
           get_next_char();
           arraySize = read_array_size();
-          if (debuggingMore) printf("The size is %i\n", arraySize);
+          if (DEBUGGINGMORE) printf("The size is %i\n", arraySize);
           get_next_char();
           remove_comments_whitespaces();
 
@@ -1363,7 +1395,7 @@ namespace octet
         else{
           int nameID = -1;
           if (is_name()){ // check if there is a name, and process it
-            if (debugging) printf("It's a name + data list!\n");
+            if (DEBUGGING) printf("It's a name + data list!\n");
             nameID = process_name(father);
             get_next_char();
           }
@@ -1373,7 +1405,7 @@ namespace octet
 
           //After the optional name, it expects a {, and analize the data_list
           if (*currentChar == 0x7b){ // 7b = {
-            if (debugging) printf("It's a data list!\n");
+            if (DEBUGGING) printf("It's a data list!\n");
             get_next_char();
             remove_comments_whitespaces();
             current_structure = data_type_structure;
@@ -1385,7 +1417,7 @@ namespace octet
             printf("\n\nERROR: I don't find the data-list!\n\n");
           }
         }
-        if (debugging) printf("Expect a } ... %c\n", *currentChar);
+        if (DEBUGGING) printf("Expect a } ... %c\n", *currentChar);
         
         if (no_error)
           return data_type_structure;
@@ -1402,7 +1434,7 @@ namespace octet
       ////////////////////////////////////////////////////////////////////////////////
       openDDL_identifier_structure * process_structureIdentifier(int type, openDDL_identifier_structure * father){
         bool no_error = true;
-        if (debugging) printf("\t----IDENTIFIER n. %i!!----\n", type);
+        if (DEBUGGING) printf("\t----IDENTIFIER n. %i!!----\n", type);
 
         //First step is remove whiteSpace and comments
         remove_comments_whitespaces();
@@ -1441,7 +1473,7 @@ namespace octet
           no_error = false;
           printf("\nERROR: No substructure!!!\n\n");
         }
-        if (debugging) printf("Expect a } ... %c\n", *currentChar);
+        if (DEBUGGING) printf("Expect a } ... %c\n", *currentChar);
 
         if (no_error)
           return identifier_structure;
@@ -1459,14 +1491,14 @@ namespace octet
         if (is_end_file()) return true; //If we arrived to the end of the file, let's finish this!
         string word;
         ++nesting;
-        if (debugging) printf("\n-----------%x\t%c\n", *currentChar, *currentChar);
+        if (DEBUGGING) printf("\n-----------%x\t%c\n", *currentChar, *currentChar);
         openDDL_structure * processing_structure = NULL;
         // It's a real structure! But it can be IDENTIFIER or DATATYPE
         //remove_comments_whitespaces();
         word = read_word();
-        if (debugging) printf("Finding => %s\n", word);
+        if (DEBUGGING) printf("Finding => %s\n", word);
         remove_comments_whitespaces();
-        if (debuggingMore) printf("%x <----\n", currentChar[0]);
+        if (DEBUGGINGMORE) printf("%x <----\n", currentChar[0]);
 
         //check if it's a type and return it's index (if its negative it's not a type)
         int type = is_dataType(word);
@@ -1485,7 +1517,7 @@ namespace octet
             printf("ERRROR!!! There is no real structure.\n");//assert(0 && "It's not a proper structure");
           }
         }
-        if (debugging) printf("Expect a } ... %c\n", *currentChar);
+        if (DEBUGGING) printf("Expect a } ... %c\n", *currentChar);
         get_next_char();
         --nesting;
         if (processing_structure == NULL)
@@ -1536,7 +1568,7 @@ namespace octet
             //Process token (in openDDL is a structure) when you find it
             no_error = process_structure();
             //get new token
-            if(debugging) printf("-----------%x\n", *currentChar);
+            if(DEBUGGING) printf("-----------%x\n", *currentChar);
           }
         }
 
