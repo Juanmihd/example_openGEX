@@ -222,14 +222,14 @@ namespace octet
       ///   Note: This function will check the property of type key, and, depending on it's value
       ///   it will update the proper info (distance, angle, time, or up)
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_Metric(openDDL_identifier_structure * structure){
+      bool openGEX_Metric(openDDL_identifier_structure *structure){
         int tempID;
+        openDDL_data_type_structure *data_structure = NULL;
         bool no_error = true;
-        openDDL_data_type_structure * data_structure;
         //Check the properties
         int numProperties = structure->get_number_properties();
         if (numProperties == 1){
-          openDDL_properties * currentProperty;
+          openDDL_properties *currentProperty;
           currentProperty = structure->get_property(0);
           //Check that the property is correct!
           tempID = identifiers_.get_value(currentProperty->identifierID);
@@ -339,16 +339,6 @@ namespace octet
               break;
             }
           }
-          for (int i = 0; i < numProperties; ++i){
-            currentProperty = structure->get_property(i);
-            if (DEBUGSTRUCTURE) printfNesting();
-            if (DEBUGSTRUCTURE) printf("Property <");
-            tempID = currentProperty->identifierID;
-            if (DEBUGSTRUCTURE) printf("%s", identifiers_.get_key(tempID));
-            if (DEBUGSTRUCTURE) printf("> with value <");
-            if (DEBUGSTRUCTURE) printfDDLliteral(currentProperty->literal);
-            if (DEBUGSTRUCTURE) printf(">\n");
-          }
         }
         //If it has a different number of properties, it's an error!
         else{
@@ -359,8 +349,112 @@ namespace octet
       }
 
       ////////////////////////////////////////////////////////////////////////////////
+      /// @brief This will obtain all the info from a Name structure
+      /// @param  name  This is a pointer to char, it will return here the value of the Name
+      /// @param  structure This is the structure to be analized, it has to be Name.
+      /// @return True if everything went well, false if there was some problem
+      ////////////////////////////////////////////////////////////////////////////////
+      bool openGEX_Name(char *name, openDDL_identifier_structure *structure){
+        bool no_error = true;
+
+        return no_error;
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief This will obtain all the info from a ObjectRef structure
+      /// @param  name  This is a pointer to char, it will return here the value of the ObjectRef
+      /// @param  structure This is the structure to be analized, it has to be ObjectRef.
+      /// @return True if everything went well, false if there was some problem
+      ////////////////////////////////////////////////////////////////////////////////
+      bool openGEX_ObjectRef(char *ref, openDDL_identifier_structure *structure){
+        bool no_error = true;
+
+        return no_error;
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief This will obtain all the info from a MaterialRef structure
+      /// @param  name  This is a pointer to char, it will return here the value of the MaterialRef
+      /// @param  structure This is the structure to be analized, it has to be MaterialRef.
+      /// @return True if everything went well, false if there was some problem
+      ////////////////////////////////////////////////////////////////////////////////
+      bool openGEX_MaterialRef(char *ref, openDDL_identifier_structure *structure){
+        bool no_error = true;
+
+        return no_error;
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief This will obtain all the info from a Morph structure
+      /// @param  values  This is a pointer to float, it will return here the values of the Morph
+      /// @param  numValues  This will return the size of values
+      /// @param  structure This is the structure to be analized, it has to be Morph.
+      /// @return True if everything went well, false if there was some problem
+      ////////////////////////////////////////////////////////////////////////////////
+      bool openGEX_Morph(float *values, int &numValues, openDDL_identifier_structure *structure){
+        bool no_error = true;
+
+        return no_error;
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief This will obtain all the info from a Transform structure
+      /// @param  name  This is a pointer to char, it will return here the value of the Transform
+      /// @param  object_only  This is a boolean saying if this is going to be applied only to one object
+      /// @param  structure This is the structure to be analized, it has to be Transform.
+      /// @return True if everything went well, false if there was some problem
+      ////////////////////////////////////////////////////////////////////////////////
+      bool openGEX_Transform(float *values, bool &object_only, openDDL_identifier_structure *structure){
+        bool no_error = true;
+
+        return no_error;
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief This will obtain all the info from a Translation structure
+      /// @param  name  This is a pointer to char, it will return here the value of the Translation
+      /// @param  coordinates  This represent which coordinate is used in the transform. (3 = all of them)
+      /// @param  object_only  This is a boolean saying if this is going to be applied only to one object
+      /// @param  structure This is the structure to be analized, it has to be Translation.
+      /// @return True if everything went well, false if there was some problem
+      ////////////////////////////////////////////////////////////////////////////////
+      bool openGEX_Translate(float *values, int &coordinates, bool &object_only, openDDL_identifier_structure *structure){
+        bool no_error = true;
+
+        return no_error;
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief This will obtain all the info from a Translation structure
+      /// @param  name  This is a pointer to char, it will return here the value of the Translation
+      /// @param  coordinates  This represent which coordinate is used in the transform. (3 = all of them, 4 = quaternion)
+      /// @param  object_only  This is a boolean saying if this is going to be applied only to one object
+      /// @param  structure This is the structure to be analized, it has to be Translation.
+      /// @return True if everything went well, false if there was some problem
+      ////////////////////////////////////////////////////////////////////////////////
+      bool openGEX_Rotate(float *values, int &coordinates, bool &object_only, openDDL_identifier_structure *structure){
+        bool no_error = true;
+
+        return no_error;
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief This will obtain all the info from a Translation structure
+      /// @param  name  This is a pointer to char, it will return here the value of the Translation
+      /// @param  coordinates  This represent which coordinate is used in the transform. (3 = all of them)
+      /// @param  object_only  This is a boolean saying if this is going to be applied only to one object
+      /// @param  structure This is the structure to be analized, it has to be Translation.
+      /// @return True if everything went well, false if there was some problem
+      ////////////////////////////////////////////////////////////////////////////////
+      bool openGEX_Scale(float *values, int &coordinates, bool &object_only, openDDL_identifier_structure *structure){
+        bool no_error = true;
+
+        return no_error;
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////
       /// @brief This will obtain all the info from a GeometryNode structure
-      /// @param  structure This is the structure to be analized, it has to be Metric.
+      /// @param  structure This is the structure to be analized, it has to be GeometryNode.
       /// @return True if everything went well, false if there was some problem
       ///   Note: This function will check the properties of the structure
       ///   And it will check for the referencies. It will prepare to build the node
@@ -368,7 +462,119 @@ namespace octet
       ///   GeometryObject will contain the node to the mesh!
       ////////////////////////////////////////////////////////////////////////////////
       bool openGEX_GeometryNode(openDDL_identifier_structure *structure){
+        int tempID;
         bool no_error = true;
+        bool values_specified[3] = { false, false, false }; //values => visible, shadow, motion_blur
+        bool values_properties[3] = { false, false, false };
+        //Obtain the properties (may not have)
+        int numProperties = structure->get_number_properties();
+        for (int i = 0; i < numProperties; ++i){
+          openDDL_properties *currentProperty;
+          currentProperty = structure->get_property(i);
+          tempID = identifiers_.get_value(currentProperty->identifierID);
+          switch (tempID){
+            //Property visible
+            values_specified[0] = true;
+            values_properties[0] = currentProperty->literal.value.bool_;
+          case 57:
+            break;
+            //Property shadow
+            values_specified[1] = true;
+            values_properties[1] = currentProperty->literal.value.bool_;
+          case 52:
+            break;
+            //Property motion_blur
+            values_specified[2] = true;
+            values_properties[2] = currentProperty->literal.value.bool_;
+          case 48:
+            break;
+          default:
+            printf("(((ERROR: Property %i non valid!)))\n", tempID);
+            break;
+          }
+        }
+        //Obtain the name of the structure
+        char * name = structure->get_name();
+        //Check substructures
+        int numSubstructures = structure->get_number_substructures();
+        int numMorph = 0;
+        int numName = 0;
+        int numObjectRef = 0;
+        float *values = NULL;
+        char *new_ref = NULL;
+        int numValues;
+        int coordinates = 3;
+        bool object_only = false;
+        for (int i = 0; i < numSubstructures; ++i){
+          openDDL_identifier_structure *substructure = (openDDL_identifier_structure *)structure->get_substructure(i);
+          tempID = substructure->get_identifierID();
+          switch (tempID){
+          //Get Name (may not have)
+          case 21://Name¡
+            if (numName == 0){
+              ++numName;
+              no_error = openGEX_Name(new_ref, substructure);
+            }
+            else{
+              printf("(((ERROR: It has more than one Morph, it can only have one (or none)!!!)))\n");
+            }
+            break;
+          //Get ObjectRef (geometryObject) (only 1)
+          case 23://ObjectRef
+            if (numObjectRef == 0){
+              ++numObjectRef;
+              no_error = openGEX_ObjectRef(new_ref, substructure);
+            }
+            else{
+              printf("(((ERROR: It has more than one Morph, it can only have one (or none)!!!)))\n");
+            }
+            break;
+          //Get MaterialRef
+          case 17://MaterialRef
+            no_error = openGEX_MaterialRef(new_ref, substructure);
+            break;
+          //Get Morph (may have one or none)
+          case 20://Morph
+            if (numMorph == 0){
+              ++numMorph;
+              no_error = openGEX_Morph(values, numValues, substructure);
+            }
+            else{
+              printf("(((ERROR: It has more than one Morph, it can only have one (or none)!!!)))\n");
+            }
+            break;
+          //Get Transforms (may not have)
+          case 32://Transform
+            no_error = openGEX_Transform(values, object_only, substructure);
+            break;
+          case 33://Translation
+            no_error = openGEX_Translate(values, coordinates, object_only, substructure);
+            break;
+          case 25://Rotation
+            no_error = openGEX_Rotate(values, coordinates, object_only, substructure);
+            break;
+          case 26://Scale
+            no_error = openGEX_Scale(values, coordinates, object_only, substructure);
+            break;
+          //Get Animation
+          case 0://Animation
+            //IGNORE ANIMATIONS FOR NOW!!!!
+            break;
+          //Get Nodes (children)
+          case 4://BoneNode
+            break;
+          case 7://CameraNode
+            //IGNORE CAMERAS FOR NOW!!!!
+            break;
+          case 10://GeometryNode
+            break;
+          case 14://LightNode
+            //IGNORE LIGHTS FOR NOW!!!!
+            break;
+          case 22://Nodes
+            break;
+          }
+        }
         return no_error;
       }
 
@@ -397,6 +603,7 @@ namespace octet
           case 10: //GeometryNode 
             if (DEBUGOPENGEX) printf("GeometryNode\n");
             //Process GeometryNode structure
+            no_error = openGEX_GeometryNode(structure);
             break;
           case 11: //GeometryObject
             if (DEBUGOPENGEX) printf("GeometryObject\n");
@@ -408,49 +615,7 @@ namespace octet
             break;
           }
         }
-        /*
-        //Check the name of the structure!
-        tempID = structure->get_nameID();
-        if (tempID >= 0){
-          if (DEBUGSTRUCTURE) printfNesting();
-          if (DEBUGSTRUCTURE) printf("The name is ");
-          if (DEBUGSTRUCTURE) printf("%s", structure->get_name());
-          if (DEBUGSTRUCTURE) printf("\n");
-        }
-        else{
-          //if (DEBUGSTRUCTURE) printfNesting();
-          //if (DEBUGSTRUCTURE) printf("It has no name! (CHECK!)\n");
-        }
-        //Check the properties
-        int numProperties = structure->get_number_properties();
-        if (numProperties > 0){
-          openDDL_properties * currentProperty;
-          //Let's work with all the properties!
-          if (DEBUGSTRUCTURE) printfNesting();
-          if (DEBUGSTRUCTURE) printf("The ammount of properties is: %i\n", numProperties);
-          for (int i = 0; i < numProperties; ++i){
-            currentProperty = structure->get_property(i);
-            if (DEBUGSTRUCTURE) printfNesting();
-            if (DEBUGSTRUCTURE) printf("Property <");
-            tempID = currentProperty->identifierID;
-            if (DEBUGSTRUCTURE) printf("%s", identifiers_.get_key(tempID));
-            if (DEBUGSTRUCTURE) printf("> with value <");
-            if (DEBUGSTRUCTURE) printfDDLliteral(currentProperty->literal);
-            if (DEBUGSTRUCTURE) printf(">\n");
-          }
-        }
-
-        //Check the substructures
-        int numSubstructures = structure->get_number_substructures();
-        if (numSubstructures > 0){
-          if (DEBUGSTRUCTURE) printfNesting();
-          if (DEBUGSTRUCTURE) printf("The ammount of substructures is: %i\n", numSubstructures);
-          for (int i = 0; i < numSubstructures; ++i){
-            openGEX_structure(structure->get_substructure(i));
-          }
-        }
-        */
-        return true;
+        return no_error;
       }
 
       ////////////////////////////////////////////////////////////////////////////////
