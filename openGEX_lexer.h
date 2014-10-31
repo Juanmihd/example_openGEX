@@ -453,6 +453,28 @@ namespace octet
       }
 
       ////////////////////////////////////////////////////////////////////////////////
+      /// @brief This will obtain all the info from a Node structure
+      /// @param  structure This is the structure to be analized, it has to be Node.
+      /// @return True if everything went well, false if there was some problem
+      ////////////////////////////////////////////////////////////////////////////////
+      bool openGEX_Node(openDDL_identifier_structure *structure, openDDL_identifier_structure *father = NULL){
+        bool no_error = true;
+
+        return no_error;
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief This will obtain all the info from a Node structure
+      /// @param  structure This is the structure to be analized, it has to be Node.
+      /// @return True if everything went well, false if there was some problem
+      ////////////////////////////////////////////////////////////////////////////////
+      bool openGEX_BoneNode(openDDL_identifier_structure *structure, openDDL_identifier_structure *father = NULL){
+        bool no_error = true;
+
+        return no_error;
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////
       /// @brief This will obtain all the info from a GeometryNode structure
       /// @param  structure This is the structure to be analized, it has to be GeometryNode.
       /// @return True if everything went well, false if there was some problem
@@ -461,7 +483,7 @@ namespace octet
       ///   assigning a pointer to a mesh that it will be created later
       ///   GeometryObject will contain the node to the mesh!
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_GeometryNode(openDDL_identifier_structure *structure){
+      bool openGEX_GeometryNode(openDDL_identifier_structure *structure, openDDL_identifier_structure *father = NULL){
         int tempID;
         bool no_error = true;
         bool values_specified[3] = { false, false, false }; //values => visible, shadow, motion_blur
@@ -500,10 +522,10 @@ namespace octet
         int numMorph = 0;
         int numName = 0;
         int numObjectRef = 0;
-        float *values = NULL;
-        char *new_ref = NULL;
         int numValues;
         int coordinates = 3;
+        float *values = NULL;
+        char *new_ref = NULL;
         bool object_only = false;
         for (int i = 0; i < numSubstructures; ++i){
           openDDL_identifier_structure *substructure = (openDDL_identifier_structure *)structure->get_substructure(i);
@@ -562,16 +584,19 @@ namespace octet
             break;
           //Get Nodes (children)
           case 4://BoneNode
+            no_error = openGEX_BoneNode(substructure,structure);
             break;
           case 7://CameraNode
             //IGNORE CAMERAS FOR NOW!!!!
             break;
           case 10://GeometryNode
+            no_error = openGEX_GeometryNode(substructure, structure);
             break;
           case 14://LightNode
             //IGNORE LIGHTS FOR NOW!!!!
             break;
           case 22://Nodes
+            no_error = openGEX_Node(substructure, structure);
             break;
           }
         }
