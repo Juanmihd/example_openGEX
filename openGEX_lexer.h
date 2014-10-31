@@ -221,6 +221,8 @@ namespace octet
       ////////////////////////////////////////////////////////////////////////////////
       bool openGEX_Metric(openDDL_identifier_structure * structure){
         int tempID;
+        bool no_error = true;
+        openDDL_data_type_structure * data_structure;
         //Check the properties
         int numProperties = structure->get_number_properties();
         if (numProperties == 1){
@@ -240,7 +242,28 @@ namespace octet
             switch (size){
             case 2: //check with up
               if (same_word(value, size, "up", size)){
-                printf("Up\n");
+                if(DEBUGOPENGEX) printf("Obatining up. Expecting data_list one element: string.\n");
+                // Get data structure
+                data_structure = (openDDL_data_type_structure *)structure->get_substructure(0);
+                if (data_structure->get_type_structure() == 1 && data_structure->get_typeID() == 11){
+                  // Obtain data
+                  char * value = data_structure->get_data_list(0)->data_list[0]->value.string_;
+                  int value_size = data_structure->get_data_list(0)->data_list[0]->size_string_;
+                  //Analyze data (it can be "z" or "y")
+                  if (value_size == 1){
+                    if (value[0] == 'z') z_up_direction = true;
+                    else if (value[0] == 'y') z_up_direction = false;
+                    else no_error = false;
+                    if (DEBUGOPENGEX) printf(z_up_direction ? "The new direction is z!\n" : "The new direction is y!\n");
+                  }
+                  else no_error = false;
+                }
+                else no_error = false;
+                //After analyzing the value for metric, if there was an error...
+                if (!no_error){
+                  printf("(((ERROR: The substructure is not correct for the key=up in Metric)))\n");
+                  return false;
+                }
               }
               else{
                 printf("(((ERROR: The property key in Metric has a wrong value!)))\n");
@@ -248,7 +271,19 @@ namespace octet
               break;
             case 4: //check with time
               if (same_word(value, size, "time", size)){
-                printf("Time\n");
+                if (DEBUGOPENGEX) printf("Obtaining time. Expecting data_list one element: float.\n");
+                // Get data structure
+                data_structure = (openDDL_data_type_structure *)structure->get_substructure(0);
+                if (data_structure->get_type_structure() == 1 && data_structure->get_typeID() == 9){
+                  // Obtain data
+                  float value = data_structure->get_data_list(0)->data_list[0]->value.float_;
+                  time_multiplier = value;
+                  if (DEBUGOPENGEX) printf("The new time multiplier is %f\n", time_multiplier);
+                }
+                else{
+                  printf("(((ERROR: The substructure is not correct for the key=up in Metric)))\n");
+                  return false;
+                }
               }
               else{
                 printf("(((ERROR: The property key in Metric has a wrong value!)))\n");
@@ -256,7 +291,19 @@ namespace octet
               break;
             case 5: //check with angle
               if (same_word(value, size, "angle", size)){
-                printf("Angle\n");
+                if (DEBUGOPENGEX) printf("Obtaining angle. Expecting data_list one element: float.\n");
+                // Get data structure
+                data_structure = (openDDL_data_type_structure *)structure->get_substructure(0);
+                if (data_structure->get_type_structure() == 1 && data_structure->get_typeID() == 9){
+                  // Obtain data
+                  float value = data_structure->get_data_list(0)->data_list[0]->value.float_;
+                  angle_multiplier = value;
+                  if (DEBUGOPENGEX) printf("The new angle multiplier is %f\n", angle_multiplier);
+                }
+                else{
+                  printf("(((ERROR: The substructure is not correct for the key=up in Metric)))\n");
+                  return false;
+                }
               }
               else{
                 printf("(((ERROR: The property key in Metric has a wrong value!)))\n");
@@ -264,7 +311,19 @@ namespace octet
               break;
             case 8: //check with distance
               if (same_word(value, size, "distance", size)){
-                printf("Distance\n");
+                if (DEBUGOPENGEX) printf("Obtaining distance. Expecting data_list one element: float.\n");
+                // Get data structure
+                data_structure = (openDDL_data_type_structure *)structure->get_substructure(0);
+                if (data_structure->get_type_structure() == 1 && data_structure->get_typeID() == 9){
+                  // Obtain data
+                  float value = data_structure->get_data_list(0)->data_list[0]->value.float_;
+                  distance_multiplier = value;
+                  if (DEBUGOPENGEX) printf("The new distance multiplier is %f\n", distance_multiplier);
+                }
+                else{
+                  printf("(((ERROR: The substructure is not correct for the key=up in Metric)))\n");
+                  return false;
+                }
               }
               else{
                 printf("(((ERROR: The property key in Metric has a wrong value!)))\n");
