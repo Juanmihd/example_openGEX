@@ -216,8 +216,11 @@ namespace octet
       }
 
       ////////////////////////////////////////////////////////////////////////////////
-      /// @brief This will print the identifier structure (previously analized by openDDL lexer)
+      /// @brief This will obtain all the info from a Metric structure
+      /// @param  structure This is the structure to be analized, it has to be Metric.
       /// @return True if everything went well, false if there was some problem
+      ///   Note: This function will check the property of type key, and, depending on it's value
+      ///   it will update the proper info (distance, angle, time, or up)
       ////////////////////////////////////////////////////////////////////////////////
       bool openGEX_Metric(openDDL_identifier_structure * structure){
         int tempID;
@@ -353,6 +356,20 @@ namespace octet
           return false;
         }
         return true;
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief This will obtain all the info from a GeometryNode structure
+      /// @param  structure This is the structure to be analized, it has to be Metric.
+      /// @return True if everything went well, false if there was some problem
+      ///   Note: This function will check the properties of the structure
+      ///   And it will check for the referencies. It will prepare to build the node
+      ///   assigning a pointer to a mesh that it will be created later
+      ///   GeometryObject will contain the node to the mesh!
+      ////////////////////////////////////////////////////////////////////////////////
+      bool openGEX_GeometryNode(openDDL_identifier_structure *structure){
+        bool no_error = true;
+        return no_error;
       }
 
       ////////////////////////////////////////////////////////////////////////////////

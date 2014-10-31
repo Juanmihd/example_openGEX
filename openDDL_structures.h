@@ -288,7 +288,7 @@ namespace octet{
       /// @param  index The index of the property to get
       /// @return A pointer to the given property
       ////////////////////////////////////////////////////////////////////////////////
-      openDDL_properties * get_property(int index){
+      openDDL_properties *get_property(int index){
         return propertiesList[index];
       }
 
@@ -296,7 +296,7 @@ namespace octet{
       /// @brief This will add a new structure to the structure
       /// @param  new_structure  The new structure to add
       ////////////////////////////////////////////////////////////////////////////////
-      void add_structure(openDDL_structure * new_structure){
+      void add_structure(openDDL_structure *new_structure){
         substructureList.push_back(new_structure);
       }
 
@@ -313,7 +313,7 @@ namespace octet{
       /// @param  index The index of the substructure to get
       /// @return A pointer to the given substructure
       ////////////////////////////////////////////////////////////////////////////////
-      openDDL_structure * get_substructure(int index){
+      openDDL_structure *get_substructure(int index){
         return substructureList[index];
       }
     };
@@ -412,7 +412,7 @@ namespace octet{
       /// @param  index  The index of the data_list requested
       /// @returns A pointer to the asked data_list
       ////////////////////////////////////////////////////////////////////////////////
-      openDDL_data_list * get_data_list(int index){
+      openDDL_data_list *get_data_list(int index){
         return data_list_array[index];
       }
     };

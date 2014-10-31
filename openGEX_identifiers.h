@@ -111,7 +111,7 @@ namespace octet{
               "Material",       // identificator 16 TL
           "MaterialRef",    // identificator 17
           "Mesh",           // identificator 18
-              "Metric",         // identificator 19 TL
+                "Metric",         // identificator 19 TL
           "Morph",          // identificator 20
           "Name",           // identificator 21
             "Node",           // identificator 22 TL
