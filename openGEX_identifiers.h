@@ -102,20 +102,20 @@ namespace octet{
           "CameraNode",     // identificator 07 TL
           "CameraObject",   // identificator 08 TL
           "Color",          // identificator 09
-            "GeometryNode",   // identificator 10 TL
+          "GeometryNode",   // identificator 10 TL
           "GeometryObject", // identificator 11 TL
           "IndexArray",     // identificator 12
           "Key",            // identificator 13
           "LightNode",      // identificator 14 TL
           "LightObject",    // identificator 15 TL
           "Material",       // identificator 16 TL
-            "MaterialRef",    // identificator 17
+          "MaterialRef",    // identificator 17
           "Mesh",           // identificator 18
-              "Metric",         // identificator 19 TL
-            "Morph",          // identificator 20
-            "Name",           // identificator 21
+          "Metric",         // identificator 19 TL
+          "Morph",          // identificator 20
+          "Name",           // identificator 21
           "Node",           // identificator 22 TL
-            "ObjectRef",      // identificator 23
+          "ObjectRef",      // identificator 23
           "Param",          // identificator 24
           "Rotation",       // identificator 25
           "Scale",          // identificator 26

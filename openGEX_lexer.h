@@ -208,7 +208,8 @@ namespace octet
           if (DEBUGSTRUCTURE) printfNesting();
           if (DEBUGSTRUCTURE) printf("The ammount of substructures is: %i\n", numSubstructures);
           for (int i = 0; i < numSubstructures; ++i){
-            openGEX_structure(structure->get_substructure(i));
+            resource_dict dict;
+            openGEX_structure(dict, structure->get_substructure(i));
           }
         }
          
@@ -457,7 +458,7 @@ namespace octet
       /// @param  structure This is the structure to be analized, it has to be Node.
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_Node(openDDL_identifier_structure *structure, openDDL_identifier_structure *father = NULL){
+      bool openGEX_Node(resource_dict &dict, openDDL_identifier_structure *structure, openDDL_identifier_structure *father = NULL){
         bool no_error = true;
 
         return no_error;
@@ -468,7 +469,7 @@ namespace octet
       /// @param  structure This is the structure to be analized, it has to be Node.
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_BoneNode(openDDL_identifier_structure *structure, openDDL_identifier_structure *father = NULL){
+      bool openGEX_BoneNode(resource_dict &dict, openDDL_identifier_structure *structure, openDDL_identifier_structure *father = NULL){
         bool no_error = true;
 
         return no_error;
@@ -483,7 +484,7 @@ namespace octet
       ///   assigning a pointer to a mesh that it will be created later
       ///   GeometryObject will contain the node to the mesh!
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_GeometryNode(openDDL_identifier_structure *structure, openDDL_identifier_structure *father = NULL){
+      bool openGEX_GeometryNode(resource_dict &dict, openDDL_identifier_structure *structure, openDDL_identifier_structure *father = NULL){
         int tempID;
         bool no_error = true;
         bool values_specified[3] = { false, false, false }; //values => visible, shadow, motion_blur
@@ -584,19 +585,19 @@ namespace octet
             break;
           //Get Nodes (children)
           case 4://BoneNode
-            no_error = openGEX_BoneNode(substructure,structure);
+            no_error = openGEX_BoneNode(dict, substructure, structure);
             break;
           case 7://CameraNode
             //IGNORE CAMERAS FOR NOW!!!!
             break;
           case 10://GeometryNode
-            no_error = openGEX_GeometryNode(substructure, structure);
+            no_error = openGEX_GeometryNode(dict, substructure, structure);
             break;
           case 14://LightNode
             //IGNORE LIGHTS FOR NOW!!!!
             break;
           case 22://Nodes
-            no_error = openGEX_Node(substructure, structure);
+            no_error = openGEX_Node(dict, substructure, structure);
             break;
           }
         }
@@ -607,7 +608,7 @@ namespace octet
       /// @brief This will process the identifier structure and store it info into octet (previously analized by openDDL lexer)
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_identifier_structure(openDDL_identifier_structure * structure){
+      bool openGEX_identifier_structure(resource_dict &dict, openDDL_identifier_structure * structure){
         currentStructure = structure;
         bool no_error = true;
         int tempID;
@@ -628,7 +629,7 @@ namespace octet
           case 10: //GeometryNode 
             if (DEBUGOPENGEX) printf("GeometryNode\n");
             //Process GeometryNode structure
-            no_error = openGEX_GeometryNode(structure);
+            no_error = openGEX_GeometryNode(dict, structure);
             break;
           case 11: //GeometryObject
             if (DEBUGOPENGEX) printf("GeometryObject\n");
@@ -647,13 +648,13 @@ namespace octet
       /// @brief This will check which type of structure to openGEX (previously analized by openDDL lexer)
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_structure(openDDL_structure * structure){
+      bool openGEX_structure(resource_dict &dict, openDDL_structure * structure){
         ++nesting;
         bool no_error = true;
         //Check the type of the structure!
         if (structure->get_type_structure() == 0){ //That means that it's a identifier structure!
           if (DEBUGSTRUCTURE) no_error = printf_identifier_structure((openDDL_identifier_structure*)structure); 
-          no_error = openGEX_identifier_structure((openDDL_identifier_structure*)structure);
+          no_error = openGEX_identifier_structure(dict, (openDDL_identifier_structure*)structure);
         }
         else{// That means that it's a data_type structure!!
           if (DEBUGSTRUCTURE) no_error = printf_data_type_structure((openDDL_data_type_structure*)structure);
@@ -675,20 +676,21 @@ namespace octet
       /// @brief This function will analize all the data obtained by the openDDL lexer process
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_data(){
+      bool openGEX_data(resource_dict &dict){
+        bool no_error = true;
         int numStructures = openDDL_file.size();
         openDDL_structure * topLevelStructure;
         if (DEBUGSTRUCTURE) printf("Starting to reading the file containin %i top-level structures:\n", numStructures);
-        for (int i = 0; i < numStructures; ++i){
+        for (int i = 0; i < numStructures && no_error; ++i){
           //Get next structure
           nesting = 0;
           topLevelStructure = openDDL_file[i];
           //Check the type of the structure and the identificator or data_type!
           if (DEBUGSTRUCTURE) printf("\n-- Top-level structure %i:\n", i + 1);
-          openGEX_structure(topLevelStructure);
+          no_error = openGEX_structure(dict, topLevelStructure);
         }
         if (DEBUGSTRUCTURE) printf("\n");
-        return true;
+        return no_error;
       }
     };
 
