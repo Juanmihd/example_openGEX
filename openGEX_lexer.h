@@ -940,7 +940,7 @@ namespace octet
       /// @param  structure This is the structure to be analized, it has to be Node.
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_IndexArray(vec3 * indices, int num_indices, openDDL_identifier_structure *structure, scene_node *father = NULL){
+      bool openGEX_IndexArray(uint32_t **indices, int num_indices, openDDL_identifier_structure *structure, scene_node *father = NULL){
         bool no_error = true;
 
         return no_error;
@@ -999,7 +999,7 @@ namespace octet
         vec3 *positions = NULL;
         vec3 *normals = NULL;
         vec3 *uvw = NULL;
-        vec3 *indices = NULL;
+        uint32_t **indices = NULL;
         int num_vertexes, num_indices;
         //Check all the substructures (all of them has to be of mesh type)
         for (int i = 0; i < numSubstructures && no_error; ++i){
@@ -1044,11 +1044,12 @@ namespace octet
           mat4t identity;
           identity.loadIdentity();
           mesh::sink<float> sink_(current_mesh, identity);
-          sink_.reserve(num_vertexes,num_indices);
+          /*sink_.reserve(num_vertexes,num_indices);
           for (int i = 0; i < num_vertexes; ++i)
             sink_.add_vertex(positions[i], normals[i], uvw[i]);
           for (int i = 0; i < num_indices; ++i)
             sink_.add_triangle(indices[i][0], indices[i][1], indices[i][2]);
+            */
         }
 
         return no_error;
