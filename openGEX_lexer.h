@@ -470,7 +470,7 @@ namespace octet
         int numProperties = structure->get_number_properties();
         if (numProperties > 2){
           no_error = false;
-          printf("(((ERROR! The structure Transform can have 0, 1 or 2 properties only!!)))\n");
+          printf("(((ERROR! The structure Translate can have 0, 1 or 2 properties only!!)))\n");
         }
         else{
           for (int i = 0; i < numProperties && no_error; ++i){
@@ -538,7 +538,119 @@ namespace octet
       ////////////////////////////////////////////////////////////////////////////////
       bool openGEX_Rotate(mat4t &transformMatrix, bool &object_only, openDDL_identifier_structure *structure){
         bool no_error = true;
-
+        int coordinates;
+        //Check that the structure is correct!
+        //Get the value of the properties!
+        int numProperties = structure->get_number_properties();
+        if (numProperties > 2){
+          no_error = false;
+          printf("(((ERROR! The structure Rotate can have 0, 1 or 2 properties only!!)))\n");
+        }
+        else{
+          for (int i = 0; i < numProperties && no_error; ++i){
+            openDDL_properties * current_property = structure->get_property(i);
+            int typeProperty = identifiers_.get_value(current_property->identifierID);
+            if (typeProperty == 49){//object
+              object_only = current_property->literal.value.bool_;
+            }
+            else if (typeProperty == 44){//kind
+              if (current_property->literal.size_string_ == 1){
+                switch (current_property->literal.value.string_[0]){
+                case 'x':
+                  coordinates = 0;
+                  break;
+                case 'y':
+                  coordinates = 1;
+                  break;
+                case 'z':
+                  coordinates = 2;
+                  break;
+                }
+              }
+              else if (current_property->literal.size_string_ == 4)
+                coordinates = 3;
+              else
+                coordinates = 4;
+            }
+            else{
+              printf("(((ERROR: This cannot be a property of this structure!)))\n");
+              no_error = false;
+            }
+          }
+        }
+        //Check that the substructures are correct!
+        if (structure->get_number_substructures() != 1){
+          printf("(((ERROR!! The data substructure of the structure Transform has to be only one!!)))");
+          no_error = false;
+        }
+        else{
+          if (coordinates == 4){ //Quaternion!
+            vec4 values;
+            //Obtain the values from the substructures (float[16]) that will be converted into a mat4t!!!
+            openDDL_data_list * data_list_values = ((openDDL_data_type_structure *)structure->get_substructure(0))->get_data_list(0);
+            for (int i = 0; i < 4; ++i){
+              values[i] = data_list_values->data_list[i]->value.float_;
+            }
+            //Obtain the matrix from this values
+            quat quaternion(values);
+            transformMatrix = mat4t (quaternion);
+          }
+          else if (coordinates == 3){
+            //If it's axis, change that one with the value in the structure
+            float x,y,z;
+            float angle;
+            //Obtain the values from the substructures (float[16]) that will be converted into a mat4t!!!
+            openDDL_data_list * data_list_values = ((openDDL_data_type_structure *)structure->get_substructure(0))->get_data_list(0);
+            angle = data_list_values->data_list[0]->value.float_;
+            x = data_list_values->data_list[1]->value.float_;
+            y = data_list_values->data_list[2]->value.float_;
+            z = data_list_values->data_list[3]->value.float_;
+            //Obtain the matrix from this values
+            float cosAngle = cosf(angle * (3.14159265f / 180));
+            float sinAngle = sinf(angle * (3.14159265f / 180));
+            transformMatrix = mat4t (
+              vec4(x*x*(1 - cosAngle) + cosAngle,   x*y*(1 - cosAngle) + z*sinAngle, x*z*(1 - cosAngle) - y*sinAngle, 0.0f),
+              vec4(x*y*(1 - cosAngle) - z*sinAngle, y*y*(1 - cosAngle) + cosAngle,   y*z*(1 - cosAngle) + x*sinAngle, 0.0f),
+              vec4(x*z*(1 - cosAngle) + y*sinAngle, y*z*(1 - cosAngle) - x*sinAngle, z*z*(1 - cosAngle) + cosAngle,   0.0f),
+              vec4(                           0.0f,                            0.0f,                          0.0f,   1.0f)
+              );
+          }
+          else {
+            //If it's only one coordinate, change that one with the value in the structure
+            float angle;
+            openDDL_data_list * data_list_values = ((openDDL_data_type_structure *)structure->get_substructure(0))->get_data_list(0);
+            angle = data_list_values->data_list[0]->value.float_;
+            //Obtain the matrix from this values
+            float cosAngle = cosf(angle * (3.14159265f / 180));
+            float sinAngle = sinf(angle * (3.14159265f / 180));
+            switch (coordinates){
+            case 0: //x
+              transformMatrix = mat4t(
+                vec4(1.0f,      0.0f,      0.0f, 0.0f),
+                vec4(0.0f,  cosAngle, -sinAngle, 0.0f),
+                vec4(0.0f, sinAngle,  -cosAngle, 0.0f),
+                vec4(0.0f,      0.0f,      0.0f, 1.0f)
+                );
+              break;
+            case 1: //y
+              transformMatrix = mat4t(
+                vec4( cosAngle, 0.0f, sinAngle, 0.0f),
+                vec4(     0.0f, 1.0f,     0.0f, 0.0f),
+                vec4(-sinAngle, 0.0f, cosAngle, 0.0f),
+                vec4(     0.0f, 0.0f,     0.0f, 1.0f)
+                );
+              break;
+            case 2: //z
+              transformMatrix = mat4t(
+                vec4(cosAngle, -sinAngle, 0.0f, 0.0f),
+                vec4(sinAngle,  cosAngle, 0.0f, 0.0f),
+                vec4(    0.0f,      0.0f, 0.0f, 0.0f),
+                vec4(    0.0f,      0.0f, 0.0f, 1.0f)
+                );
+              break;
+            }
+          }
+        }
         return no_error;
       }
 
