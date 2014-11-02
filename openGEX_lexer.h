@@ -386,7 +386,7 @@ namespace octet
       /// @param  structure This is the structure to be analized, it has to be ObjectRef.
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_ObjectRef(char *ref, openDDL_identifier_structure *structure){
+      bool openGEX_ObjectRef(mesh *ref, openDDL_identifier_structure *structure){
         bool no_error = true;
 
         return no_error;
@@ -398,7 +398,7 @@ namespace octet
       /// @param  structure This is the structure to be analized, it has to be MaterialRef.
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_MaterialRef(char *ref, openDDL_identifier_structure *structure){
+      bool openGEX_MaterialRef(material *ref, openDDL_identifier_structure *structure){
         bool no_error = true;
 
         return no_error;
@@ -424,9 +424,20 @@ namespace octet
       /// @param  structure This is the structure to be analized, it has to be Transform.
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_Transform(float *values, bool &object_only, openDDL_identifier_structure *structure){
+      bool openGEX_Transform(mat4t &nodeToParent, bool &object_only, openDDL_identifier_structure *structure){
         bool no_error = true;
+        //Check that the structure is correct!
+        //Get the value of the properties!
+        if (structure->get_number_properties() > 1){
+          no_error = false;
+          printf("(((ERROR! The structure Transform can have 0 or 1 properties only!!)))\n");
+        }
+        else if (structure->get_number_properties() == 1){
+          //If has one property, obtain it, it should be a "object" type of property!
+          openDDL_properties * current_property = structure->get_property(0);
 
+        }
+        //Obtain the values from the substructures (float[16]) that will be converted into a mat4t!!!
         return no_error;
       }
 
@@ -438,7 +449,7 @@ namespace octet
       /// @param  structure This is the structure to be analized, it has to be Translation.
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_Translate(float *values, int &coordinates, bool &object_only, openDDL_identifier_structure *structure){
+      bool openGEX_Translate(mat4t &nodeToParent, int &coordinates, bool &object_only, openDDL_identifier_structure *structure){
         bool no_error = true;
 
         return no_error;
@@ -452,7 +463,7 @@ namespace octet
       /// @param  structure This is the structure to be analized, it has to be Translation.
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_Rotate(float *values, int &coordinates, bool &object_only, openDDL_identifier_structure *structure){
+      bool openGEX_Rotate(mat4t &nodeToParent, int &coordinates, bool &object_only, openDDL_identifier_structure *structure){
         bool no_error = true;
 
         return no_error;
@@ -466,7 +477,7 @@ namespace octet
       /// @param  structure This is the structure to be analized, it has to be Translation.
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_Scale(float *values, int &coordinates, bool &object_only, openDDL_identifier_structure *structure){
+      bool openGEX_Scale(mat4t &nodeToParent, int &coordinates, bool &object_only, openDDL_identifier_structure *structure){
         bool no_error = true;
 
         return no_error;
@@ -515,6 +526,13 @@ namespace octet
         if (father != NULL){
           father->add_child(node);
         }
+        //Creating mesh, material and skeleton
+        mesh * current_mesh = 0;
+        material * current_material = 0;
+        skeleton * current_skeleton = 0;
+        //Creating matrix of transforms
+        mat4t nodeToParent;
+        nodeToParent.loadIdentity(); //and initialize it to identity!
 
         //Obtain the properties (may not have)
         int numProperties = structure->get_number_properties();
@@ -523,20 +541,20 @@ namespace octet
           currentProperty = structure->get_property(i);
           tempID = identifiers_.get_value(currentProperty->identifierID);
           switch (tempID){
+          case 57:
             //Property visible
             values_specified[0] = true;
             values_properties[0] = currentProperty->literal.value.bool_;
-          case 57:
             break;
+          case 52:
             //Property shadow
             values_specified[1] = true;
             values_properties[1] = currentProperty->literal.value.bool_;
-          case 52:
             break;
+          case 48:
             //Property motion_blur
             values_specified[2] = true;
             values_properties[2] = currentProperty->literal.value.bool_;
-          case 48:
             break;
           default:
             printf("(((ERROR: Property %i non valid!)))\n", tempID);
@@ -547,16 +565,18 @@ namespace octet
         char * name = structure->get_name();
         //Check substructures
         int numSubstructures = structure->get_number_substructures();
-        int numMorph = 0;
-        int numName = 0;
-        int numObjectRef = 0;
+        //Some variables to check the quantity of some substructures
+        int numMorph = 0; //0 or 1
+        int numName = 0; //0 or 1
+        int numObjectRef = 0; //It has to be 1!!
+        //This is to get some info from the substructures
+        float *values = NULL;
         int numValues;
         int coordinates = 3;
-        float *values = NULL;
-        char *new_ref = NULL;
         char * nameNode = NULL;
         int sizeName = 0;
         bool object_only = false;
+        //Check all the substructures
         for (int i = 0; i < numSubstructures; ++i){
           openDDL_identifier_structure *substructure = (openDDL_identifier_structure *)structure->get_substructure(i);
           tempID = substructure->get_identifierID();
@@ -575,7 +595,7 @@ namespace octet
           case 23://ObjectRef
             if (numObjectRef == 0){
               ++numObjectRef;
-              no_error = openGEX_ObjectRef(new_ref, substructure);
+              no_error = openGEX_ObjectRef(current_mesh, substructure);
             }
             else{
               printf("(((ERROR: It has more than one Morph, it can only have one (or none)!!!)))\n");
@@ -583,7 +603,7 @@ namespace octet
             break;
           //Get MaterialRef
           case 17://MaterialRef
-            no_error = openGEX_MaterialRef(new_ref, substructure);
+            no_error = openGEX_MaterialRef(current_material, substructure);
             break;
           //Get Morph (may have one or none)
           case 20://Morph
@@ -597,16 +617,16 @@ namespace octet
             break;
           //Get Transforms (may not have)
           case 32://Transform
-            no_error = openGEX_Transform(values, object_only, substructure);
+            no_error = openGEX_Transform(nodeToParent, object_only, substructure);
             break;
           case 33://Translation
-            no_error = openGEX_Translate(values, coordinates, object_only, substructure);
+            no_error = openGEX_Translate(nodeToParent, coordinates, object_only, substructure);
             break;
           case 25://Rotation
-            no_error = openGEX_Rotate(values, coordinates, object_only, substructure);
+            no_error = openGEX_Rotate(nodeToParent, coordinates, object_only, substructure);
             break;
           case 26://Scale
-            no_error = openGEX_Scale(values, coordinates, object_only, substructure);
+            no_error = openGEX_Scale(nodeToParent, coordinates, object_only, substructure);
             break;
           //Get Animation
           case 0://Animation
@@ -631,12 +651,19 @@ namespace octet
           }
         }
         //Sum up after reading all substructures
-        if (numName == 0){ //it has no name, so generate an autoname
-          if (DEBUGOPENGEX) printf("As it has no name, let's generate an auto name \n");
-          nameNode = new char[2];
-          nameNode = "No";
+        if (numObjectRef != 1){
+          printf("(((ERROR!! The GeometricNode structure has to have one ObjectRef!)))\n");
+          no_error = false;
+        } else{
+          if (numName == 0){ //it has no name, so generate an autoname
+            if (DEBUGOPENGEX) printf("As it has no name, let's generate an auto name \n");
+            nameNode = new char[2];
+            nameNode = "No";
+          }
+          //Creating new mesh_instance
+          mesh_instance * object = new mesh_instance(node, current_mesh, current_material, current_skeleton);
+          dict.set_resource(nameNode, object);
         }
-        dict.set_resource(nameNode, node);
         return no_error;
       }
 
