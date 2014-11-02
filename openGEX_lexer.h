@@ -728,6 +728,7 @@ namespace octet
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief This will obtain all the info from a Node structure
+      /// @param  dict This is the resource where everything needs to be stored.
       /// @param  structure This is the structure to be analized, it has to be Node.
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
@@ -738,7 +739,149 @@ namespace octet
       }
 
       ////////////////////////////////////////////////////////////////////////////////
+      /// @brief This will obtain all the info from a VertexArray structure
+      /// @param  dict This is the resource where everything needs to be stored.
+      /// @param  structure This is the structure to be analized, it has to be Node.
+      /// @return True if everything went well, false if there was some problem
+      ////////////////////////////////////////////////////////////////////////////////
+      bool openGEX_VertexArray(mesh *current_mesh, openDDL_identifier_structure *structure, scene_node *father = NULL){
+        bool no_error = true;
+        //Get the value of the properties!
+        char * attrib_value = NULL;
+        int attrib_size = 0;
+        int morph_index = 0;
+        int numProperties = structure->get_number_properties();
+        if (numProperties > 2){
+          no_error = false;
+          printf("(((ERROR! The structure Scale can have 0, 1 or 2 properties only!!)))\n");
+        }
+        else{
+          for (int i = 0; i < numProperties && no_error; ++i){
+            openDDL_properties * current_property = structure->get_property(i);
+            int typeProperty = identifiers_.get_value(current_property->identifierID);
+            if (typeProperty == 36){//attrib
+              attrib_value = current_property->literal.value.string_;
+              attrib_size = current_property->literal.size_string_;
+            }
+            else if (typeProperty == 47){//morph
+            }
+            else{
+              printf("(((ERROR: This cannot be a property of this structure!)))\n");
+              no_error = false;
+            }
+          }
+        }
+        return no_error;
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief This will obtain all the info from a IndexArray structure
+      /// @param  dict This is the resource where everything needs to be stored.
+      /// @param  structure This is the structure to be analized, it has to be Node.
+      /// @return True if everything went well, false if there was some problem
+      ////////////////////////////////////////////////////////////////////////////////
+      bool openGEX_IndexArray(mesh *current_mesh, openDDL_identifier_structure *structure, scene_node *father = NULL){
+        bool no_error = true;
+
+        return no_error;
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief This will obtain all the info from a Skin structure
+      /// @param  dict This is the resource where everything needs to be stored.
+      /// @param  structure This is the structure to be analized, it has to be Node.
+      /// @return True if everything went well, false if there was some problem
+      ////////////////////////////////////////////////////////////////////////////////
+      bool openGEX_Skin(mesh *current_mesh, openDDL_identifier_structure *structure, scene_node *father = NULL){
+        bool no_error = true;
+
+        return no_error;
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief This will obtain all the info from a Mesh structure
+      /// @param  dict This is the resource where everything needs to be stored.
+      /// @param  lod Level of detail (it has to be different for any mesh in a same GeometryObject
+      /// @param  structure This is the structure to be analized, it has to be Node.
+      /// @return True if everything went well, false if there was some problem
+      ////////////////////////////////////////////////////////////////////////////////
+      bool openGEX_Mesh(mesh *current_mesh, int &lod, openDDL_identifier_structure *structure){
+        bool no_error = true;
+        int tempID;
+        char * new_primitive;
+        int size_primitive;
+        //Check properties (lod and primitive)
+        int numProperties = structure->get_number_properties();
+        for (int i = 0; i < numProperties; ++i){
+          openDDL_properties *currentProperty;
+          currentProperty = structure->get_property(i);
+          tempID = identifiers_.get_value(currentProperty->identifierID);
+          switch (tempID){
+          case 45:
+            //Property lod
+            lod = currentProperty->literal.value.u_integer_literal_;
+            break;
+          case 50:
+            //Property primitive
+            size_primitive = currentProperty->literal.size_string_;
+            new_primitive = currentProperty->literal.value.string_;
+            break;
+          default:
+            printf("(((ERROR: Property %i non valid!)))\n", tempID);
+            break;
+          }
+        }
+        //Check substructures (VertexArray (1 or more), IndexArray (0 or 1), Skin (0 or 1))
+        int numSubstructures = structure->get_number_substructures();
+        int numVertexArray = 0;
+        int numIndexArray = 0;
+        int numSkin = 0;
+        //Check all the substructures (all of them has to be of mesh type)
+        for (int i = 0; i < numSubstructures && no_error; ++i){
+          openDDL_identifier_structure *substructure = (openDDL_identifier_structure *)structure->get_substructure(i);
+          tempID = substructure->get_identifierID();
+          switch (tempID){
+          case 35://VertexArray
+            ++numVertexArray;
+            no_error = openGEX_VertexArray(current_mesh, substructure);
+            break;
+          case 12://IndexArray
+            if (numIndexArray == 0){
+              ++numIndexArray;
+              no_error = openGEX_IndexArray(current_mesh, substructure);
+            }
+            else{
+              no_error = false;
+              printf("(((ERROR: The structure Mesh can only have one IndexArray substructure)))\n");
+            }
+            break;
+          case 28://Skin
+            if (numSkin == 0){
+              ++numSkin;
+              no_error = openGEX_Skin(current_mesh, substructure);
+            }
+            else{
+              no_error = false;
+              printf("(((ERROR: The structure Mesh can only have one Skin substructure)))\n");
+            }
+            break;
+          default:
+            no_error = false;
+            printf("(((ERROR: The structure Mesh can only have as substructure a Mesh)))\n");
+            break;
+          }
+        }
+        if (numVertexArray != 1){
+          no_error = false;
+          printf("(((ERROR: The structure Mesh has to have one VertexArray substructure)))\n");
+        }
+
+        return no_error;
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////
       /// @brief This will obtain all the info from a Node structure
+      /// @param  dict This is the resource where everything needs to be stored.
       /// @param  structure This is the structure to be analized, it has to be Node.
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
@@ -750,7 +893,9 @@ namespace octet
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief This will obtain all the info from a GeometryNode structure
+      /// @param  dict This is the resource where everything needs to be stored.
       /// @param  structure This is the structure to be analized, it has to be GeometryNode.
+      /// @param  father This is the scene_node father to this structure (by default NULL).
       /// @return True if everything went well, false if there was some problem
       ///   Note: This function will check the properties of the structure
       ///   And it will check for the referencies. It will prepare to build the node
@@ -915,6 +1060,75 @@ namespace octet
       }
 
       ////////////////////////////////////////////////////////////////////////////////
+      /// @brief This will obtain all the info from a GeometryNode structure
+      /// @param  structure This is the structure to be analized, it has to be GeometryNode.
+      /// @return True if everything went well, false if there was some problem
+      ///   Note: This function will check the properties of the structure
+      ///   And it will check for the referencies. It will prepare to build the node
+      ///   assigning a pointer to a mesh that it will be created later
+      ///   GeometryObject will contain the node to the mesh!
+      ////////////////////////////////////////////////////////////////////////////////
+      bool openGEX_GeometryObject(resource_dict &dict, openDDL_identifier_structure *structure){
+        int tempID;
+        bool no_error = true;
+        bool values_specified[3] = { false, false, false }; //values => visible, shadow, motion_blur
+        bool values_properties[3] = { false, false, false };
+        //Creating mesh, material and skeleton
+        mesh * current_mesh = 0;
+        //Creating matrix of transforms
+        mat4t nodeToParent;
+        nodeToParent.loadIdentity(); //and initialize it to identity!
+
+        //Obtain the properties (may not have)
+        int numProperties = structure->get_number_properties();
+        for (int i = 0; i < numProperties; ++i){
+          openDDL_properties *currentProperty;
+          currentProperty = structure->get_property(i);
+          tempID = identifiers_.get_value(currentProperty->identifierID);
+          switch (tempID){
+          case 57:
+            //Property visible
+            values_specified[0] = true;
+            values_properties[0] = currentProperty->literal.value.bool_;
+            break;
+          case 52:
+            //Property shadow
+            values_specified[1] = true;
+            values_properties[1] = currentProperty->literal.value.bool_;
+            break;
+          case 48:
+            //Property motion_blur
+            values_specified[2] = true;
+            values_properties[2] = currentProperty->literal.value.bool_;
+            break;
+          default:
+            printf("(((ERROR: Property %i non valid!)))\n", tempID);
+            break;
+          }
+        }
+        //Obtain the name of the structure
+        char * name = structure->get_name();
+        //Check substructures
+        int numSubstructures = structure->get_number_substructures();
+        dynarray<int> lod (numSubstructures);
+        //Check all the substructures (all of them has to be of mesh type)
+        for (int i = 0; i < numSubstructures && no_error; ++i){
+          openDDL_identifier_structure *substructure = (openDDL_identifier_structure *)structure->get_substructure(i);
+          tempID = substructure->get_identifierID();
+          if (tempID != 18){//Mesh
+            no_error = false;
+            printf("(((ERROR: The structure GeometricObject can only have as substructure a Mesh)))\n");
+          }
+          else{
+            lod[i] = 0;
+            no_error = openGEX_Mesh(current_mesh, lod[i], substructure);
+          }
+        }
+
+        return no_error;
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////
       /// @brief This will process the identifier structure and store it info into octet (previously analized by openDDL lexer)
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
@@ -944,6 +1158,7 @@ namespace octet
           case 11: //GeometryObject
             if (DEBUGOPENGEX) printf("GeometryObject\n");
             //Process GeometryObject structure
+            no_error = openGEX_GeometryObject(dict, structure);
             break;
           case 16: //Material
             if (DEBUGOPENGEX) printf("Material\n");

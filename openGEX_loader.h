@@ -41,16 +41,20 @@ namespace octet { namespace loaders {
         }
         else{
           printf("The lexer DDL process has finished successfully!\nAnd now start the openGEX process...\n");
-          if (!lexer.openGEX_data()){
-            printf("Error loading the openGEX file (openGEX process)!\n");
-            return false;
-          }
-          else
-            printf("The openGEX lecture of data went great!\n");
-          //Import the file into octet (return false if there was any problem)
+          
         }
         //If it has arrived there, it was ok! so return true
         return true;
+      }
+
+      bool process_resources(resource_dict &dict){
+        if (!lexer.openGEX_data(dict)){
+          printf("Error loading the openGEX file (openGEX process)!\n");
+          return false;
+        }
+        else
+          printf("The openGEX lecture of data went great!\n");
+        //Import the file into octet (return false if there was any problem)
       }
 
     };
