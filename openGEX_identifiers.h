@@ -135,8 +135,8 @@ namespace octet{
           "end",            // identificator 40	float
           "front",          // identificator 41	string	("ccw", "cw")
           "index",          // identificator 42	unsigned_int (0)
-          "key",            // identificator 43	string	Metric("distance" (1.0),"angle" (1.0),"time" (1.0),"up" ("z"))
-          "kind",           // identificator 44	string Atten("distance", "angle", "cos_angle") Key("value","-control","+control","tension","continuity","bias") Rotation("axis","x,"y","z","quaternion") Scale,Translation("xyz","x","y","z")
+          "key",            // identificator 43	string  Metric("distance" (1.0),"angle" (1.0),"time" (1.0),"up" ("z"))
+          "kind",           // identificator 44	string  Atten("distance", "angle", "cos_angle") Key("value","-control","+control","tension","continuity","bias") Rotation("axis","x,"y","z","quaternion") Scale,Translation("xyz","x","y","z")
           "lod",            // identificator 45	unsigned_int (0)
           "material",       // identificator 46	unsigned_int (0)
           "morph",          // identificator 47	unsigned_int (0)
