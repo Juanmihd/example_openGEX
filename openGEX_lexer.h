@@ -750,6 +750,8 @@ namespace octet
         char * attrib_value = NULL;
         int attrib_size = 0;
         int morph_index = 0;
+        int current_attrib = 0;
+        bool secondary_position = false;
         int numProperties = structure->get_number_properties();
         if (numProperties > 2){
           no_error = false;
@@ -760,14 +762,103 @@ namespace octet
             openDDL_properties * current_property = structure->get_property(i);
             int typeProperty = identifiers_.get_value(current_property->identifierID);
             if (typeProperty == 36){//attrib
+              //attrib properties can be "position", "normal", "tangent", "bitangent", "color", and "texcoord"
+              //also, they can be finished in an optional [0] or [1] where having [1] means an secondary value
+              //This will translate those words to the following values:
+              // position = 0, normal = 1, texcoord = 2, tangent = 3, bitangent = 4, color = 5
+              // This will make easier the next process of understanding the floats of this substructure
               attrib_value = current_property->literal.value.string_;
               attrib_size = current_property->literal.size_string_;
+              if (attrib_value[attrib_size - 1] == ']'){//Then the array will have 3 more elements ([i])
+                secondary_position = (attrib_value[attrib_size - 2] == 1);
+                attrib_size -= 3;
+              }
+              //Check with the size first, to identify the candidates values
+              switch (attrib_size){
+              case 5://color
+                if (same_word("color", attrib_value, attrib_size)){
+                  current_attrib = 5;
+                }
+                else{
+                  printf("(((ERRROR!! This is not a valid value for attrib)))\n");
+                  no_error = false;
+                }
+                break;
+              case 6://normal
+                if (same_word("normal", attrib_value, attrib_size)){
+                  current_attrib = 1;
+                }
+                else{
+                  printf("(((ERRROR!! This is not a valid value for attrib)))\n");
+                  no_error = false;
+                }
+                break;
+              case 7://tangent
+                if (same_word("tangent", attrib_value, attrib_size)){
+                  current_attrib = 3;
+                }
+                else{
+                  printf("(((ERRROR!! This is not a valid value for attrib)))\n");
+                  no_error = false;
+                }
+                break;
+              case 8://position or texcoord
+                if (same_word("position", attrib_value, attrib_size)){
+                  current_attrib = 0;
+                }
+                else if (same_word("texcoord", attrib_value, attrib_size)){
+                  current_attrib = 2;
+                }
+                else{
+                  printf("(((ERRROR!! This is not a valid value for attrib)))\n");
+                  no_error = false;
+                }
+                break;
+              case 9://bitangent
+                if (same_word("bitangent", attrib_value, attrib_size)){
+                  current_attrib = 4;
+                }
+                else{
+                  printf("(((ERRROR!! This is not a valid value for attrib)))\n");
+                  no_error = false;
+                }
+                break;
+              }
             }
             else if (typeProperty == 47){//morph
+              morph_index = current_property->literal.value.u_integer_literal_;
             }
             else{
               printf("(((ERROR: This cannot be a property of this structure!)))\n");
               no_error = false;
+            }
+          }
+        }
+        //Check the substructure (only one!!!)
+        if (structure->get_number_substructures() != 1){
+          no_error = false;
+          printf("(((ERROR! The VertexArray has to have a substructure, only one, but at least one!)))\n");
+        }
+        else{
+          openDDL_data_type_structure *substructure = (openDDL_data_type_structure *) structure->get_substructure(0);
+          int size_data_list = substructure->get_integer_literal();
+          int number_data_lists = substructure->get_number_lists();
+          if (size_data_list == 1){
+            openDDL_data_list *data_list = substructure->get_data_list(0);
+            int number_vertices = data_list->data_list.size();
+            current_mesh->set_num_vertices(number_vertices);
+
+          }
+          else{
+            current_mesh->set_num_vertices(number_data_lists);
+            if (size_data_list == 2){
+
+            }
+            else if (size_data_list == 3){
+
+            }
+            else if (size_data_list == 4){
+
             }
           }
         }

@@ -132,6 +132,22 @@ namespace octet
         }
         return equal;
       }
+
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief This will check to words are equal
+      /// @param  word1  This is one of the words to be checked
+      /// @param  size1  This is the size of the first word that has to be checked
+      /// @param  word2  This is the other of the words to be checked
+      /// @param  size2  This is the size of the second word that has to be checked
+      /// @returns  True if the two words are equal
+      ////////////////////////////////////////////////////////////////////////////////
+      bool same_word(char *word1, char *word2, int size){
+        bool equal = true;
+        for (int i = 0; equal && i < size; ++i){
+          equal = (word1[i] == word2[i]);
+        }
+        return equal;
+      }
       
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief  This function will test if the current token is a whitespace (less than 0x20 character)
@@ -1408,7 +1424,7 @@ namespace octet
 
           // Get ready to create a new structure of data_type
           data_type_structure = new openDDL_data_type_structure(type, arraySize, father, nameID);
-
+          data_type_structure->set_integer_literal(arraySize);
           remove_comments_whitespaces();
 
           //expect a { (if not, error)
