@@ -744,7 +744,7 @@ namespace octet
       /// @param  structure This is the structure to be analized, it has to be Node.
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_VertexArray(mesh *current_mesh, openDDL_identifier_structure *structure, scene_node *father = NULL){
+      bool openGEX_VertexArray(vec3 *positions, vec3 *normals, vec3 *uvw, int &num_vertexes, openDDL_identifier_structure *structure, scene_node *father = NULL){
         bool no_error = true;
         //Get the value of the properties!
         char * attrib_value = NULL;
@@ -841,24 +841,93 @@ namespace octet
         }
         else{
           openDDL_data_type_structure *substructure = (openDDL_data_type_structure *) structure->get_substructure(0);
+          openDDL_data_list *data_list;
           int size_data_list = substructure->get_integer_literal();
           int number_data_lists = substructure->get_number_lists();
           if (size_data_list == 1){
-            openDDL_data_list *data_list = substructure->get_data_list(0);
-            int number_vertices = data_list->data_list.size();
-            current_mesh->set_num_vertices(number_vertices);
-
+            data_list = substructure->get_data_list(0);
+            num_vertexes = data_list->data_list.size();
+            openDDL_data_literal * new_data_list = data_list->data_list[0];
+            float a, b, c;
+            if (current_attrib == 0){ //pos
+              if (positions == NULL)
+                positions = new vec3[num_vertexes];
+              for (int i = 0; i < num_vertexes; ++i){
+                a = new_data_list->value.float_;
+                ++new_data_list;
+                b = new_data_list->value.float_;
+                ++new_data_list;
+                c = new_data_list->value.float_;
+                ++new_data_list;
+                positions[i] = vec3(a, b, c);
+              }
+            }
+            else if (current_attrib == 1){//normal
+              if (normals == NULL)
+                normals = new vec3[num_vertexes];
+              for (int i = 0; i < num_vertexes; ++i){
+                a = new_data_list->value.float_;
+                ++new_data_list;
+                b = new_data_list->value.float_;
+                ++new_data_list;
+                c = new_data_list->value.float_;
+                ++new_data_list;
+                normals[i] = vec3(a, b, c);
+              }
+            }
+            else if (current_attrib == 2){//uv
+              if (uvw == NULL)
+                uvw = new vec3[num_vertexes];
+              for (int i = 0; i < num_vertexes; ++i){
+                a = new_data_list->value.float_;
+                ++new_data_list;
+                b = new_data_list->value.float_;
+                ++new_data_list;
+                uvw[i] = vec3(a, b, 1);
+              }
+            }
           }
           else{
-            current_mesh->set_num_vertices(number_data_lists);
-            if (size_data_list == 2){
-
+            num_vertexes = number_data_lists;
+            if (size_data_list == 2 && current_attrib == 2){ //uv
+              if (uvw == NULL)
+                uvw = new vec3[num_vertexes];
+              for (int i = 0; i < number_data_lists; ++i){
+                data_list = substructure->get_data_list(i);
+                uvw[i] = vec3(data_list->data_list[0]->value.float_,
+                               data_list->data_list[1]->value.float_,
+                               1);
+              }
             }
             else if (size_data_list == 3){
-
+              if (current_attrib == 0){ //pos
+                if (positions == NULL)
+                  positions = new vec3[num_vertexes];
+                for (int i = 0; i < number_data_lists; ++i){
+                  data_list = substructure->get_data_list(i);
+                  positions[i] = vec3(data_list->data_list[0]->value.float_,
+                                       data_list->data_list[1]->value.float_, 
+                                       data_list->data_list[2]->value.float_);
+                }
+              }
+              else if (current_attrib == 1){ //normal
+                if (normals == NULL)
+                  normals = new vec3[num_vertexes];
+                for (int i = 0; i < number_data_lists; ++i){
+                  data_list = substructure->get_data_list(i);
+                  normals[i] = vec3(data_list->data_list[0]->value.float_,
+                                     data_list->data_list[1]->value.float_,
+                                     data_list->data_list[2]->value.float_);
+                }
+              }
+              else{
+                no_error = false;
+                printf("(((ERROR! There is some problem with the amount of elements in the VertexArray...)))\n");
+              }
             }
-            else if (size_data_list == 4){
-
+            else if (size_data_list >= 4){
+              //This case is not yet studied
+              printf("(((ERROR! This case has not yet been developed!)))\n");
             }
           }
         }
@@ -871,7 +940,7 @@ namespace octet
       /// @param  structure This is the structure to be analized, it has to be Node.
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_IndexArray(mesh *current_mesh, openDDL_identifier_structure *structure, scene_node *father = NULL){
+      bool openGEX_IndexArray(vec3 * indices, int num_indices, openDDL_identifier_structure *structure, scene_node *father = NULL){
         bool no_error = true;
 
         return no_error;
@@ -927,6 +996,11 @@ namespace octet
         int numVertexArray = 0;
         int numIndexArray = 0;
         int numSkin = 0;
+        vec3 *positions = NULL;
+        vec3 *normals = NULL;
+        vec3 *uvw = NULL;
+        vec3 *indices = NULL;
+        int num_vertexes, num_indices;
         //Check all the substructures (all of them has to be of mesh type)
         for (int i = 0; i < numSubstructures && no_error; ++i){
           openDDL_identifier_structure *substructure = (openDDL_identifier_structure *)structure->get_substructure(i);
@@ -934,12 +1008,12 @@ namespace octet
           switch (tempID){
           case 35://VertexArray
             ++numVertexArray;
-            no_error = openGEX_VertexArray(current_mesh, substructure);
+            no_error = openGEX_VertexArray(positions, normals, uvw, num_vertexes, substructure);
             break;
           case 12://IndexArray
             if (numIndexArray == 0){
               ++numIndexArray;
-              no_error = openGEX_IndexArray(current_mesh, substructure);
+              no_error = openGEX_IndexArray(indices, num_indices, substructure);
             }
             else{
               no_error = false;
@@ -965,6 +1039,16 @@ namespace octet
         if (numVertexArray != 1){
           no_error = false;
           printf("(((ERROR: The structure Mesh has to have one VertexArray substructure)))\n");
+        }
+        else{ //Post processing after reading all the substructures!
+          mat4t identity;
+          identity.loadIdentity();
+          mesh::sink<float> sink_(current_mesh, identity);
+          sink_.reserve(num_vertexes,num_indices);
+          for (int i = 0; i < num_vertexes; ++i)
+            sink_.add_vertex(positions[i], normals[i], uvw[i]);
+          for (int i = 0; i < num_indices; ++i)
+            sink_.add_triangle(indices[i][0], indices[i][1], indices[i][2]);
         }
 
         return no_error;
