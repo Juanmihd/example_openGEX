@@ -464,7 +464,7 @@ namespace octet
       ////////////////////////////////////////////////////////////////////////////////
       bool openGEX_Translate(mat4t &transformMatrix, bool &object_only, openDDL_identifier_structure *structure){
         bool no_error = true;
-        int coordinates;
+        int coordinates = 3;
         //Check that the structure is correct!
         //Get the value of the properties!
         int numProperties = structure->get_number_properties();
@@ -508,22 +508,20 @@ namespace octet
           no_error = false;
         }
         else{
-          vec4 values(0);
+          //Obtain the matrix from this values
+          transformMatrix.loadIdentity();
           if (coordinates == 3){
             //Obtain the values from the substructures (float[16]) that will be converted into a mat4t!!!
             openDDL_data_list * data_list_values = ((openDDL_data_type_structure *)structure->get_substructure(0))->get_data_list(0);
             for (int i = 0; i < 3; ++i){
-              values[i] = data_list_values->data_list[i]->value.float_;
+              transformMatrix[i][3] = data_list_values->data_list[i]->value.float_;
             }
           }
           else{
             //If it's only one coordinate, change that one with the value in the structure
             openDDL_data_list * data_list_values = ((openDDL_data_type_structure *)structure->get_substructure(0))->get_data_list(0);
-            values[coordinates] = data_list_values->data_list[0]->value.float_;
+            transformMatrix[coordinates][3] = data_list_values->data_list[0]->value.float_;
           }
-          //Obtain the matrix from this values
-          transformMatrix.loadIdentity();
-          transformMatrix.colz() += values;
         }
         return no_error;
       }
@@ -538,7 +536,7 @@ namespace octet
       ////////////////////////////////////////////////////////////////////////////////
       bool openGEX_Rotate(mat4t &transformMatrix, bool &object_only, openDDL_identifier_structure *structure){
         bool no_error = true;
-        int coordinates;
+        int coordinates = 3;
         //Check that the structure is correct!
         //Get the value of the properties!
         int numProperties = structure->get_number_properties();
@@ -664,7 +662,67 @@ namespace octet
       ////////////////////////////////////////////////////////////////////////////////
       bool openGEX_Scale(mat4t &transformMatrix, bool &object_only, openDDL_identifier_structure *structure){
         bool no_error = true;
-
+        int coordinates = 3;
+        //Check that the structure is correct!
+        //Get the value of the properties!
+        int numProperties = structure->get_number_properties();
+        if (numProperties > 2){
+          no_error = false;
+          printf("(((ERROR! The structure Scale can have 0, 1 or 2 properties only!!)))\n");
+        }
+        else{
+          for (int i = 0; i < numProperties && no_error; ++i){
+            openDDL_properties * current_property = structure->get_property(i);
+            int typeProperty = identifiers_.get_value(current_property->identifierID);
+            if (typeProperty == 49){//object
+              object_only = current_property->literal.value.bool_;
+            }
+            else if (typeProperty == 44){//kind
+              if (current_property->literal.size_string_ == 1)
+                switch (current_property->literal.value.string_[0]){
+                case 'x':
+                  coordinates = 0;
+                  break;
+                case 'y':
+                  coordinates = 1;
+                  break;
+                case 'z':
+                  coordinates = 2;
+                  break;
+              }
+              else{
+                coordinates = 3;
+              }
+            }
+            else{
+              printf("(((ERROR: This cannot be a property of this structure!)))\n");
+              no_error = false;
+            }
+          }
+        }
+        //Check that the substructures are correct!
+        if (structure->get_number_substructures() != 1){
+          printf("(((ERROR!! The data substructure of the structure Transform has to be only one!!)))");
+          no_error = false;
+        }
+        else{
+          if (coordinates == 3){
+            //Obtain the matrix from this values
+            transformMatrix.loadIdentity();
+            //Obtain the values from the substructures (float[16]) that will be converted into a mat4t!!!
+            openDDL_data_list * data_list_values = ((openDDL_data_type_structure *)structure->get_substructure(0))->get_data_list(0);
+            for (int i = 0; i < 3; ++i){
+              transformMatrix[i][i] = data_list_values->data_list[i]->value.float_;
+            }
+          }
+          else{
+            //If it's only one coordinate, change that one with the value in the structure
+            //Obtain the matrix from this values
+            transformMatrix.loadIdentity();
+            openDDL_data_list * data_list_values = ((openDDL_data_type_structure *)structure->get_substructure(0))->get_data_list(0);
+            transformMatrix[coordinates][coordinates] = data_list_values->data_list[0]->value.float_;
+          }
+        }
         return no_error;
       }
 
