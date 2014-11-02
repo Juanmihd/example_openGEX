@@ -355,9 +355,28 @@ namespace octet
       /// @param  structure This is the structure to be analized, it has to be Name.
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_Name(char *name, openDDL_identifier_structure *structure){
+      bool openGEX_Name(char *name, int nameSize, openDDL_identifier_structure *structure){
         bool no_error = true;
-
+        if (structure->get_number_properties() != 0){
+          printf("(((ERROR: A structure of the type Name cannot have properties)))\n");
+          no_error = false;
+        }
+        else if (structure->get_number_substructures() != 1){
+          printf("(((ERROR: A structure of the type Name has to have one substructure)))\n");
+          no_error = false;
+        }
+        else{
+          //Obtain the data list of the substructure
+          openDDL_data_list * data_list_name = ((openDDL_data_type_structure *)structure->get_substructure(0))->get_data_list(0);
+          if (data_list_name->value_type != value_type_DDL::STRING){
+            printf("(((ERROR: The type of the substructure data of the structure Name has to be string)))\n");
+            no_error = false;
+          }
+          else{
+            name = data_list_name->data_list[0]->value.string_;
+            nameSize = data_list_name->data_list[0]->size_string_;
+          }
+        }
         return no_error;
       }
 
@@ -458,7 +477,7 @@ namespace octet
       /// @param  structure This is the structure to be analized, it has to be Node.
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_Node(resource_dict &dict, openDDL_identifier_structure *structure, openDDL_identifier_structure *father = NULL){
+      bool openGEX_Node(resource_dict &dict, openDDL_identifier_structure *structure, scene_node *father = NULL){
         bool no_error = true;
 
         return no_error;
@@ -469,7 +488,7 @@ namespace octet
       /// @param  structure This is the structure to be analized, it has to be Node.
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_BoneNode(resource_dict &dict, openDDL_identifier_structure *structure, openDDL_identifier_structure *father = NULL){
+      bool openGEX_BoneNode(resource_dict &dict, openDDL_identifier_structure *structure, scene_node *father = NULL){
         bool no_error = true;
 
         return no_error;
@@ -484,11 +503,19 @@ namespace octet
       ///   assigning a pointer to a mesh that it will be created later
       ///   GeometryObject will contain the node to the mesh!
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_GeometryNode(resource_dict &dict, openDDL_identifier_structure *structure, openDDL_identifier_structure *father = NULL){
+      bool openGEX_GeometryNode(resource_dict &dict, openDDL_identifier_structure *structure, scene_node *father = NULL){
         int tempID;
         bool no_error = true;
         bool values_specified[3] = { false, false, false }; //values => visible, shadow, motion_blur
         bool values_properties[3] = { false, false, false };
+        //Creating new node
+        scene_node *node;
+        node = new scene_node();
+        //If it's not a Top-Level class, add it to his father
+        if (father != NULL){
+          father->add_child(node);
+        }
+
         //Obtain the properties (may not have)
         int numProperties = structure->get_number_properties();
         for (int i = 0; i < numProperties; ++i){
@@ -527,6 +554,8 @@ namespace octet
         int coordinates = 3;
         float *values = NULL;
         char *new_ref = NULL;
+        char * nameNode = NULL;
+        int sizeName = 0;
         bool object_only = false;
         for (int i = 0; i < numSubstructures; ++i){
           openDDL_identifier_structure *substructure = (openDDL_identifier_structure *)structure->get_substructure(i);
@@ -536,7 +565,7 @@ namespace octet
           case 21://Name¡
             if (numName == 0){
               ++numName;
-              no_error = openGEX_Name(new_ref, substructure);
+              no_error = openGEX_Name(nameNode, sizeName, substructure);
             }
             else{
               printf("(((ERROR: It has more than one Morph, it can only have one (or none)!!!)))\n");
@@ -585,22 +614,29 @@ namespace octet
             break;
           //Get Nodes (children)
           case 4://BoneNode
-            no_error = openGEX_BoneNode(dict, substructure, structure);
+            no_error = openGEX_BoneNode(dict, substructure, node);
             break;
           case 7://CameraNode
             //IGNORE CAMERAS FOR NOW!!!!
             break;
           case 10://GeometryNode
-            no_error = openGEX_GeometryNode(dict, substructure, structure);
+            no_error = openGEX_GeometryNode(dict, substructure, node);
             break;
           case 14://LightNode
             //IGNORE LIGHTS FOR NOW!!!!
             break;
           case 22://Nodes
-            no_error = openGEX_Node(dict, substructure, structure);
+            no_error = openGEX_Node(dict, substructure, node);
             break;
           }
         }
+        //Sum up after reading all substructures
+        if (numName == 0){ //it has no name, so generate an autoname
+          if (DEBUGOPENGEX) printf("As it has no name, let's generate an auto name \n");
+          nameNode = new char[2];
+          nameNode = "No";
+        }
+        dict.set_resource(nameNode, node);
         return no_error;
       }
 

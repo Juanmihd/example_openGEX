@@ -90,6 +90,7 @@ namespace octet{
       ////////////////////////////////////////////////////////////////////////////////
       void init(){
         father_structure = NULL;
+        name = NULL;
         nameID = -1;
         type = notYetType;
       }
