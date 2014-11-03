@@ -400,7 +400,65 @@ namespace octet
       ////////////////////////////////////////////////////////////////////////////////
       bool openGEX_Color(vec4 &color, openDDL_identifier_structure *structure){
         bool no_error = true;
+        //Check properties (has to have one, attrib)
+        if (structure->get_number_properties() == 1){
+          openDDL_properties * current_property = structure->get_property(0);
+          int tempID = identifiers_.get_value(current_property->identifierID);
+          if (tempID == 36){ //attrib
+            //attrib might have different values:
+            // "diffuse", "specular", "emission", "opacity", "transparency"
+            int size_attrib = current_property->literal.size_string_;
+            char * value_attrib = current_property->literal.value.string_;
+            switch (size_attrib){
+            case 7://diffuse or opacity
+              if (same_word("diffuse", value_attrib, size_attrib)){
 
+              }
+              else if (same_word("opacity", value_attrib, size_attrib)){
+
+              }
+              else{
+                printf("(((ERROR! The property attrib has a wrong value!)))\n");
+                no_error = false;
+              }
+              break;
+            case 8://specular or emission
+              if (same_word("specular", value_attrib, size_attrib)){
+
+              }
+              else if (same_word("emission", value_attrib, size_attrib)){
+
+              }
+              else{
+                printf("(((ERROR! The property attrib has a wrong value!)))\n");
+                no_error = false;
+              }
+              break;
+            case 9://transparency
+              if (same_word("transparency", value_attrib, size_attrib)){
+
+              }
+              else{
+                printf("(((ERROR! The property attrib has a wrong value!)))\n");
+                no_error = false;
+              }
+              break;
+            default:
+              printf("(((ERROR! The property attrib has a wrong value!)))\n");
+              no_error = false;
+              break;
+            }
+          }
+          else{
+            printf("(((ERROR! The property of a Color structure has to be attrib!)))\n");
+            no_error = false;
+          }
+        }
+        else{
+          printf("(((ERROR! It has to have one (and only one) property!)))\n");
+          no_error = false;
+        }
+        //Check substructures (has to have one, float[3] or float[4])
         return no_error;
       }
 
