@@ -39,10 +39,13 @@ namespace octet { namespace loaders {
           printf("Error loading the openGEX file (openDDL process)!\n");
           return false;
         }
-        else{
-          printf("The lexer DDL process has finished successfully!\n");
-          
+        printf("The lexer DDL process has finished successfully!\nAnd now... starting the openGEX process!\n");
+        resource_dict dict;
+        if (!lexer.openGEX_data(dict)){
+          printf("Error loading the openGEX file (openGEX process)!\n");
+          return false;
         }
+        printf("HUGE SUCCESS!!\n");
         //If it has arrived there, it was ok! so return true
         return true;
       }

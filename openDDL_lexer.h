@@ -740,8 +740,8 @@ namespace octet
       /// @param  size    this is the size of the word readed
       /// @return   True if everything went right, and false if something went wrong
       ////////////////////////////////////////////////////////////////////////////////
-      bool get_value_reference(char *ref, bool &global, char *word, int size){
-        if(DEBUGGING) printf("Reading the reference %s: ",word);
+      bool get_value_reference(char *ref, int &new_size, bool &global, char *word, int size){
+        if (DEBUGGINGDDL) printf("Reading the reference: %s\n", word);
         
         // A reference can be the identificator or name 'null'
         if (size == 4){ //null size is 4
@@ -751,19 +751,19 @@ namespace octet
         }
         // If it's not the null value...
         else{
+          // pass from word to ref, and then work with ref!
+          for (int i = 0; i < size; ++i){
+            ref[i] = word[i];
+          }
+          new_size = size;
           // it can be also a name
           if (*word == 0x24){ // 24 = $, that means it's a global name
             global = true;
             //first step is to look if the global name exists
             int nameID = names_.get_index(word);
-            //if exist, add the same pointer
-            if (nameID >= 0){
-              ref = word;
-            }
             //if it does not exist, pointer = NULL
-            else{
+            if (nameID < 0){
               names_[word] = NULL;
-              ref = word;
             }
           }
           else if (*word == 0x25){ // 25 = %, that means it's a local name
@@ -771,14 +771,9 @@ namespace octet
             //first step is to look if the local name exists
             openDDL_identifier_structure * father = current_structure->get_father_structure();
             int nameID = father->get_local_index(word);
-            //if exist, add the same pointer
-            if (nameID >= 0){
-              ref = word;
-            }
             //if it does not exist, pointer = NULL
-            else {
+            if (nameID < 0){
               father->set_local_name(word, NULL);
-              ref = word;
             }
           }
           // followed optionally for some identifiers
@@ -945,9 +940,10 @@ namespace octet
               if (type >= 0){
                 //Get ready the data to store the size
                 char * new_string = new char[size];
+                int new_size;
                 bool global;
                 // Obtain the ref from the property
-                get_value_reference(new_string, global, (char*)tempChar, size);
+                get_value_reference(new_string, new_size, global, (char*)tempChar, size);
                 // Set new property with the new value as reference
                 new_property->literal.value_type = value_type_DDL::REF;
                 new_property->literal.value.ref_ = new_string;
@@ -1095,7 +1091,14 @@ namespace octet
         }
         case token_type::tok_ref:
         {
-          no_error = get_value_reference(current_literal->value.ref_, current_literal->global_ref_, word, size);
+          char * new_string = new char[size];
+          int new_size;
+          no_error = get_value_reference(new_string, new_size, current_literal->global_ref_, word, size);
+          // Set new property with the new value as reference
+          current_literal->value_type = value_type_DDL::REF;
+          new_string[new_size] = '\0';
+          current_literal->value.ref_ = new_string;
+          current_literal->size_string_ = new_size;
           break;
         }
         case token_type::tok_type:

@@ -14,9 +14,6 @@
 #include "openGEX_identifiers.h"
 #include "openGEX_structures.h"
 
-////////////////////////////////////////////////////////////////////////////////
-/// @brief This class is the openGEX lexer, it will read the array of characters and get tokes
-////////////////////////////////////////////////////////////////////////////////
 namespace octet
 {
   namespace loaders{
@@ -33,10 +30,19 @@ namespace octet
       GEX_FOV = 2, GEX_NEAR = 3, GEX_FAR = 4, //CameraObject
       GEX_BEGIN = 5, GEX_END = 6, GEX_SCALE = 7, GEX_OFFSET = 8 //Atten
     };
-    enum { DEBUGDATA = 0, DEBUGSTRUCTURE = 0, DEBUGOPENGEX = 1 };
+    enum { DEBUGDATA = 1, DEBUGSTRUCTURE = 1, DEBUGOPENGEX = 1 };
+
+////////////////////////////////////////////////////////////////////////////////
+/// @brief This class is the openGEX lexer, it will read the array of characters and get tokes
+////////////////////////////////////////////////////////////////////////////////
     class openGEX_lexer : public openDDL_lexer{
       typedef gex_ident::gex_ident_enum gex_ident_list;
-      
+      //This will be used to handle the references to meshes and materials (and more will be probably added)
+      dictionary<mesh*> ref_meshes;
+      dictionary<dynarray<mesh_instance*>> ref_meshes_inv;
+      dictionary<material*> ref_materials;
+      dictionary<dynarray<mesh_instance*>> ref_materials_inv;
+
       //Some values needed to process correctly the file
       //This are the values that are obtained by Metric structures and that define the measurement and orientation
       float distance_multiplier; //default value = 1.0f
@@ -153,9 +159,11 @@ namespace octet
         case value_type_DDL::REF:
           if (value.global_ref_){
             printf("Global ->");
+            printf("%s", value.value.ref_);
           }
           else{
             printf("Local ->");
+            printf("%s", value.value.ref_);
           }
           break;
         case value_type_DDL::TYPE:
@@ -462,18 +470,6 @@ namespace octet
       }
 
       ////////////////////////////////////////////////////////////////////////////////
-      /// @brief This will obtain all the info from a ObjectRef structure
-      /// @param  name  This is a pointer to char, it will return here the value of the ObjectRef
-      /// @param  structure This is the structure to be analized, it has to be ObjectRef.
-      /// @return True if everything went well, false if there was some problem
-      ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_ObjectRef(mesh *ref, openDDL_identifier_structure *structure){
-        bool no_error = true;
-
-        return no_error;
-      }
-
-      ////////////////////////////////////////////////////////////////////////////////
       /// @brief This will obtain all the info from a Color structure
       /// @param  name  This is a pointer to char, it will return here the value of the Color
       /// @param  structure This is the structure to be analized, it has to be Color.
@@ -763,14 +759,52 @@ namespace octet
       }
 
       ////////////////////////////////////////////////////////////////////////////////
+      /// @brief This will obtain all the info from a ObjectRef structure
+      /// @param  name  This is a pointer to char, it will return here the value of the ObjectRef
+      /// @param  structure This is the structure to be analized, it has to be ObjectRef.
+      /// @return True if everything went well, false if there was some problem
+      ////////////////////////////////////////////////////////////////////////////////
+      bool openGEX_ObjectRef(char *object_ref, openDDL_identifier_structure *structure){
+        bool no_error = true;
+        //This structure cannot have properties
+        if (structure->get_number_properties() > 0){
+          no_error = true;
+          printf("(((ERROR: A ObjectRef structure cannot have properties!)))\n");
+        }
+        //And it has to have one single substructure of data type ref
+        if (structure->get_number_substructures() == 1){
+          openDDL_data_type_structure * substructure = (openDDL_data_type_structure *)structure->get_substructure(0);
+          object_ref = substructure->get_data_list(0)->data_list[0]->value.ref_;
+        }
+        else{
+          no_error = true;
+          printf("(((ERROR: A ObjectRef structure has to have one single substructure!)))\n");
+        }
+        return no_error;
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////
       /// @brief This will obtain all the info from a MaterialRef structure
       /// @param  name  This is a pointer to char, it will return here the value of the MaterialRef
       /// @param  structure This is the structure to be analized, it has to be MaterialRef.
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_MaterialRef(material *ref, openDDL_identifier_structure *structure){
+      bool openGEX_MaterialRef(char *material_ref, openDDL_identifier_structure *structure){
         bool no_error = true;
-
+        //This structure cannot have properties
+        if (structure->get_number_properties() > 0){
+          no_error = true;
+          printf("(((ERROR: A ObjectRef structure cannot have properties!)))\n");
+        }
+        //And it has to have one single substructure of data type ref
+        if (structure->get_number_substructures() == 1){
+          openDDL_data_type_structure * substructure = (openDDL_data_type_structure *)structure->get_substructure(0);
+          material_ref = substructure->get_data_list(0)->data_list[0]->value.ref_;
+        }
+        else{
+          no_error = true;
+          printf("(((ERROR: A ObjectRef structure has to have one single substructure!)))\n");
+        }
         return no_error;
       }
 
@@ -1676,6 +1710,8 @@ namespace octet
         bool no_error = true;
         bool values_specified[3] = { false, false, false }; //values => visible, shadow, motion_blur
         bool values_properties[3] = { false, false, false };
+        mesh_instance * current_object;
+        current_object = new mesh_instance;
         //Creating new node
         scene_node *node;
         node = new scene_node();
@@ -1683,10 +1719,6 @@ namespace octet
         if (father != NULL){
           father->add_child(node);
         }
-        //Creating mesh, material and skeleton
-        mesh * current_mesh = 0;
-        material * current_material = 0;
-        skeleton * current_skeleton = 0;
         //Creating matrix of transforms
         mat4t nodeToParent;
         nodeToParent.loadIdentity(); //and initialize it to identity!
@@ -1732,6 +1764,8 @@ namespace octet
         char * nameNode = NULL;
         int sizeName = 0;
         bool object_only = false;
+        char * ref_object = NULL;
+        char * ref_material = NULL;
         //Check all the substructures
         for (int i = 0; i < numSubstructures; ++i){
           openDDL_identifier_structure *substructure = (openDDL_identifier_structure *)structure->get_substructure(i);
@@ -1751,7 +1785,11 @@ namespace octet
           case 23://ObjectRef
             if (numObjectRef == 0){
               ++numObjectRef;
-              no_error = openGEX_ObjectRef(current_mesh, substructure);
+              no_error = openGEX_ObjectRef(ref_object, substructure);
+              if (!ref_meshes.contains(ref_object)){
+                ref_meshes[ref_object] = NULL;
+              }
+              current_object->set_mesh(ref_meshes[ref_object]);
             }
             else{
               printf("(((ERROR: It has more than one Morph, it can only have one (or none)!!!)))\n");
@@ -1759,7 +1797,7 @@ namespace octet
             break;
           //Get MaterialRef
           case 17://MaterialRef
-            no_error = openGEX_MaterialRef(current_material, substructure);
+            no_error = openGEX_MaterialRef(ref_material, substructure);
             break;
           //Get Morph (may have one or none)
           case 20://Morph
@@ -1819,9 +1857,7 @@ namespace octet
             if (DEBUGOPENGEX) printf("As it has no name, assign the structure name \n");
             nameNode = name;
           }
-          //Creating new mesh_instance
-          mesh_instance * object = new mesh_instance(node, current_mesh, current_material, current_skeleton);
-          dict.set_resource(nameNode, object);
+          dict.set_resource(nameNode, current_object);
         }
         return no_error;
       }
