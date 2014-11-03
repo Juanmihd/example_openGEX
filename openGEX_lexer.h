@@ -1006,8 +1006,7 @@ namespace octet
             data_list = substructure->get_data_list(0);
             num_indices = data_list->data_list.size();
             openDDL_data_literal * new_data_list = data_list->data_list[0];
-            float a, b, c;
-            if (indices == NULL)
+            /*if (indices == NULL)
               indices = new vec3[num_indices];
             for (int i = 0; i < num_indices; ++i){
               a = new_data_list->value.float_;
@@ -1017,18 +1016,18 @@ namespace octet
               c = new_data_list->value.float_;
               ++new_data_list;
               positions[i] = vec3(a, b, c);
-            }
+            }*/
           }
           else{
             num_indices = number_data_lists;
-            if (indices == NULL)
+            /*if (indices == NULL)
               indices = new vec3[num_indices];
             for (int i = 0; i < number_data_lists; ++i){
               data_list = substructure->get_data_list(i);
               uvw[i] = vec3(data_list->data_list[0]->value.float_,
                 data_list->data_list[1]->value.float_,
                 1);
-            }
+            }*/
           }
         }
         return no_error;
@@ -1188,7 +1187,7 @@ namespace octet
         else{ //Post processing after reading all the substructures!
           mat4t identity;
           identity.loadIdentity();
-          mesh::sink<float> sink_(current_mesh, identity); //CHANGE THE USE OF SINK AND USE MESH_->GET_VERTICES()->ASSIGN(VERTICES.DATA,0,SIZEOF(FLOAT),SIZE)
+          mesh::sink<mesh::vertex> sink_(current_mesh, identity); //CHANGE THE USE OF SINK AND USE MESH_->GET_VERTICES()->ASSIGN(VERTICES.DATA,0,SIZEOF(FLOAT),SIZE)
           sink_.reserve(num_vertexes,num_indices);
           for (int i = 0; i < num_vertexes; ++i)
             sink_.add_vertex(positions[i], normals[i], uvw[i]);

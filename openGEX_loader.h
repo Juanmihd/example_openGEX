@@ -40,7 +40,7 @@ namespace octet { namespace loaders {
           return false;
         }
         else{
-          printf("The lexer DDL process has finished successfully!\nAnd now start the openGEX process...\n");
+          printf("The lexer DDL process has finished successfully!\n");
           
         }
         //If it has arrived there, it was ok! so return true
@@ -48,6 +48,7 @@ namespace octet { namespace loaders {
       }
 
       bool process_resources(resource_dict &dict){
+        printf("And now start the openGEX process...\n");
         if (!lexer.openGEX_data(dict)){
           printf("Error loading the openGEX file (openGEX process)!\n");
           return false;
