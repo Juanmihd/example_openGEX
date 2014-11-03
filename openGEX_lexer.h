@@ -1787,11 +1787,11 @@ namespace octet
             if (numObjectRef == 0){
               ++numObjectRef;
               no_error = openGEX_ObjectRef(object_ref, substructure);
-              printf("It's here!\n");
-              if (!ref_meshes.contains(object_ref)){
+              if (!ref_meshes.contains(object_ref))
                 ref_meshes[object_ref] = NULL;
-              }
-              current_object->set_mesh(ref_meshes[object_ref]);
+              else
+                current_object->set_mesh(ref_meshes[object_ref]);
+              ref_meshes_inv[object_ref].push_back(current_object);
             }
             else{
               printf("(((ERROR: It has more than one Morph, it can only have one (or none)!!!)))\n");
@@ -1800,6 +1800,11 @@ namespace octet
           //Get MaterialRef
           case 17://MaterialRef
             no_error = openGEX_MaterialRef(ref_material, substructure);
+            if (!ref_materials.contains(ref_material))
+              ref_materials[ref_material] = NULL;
+            else
+              current_object->set_material(ref_materials[ref_material]);
+            ref_materials_inv[ref_material].push_back(current_object);
             break;
           //Get Morph (may have one or none)
           case 20://Morph
@@ -1923,6 +1928,8 @@ namespace octet
             lod[i] = 0;
             no_error = openGEX_Mesh(current_mesh, lod[i], substructure);
             dict.set_resource(name, current_mesh);
+            int num_objects_ref = ref_meshes_inv.get_size();
+            //COMPLETE THIS PART ASIGNING THE CURRENT MESH TO THE OBJECTS EXPECTING THAT!
           }
           else{
             no_error = false;
