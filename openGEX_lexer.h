@@ -21,6 +21,8 @@ namespace octet
 {
   namespace loaders{
     enum { DEBUGDATA = 0, DEBUGSTRUCTURE = 0, DEBUGOPENGEX = 1 };
+    enum Primitives { GEX_POINTS = 0, GEX_LINES = 1, GEX_LINE_STRIP = 2, 
+      GEX_TRIANGLES = 3, GEX_TRIANGLE_STRIP = 4, GEX_QUADS = 5};
     class openGEX_lexer : public openDDL_lexer{
       typedef gex_ident::gex_ident_enum gex_ident_list;
       
@@ -940,7 +942,7 @@ namespace octet
       /// @param  structure This is the structure to be analized, it has to be Node.
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_IndexArray(uint32_t **indices, int &num_indices, openDDL_identifier_structure *structure, scene_node *father = NULL){
+      bool openGEX_IndexArray(uint32_t **indices, int &num_indices, int primitive, openDDL_identifier_structure *structure, scene_node *father = NULL){
         bool no_error = true;
         //Get the value of the properties!
         bool clock_wise = false;
@@ -991,6 +993,44 @@ namespace octet
           }
         }
         //Check substructures (it has to have one! and it will be a data_list or data_list_array of uints)
+        if (structure->get_number_substructures() != 1){
+          no_error = false;
+          printf("(((ERROR! The VertexArray has to have a substructure, only one, but at least one!)))\n");
+        }
+        else{
+          openDDL_data_type_structure *substructure = (openDDL_data_type_structure *)structure->get_substructure(0);
+          openDDL_data_list *data_list;
+          int size_data_list = substructure->get_integer_literal();
+          int number_data_lists = substructure->get_number_lists();
+          if (size_data_list == 1){
+            data_list = substructure->get_data_list(0);
+            num_indices = data_list->data_list.size();
+            openDDL_data_literal * new_data_list = data_list->data_list[0];
+            float a, b, c;
+            if (indices == NULL)
+              indices = new vec3[num_indices];
+            for (int i = 0; i < num_indices; ++i){
+              a = new_data_list->value.float_;
+              ++new_data_list;
+              b = new_data_list->value.float_;
+              ++new_data_list;
+              c = new_data_list->value.float_;
+              ++new_data_list;
+              positions[i] = vec3(a, b, c);
+            }
+          }
+          else{
+            num_indices = number_data_lists;
+            if (indices == NULL)
+              indices = new vec3[num_indices];
+            for (int i = 0; i < number_data_lists; ++i){
+              data_list = substructure->get_data_list(i);
+              uvw[i] = vec3(data_list->data_list[0]->value.float_,
+                data_list->data_list[1]->value.float_,
+                1);
+            }
+          }
+        }
         return no_error;
       }
 
@@ -1016,8 +1056,7 @@ namespace octet
       bool openGEX_Mesh(mesh *current_mesh, int &lod, openDDL_identifier_structure *structure){
         bool no_error = true;
         int tempID;
-        char * new_primitive;
-        int size_primitive;
+        Primitives valuePrimitive = GEX_TRIANGLES;
         //Check properties (lod and primitive)
         int numProperties = structure->get_number_properties();
         for (int i = 0; i < numProperties; ++i){
@@ -1031,11 +1070,69 @@ namespace octet
             break;
           case 50:
             //Property primitive
+            //The primitives can ve different types (check enum Primitives)
+            char * new_primitive;
+            int size_primitive;
             size_primitive = currentProperty->literal.size_string_;
             new_primitive = currentProperty->literal.value.string_;
+            switch (size_primitive){ //Check the size of the primitive
+            case 6: //points
+              if (same_word("points", new_primitive, size_primitive)){
+                valuePrimitive = GEX_POINTS;
+              }
+              else{
+                printf("(((ERROR! The property primitive has a wrong content!)))\n");
+                no_error = false;
+              }
+              break;
+            case 5: //lines or quads
+              if (same_word("lines", new_primitive, size_primitive)){
+                valuePrimitive = GEX_LINES;
+              }
+              else if (same_word("quads", new_primitive, size_primitive)){
+                valuePrimitive = GEX_QUADS;
+              }
+              else{
+                printf("(((ERROR! The property primitive has a wrong content!)))\n");
+                no_error = false;
+              }
+              break;
+            case 10://line_strip
+              if (same_word("line_strip", new_primitive, size_primitive)){
+                valuePrimitive = GEX_LINE_STRIP;
+              }
+              else{
+                printf("(((ERROR! The property primitive has a wrong content!)))\n");
+                no_error = false;
+              }
+              break;
+            case 9: //triangles
+              if (same_word("triangles", new_primitive, size_primitive)){
+                valuePrimitive = GEX_TRIANGLES;
+              }
+              else{
+                printf("(((ERROR! The property primitive has a wrong content!)))\n");
+                no_error = false;
+              }
+              break;
+            case 14://triangle_strip
+              if (same_word("triangle_strip", new_primitive, size_primitive)){
+                valuePrimitive = GEX_TRIANGLE_STRIP;
+              }
+              else{
+                printf("(((ERROR! The property primitive has a wrong content!)))\n");
+                no_error = false;
+              }
+              break;
+            default://ERROR!
+              printf("(((ERROR! The property primitive has a wrong content!)))\n");
+              no_error = false;
+              break;
+            }
             break;
           default:
             printf("(((ERROR: Property %i non valid!)))\n", tempID);
+            no_error = false;
             break;
           }
         }
@@ -1061,7 +1158,7 @@ namespace octet
           case 12://IndexArray
             if (numIndexArray == 0){
               ++numIndexArray;
-              no_error = openGEX_IndexArray(indices, num_indices, substructure);
+              no_error = openGEX_IndexArray(indices, num_indices, valuePrimitive, substructure);
             }
             else{
               no_error = false;
@@ -1091,12 +1188,11 @@ namespace octet
         else{ //Post processing after reading all the substructures!
           mat4t identity;
           identity.loadIdentity();
-          mesh::sink<float> sink_(current_mesh, identity);
+          mesh::sink<float> sink_(current_mesh, identity); //CHANGE THE USE OF SINK AND USE MESH_->GET_VERTICES()->ASSIGN(VERTICES.DATA,0,SIZEOF(FLOAT),SIZE)
           sink_.reserve(num_vertexes,num_indices);
           for (int i = 0; i < num_vertexes; ++i)
             sink_.add_vertex(positions[i], normals[i], uvw[i]);
-          for (int i = 0; i < num_indices; ++i)
-            sink_.add_triangle(indices[i][0], indices[i][1], indices[i][2]);
+
         }
 
         return no_error;
