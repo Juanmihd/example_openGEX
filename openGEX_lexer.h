@@ -21,8 +21,6 @@ namespace octet
 {
   namespace loaders{
     enum { DEBUGDATA = 0, DEBUGSTRUCTURE = 0, DEBUGOPENGEX = 1 };
-    enum Primitives { GEX_POINTS = 0, GEX_LINES = 1, GEX_LINE_STRIP = 2, 
-      GEX_TRIANGLES = 3, GEX_TRIANGLE_STRIP = 4, GEX_QUADS = 5};
     class openGEX_lexer : public openDDL_lexer{
       typedef gex_ident::gex_ident_enum gex_ident_list;
       
@@ -188,18 +186,18 @@ namespace octet
         //Check the properties
         int numProperties = structure->get_number_properties();
         if (numProperties > 0){
-          openDDL_properties * currentProperty;
+          openDDL_properties * current_property;
           //Let's work with all the properties!
           if (DEBUGSTRUCTURE) printfNesting();
           if (DEBUGSTRUCTURE) printf("The ammount of properties is: %i\n", numProperties);
           for (int i = 0; i < numProperties; ++i){
-            currentProperty = structure->get_property(i);
+            current_property = structure->get_property(i);
             if (DEBUGSTRUCTURE) printfNesting();
             if (DEBUGSTRUCTURE) printf("Property <");
-            tempID = currentProperty->identifierID;
+            tempID = current_property->identifierID;
             if (DEBUGSTRUCTURE) printf("%s", identifiers_.get_key(tempID));
             if (DEBUGSTRUCTURE) printf("> with value <");
-            if (DEBUGSTRUCTURE) printfDDLliteral(currentProperty->literal);
+            if (DEBUGSTRUCTURE) printfDDLliteral(current_property->literal);
             if (DEBUGSTRUCTURE) printf(">\n");
           }
         }
@@ -232,18 +230,18 @@ namespace octet
         //Check the properties
         int numProperties = structure->get_number_properties();
         if (numProperties == 1){
-          openDDL_properties *currentProperty;
-          currentProperty = structure->get_property(0);
+          openDDL_properties *current_property;
+          current_property = structure->get_property(0);
           //Check that the property is correct!
-          tempID = identifiers_.get_value(currentProperty->identifierID);
+          tempID = identifiers_.get_value(current_property->identifierID);
           if (tempID != 43){ // 43 = key
             printf("(((ERROR: The property in Metric has to be key and it's %i)))\n",tempID);
             return false;
           }
           else{
             //Check the value of the property key (distance, angle, time or up)
-            char * value = currentProperty->literal.value.string_;
-            int size = currentProperty->literal.size_string_;
+            char * value = current_property->literal.value.string_;
+            int size = current_property->literal.size_string_;
             //Now it has to check which key is. So let's check the size first (faster!)
             switch (size){
             case 2: //check with up
@@ -942,7 +940,7 @@ namespace octet
       /// @param  structure This is the structure to be analized, it has to be Node.
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_IndexArray(uint32_t **indices, int &num_indices, int primitive, openDDL_identifier_structure *structure, scene_node *father = NULL){
+      bool openGEX_IndexArray(uint32_t *indices, int &num_indices, openDDL_identifier_structure *structure, scene_node *father = NULL){
         bool no_error = true;
         //Get the value of the properties!
         bool clock_wise = false;
@@ -1005,29 +1003,22 @@ namespace octet
           if (size_data_list == 1){
             data_list = substructure->get_data_list(0);
             num_indices = data_list->data_list.size();
-            openDDL_data_literal * new_data_list = data_list->data_list[0];
-            /*if (indices == NULL)
-              indices = new vec3[num_indices];
+            if (indices == NULL)
+              indices = new uint32_t [num_indices];
             for (int i = 0; i < num_indices; ++i){
-              a = new_data_list->value.float_;
-              ++new_data_list;
-              b = new_data_list->value.float_;
-              ++new_data_list;
-              c = new_data_list->value.float_;
-              ++new_data_list;
-              positions[i] = vec3(a, b, c);
-            }*/
+              indices[i] = data_list->data_list[i]->value.u_integer_literal_;
+            }
           }
           else{
-            num_indices = number_data_lists;
-            /*if (indices == NULL)
-              indices = new vec3[num_indices];
+            num_indices = number_data_lists * size_data_list;
+            if (indices == NULL)
+              indices = new uint32_t[num_indices];
             for (int i = 0; i < number_data_lists; ++i){
               data_list = substructure->get_data_list(i);
-              uvw[i] = vec3(data_list->data_list[0]->value.float_,
-                data_list->data_list[1]->value.float_,
-                1);
-            }*/
+              for (int j = 0; j < size_data_list; ++j){
+                indices[i*size_data_list + j] = data_list->data_list[j]->value.u_integer_literal_;
+              }
+            }
           }
         }
         return no_error;
@@ -1055,29 +1046,29 @@ namespace octet
       bool openGEX_Mesh(mesh *current_mesh, int &lod, openDDL_identifier_structure *structure){
         bool no_error = true;
         int tempID;
-        Primitives valuePrimitive = GEX_TRIANGLES;
+        uint16_t valuePrimitive = GL_TRIANGLES;
         //Check properties (lod and primitive)
         int numProperties = structure->get_number_properties();
         for (int i = 0; i < numProperties; ++i){
-          openDDL_properties *currentProperty;
-          currentProperty = structure->get_property(i);
-          tempID = identifiers_.get_value(currentProperty->identifierID);
+          openDDL_properties *current_property;
+          current_property = structure->get_property(i);
+          tempID = identifiers_.get_value(current_property->identifierID);
           switch (tempID){
           case 45:
             //Property lod
-            lod = currentProperty->literal.value.u_integer_literal_;
+            lod = current_property->literal.value.u_integer_literal_;
             break;
           case 50:
             //Property primitive
             //The primitives can ve different types (check enum Primitives)
             char * new_primitive;
             int size_primitive;
-            size_primitive = currentProperty->literal.size_string_;
-            new_primitive = currentProperty->literal.value.string_;
+            size_primitive = current_property->literal.size_string_;
+            new_primitive = current_property->literal.value.string_;
             switch (size_primitive){ //Check the size of the primitive
             case 6: //points
               if (same_word("points", new_primitive, size_primitive)){
-                valuePrimitive = GEX_POINTS;
+                valuePrimitive = GL_POINT;
               }
               else{
                 printf("(((ERROR! The property primitive has a wrong content!)))\n");
@@ -1086,10 +1077,10 @@ namespace octet
               break;
             case 5: //lines or quads
               if (same_word("lines", new_primitive, size_primitive)){
-                valuePrimitive = GEX_LINES;
+                valuePrimitive = GL_LINES;
               }
               else if (same_word("quads", new_primitive, size_primitive)){
-                valuePrimitive = GEX_QUADS;
+                valuePrimitive = GL_QUADS;
               }
               else{
                 printf("(((ERROR! The property primitive has a wrong content!)))\n");
@@ -1098,7 +1089,7 @@ namespace octet
               break;
             case 10://line_strip
               if (same_word("line_strip", new_primitive, size_primitive)){
-                valuePrimitive = GEX_LINE_STRIP;
+                valuePrimitive = GL_LINE_STRIP;
               }
               else{
                 printf("(((ERROR! The property primitive has a wrong content!)))\n");
@@ -1107,7 +1098,7 @@ namespace octet
               break;
             case 9: //triangles
               if (same_word("triangles", new_primitive, size_primitive)){
-                valuePrimitive = GEX_TRIANGLES;
+                valuePrimitive = GL_TRIANGLES;
               }
               else{
                 printf("(((ERROR! The property primitive has a wrong content!)))\n");
@@ -1116,7 +1107,7 @@ namespace octet
               break;
             case 14://triangle_strip
               if (same_word("triangle_strip", new_primitive, size_primitive)){
-                valuePrimitive = GEX_TRIANGLE_STRIP;
+                valuePrimitive = GL_TRIANGLE_STRIP;
               }
               else{
                 printf("(((ERROR! The property primitive has a wrong content!)))\n");
@@ -1143,7 +1134,7 @@ namespace octet
         vec3 *positions = NULL;
         vec3 *normals = NULL;
         vec3 *uvw = NULL;
-        uint32_t **indices = NULL;
+        uint32_t *indices = NULL;
         int num_vertexes, num_indices;
         //Check all the substructures (all of them has to be of mesh type)
         for (int i = 0; i < numSubstructures && no_error; ++i){
@@ -1157,7 +1148,7 @@ namespace octet
           case 12://IndexArray
             if (numIndexArray == 0){
               ++numIndexArray;
-              no_error = openGEX_IndexArray(indices, num_indices, valuePrimitive, substructure);
+              no_error = openGEX_IndexArray(indices, num_indices, substructure);
             }
             else{
               no_error = false;
@@ -1185,15 +1176,24 @@ namespace octet
           printf("(((ERROR: The structure Mesh has to have one VertexArray substructure)))\n");
         }
         else{ //Post processing after reading all the substructures!
-          mat4t identity;
-          identity.loadIdentity();
-          mesh::sink<mesh::vertex> sink_(current_mesh, identity); //CHANGE THE USE OF SINK AND USE MESH_->GET_VERTICES()->ASSIGN(VERTICES.DATA,0,SIZEOF(FLOAT),SIZE)
-          sink_.reserve(num_vertexes,num_indices);
-          for (int i = 0; i < num_vertexes; ++i)
-            sink_.add_vertex(positions[i], normals[i], uvw[i]);
-
+          current_mesh->allocate(num_vertexes, num_indices);
+          //Now we need to pass from position,normals,uvw to a buffer of data with all the info posx,posy,posz,norx,nory,norz,u,v,w...
+          float * vertices = new float[num_vertexes * 9];
+          for (int i = 0; i < num_vertexes; ++i){
+            for (int j = 0; j < 3; ++j){ //Copying position
+              vertices[i * 9 + j] = positions[i][j];
+            }
+            for (int j = 0; j < 3; ++j){ //Copying normals
+              vertices[i * 9 + 3 + j] = normals[i][j];
+            }
+            for (int j = 0; j < 3; ++j){ //Copying uvw
+              vertices[i * 9 + 6 + j] = uvw[i][j];
+            }
+          }
+          current_mesh->get_vertices()->assign(vertices, 0, (sizeof(float) * num_vertexes * 9));
+          current_mesh->get_indices()->assign(indices, 0, (sizeof(uint32_t) * num_indices));
+          current_mesh->set_mode(valuePrimitive);
         }
-
         return no_error;
       }
 
@@ -1201,6 +1201,7 @@ namespace octet
       /// @brief This will obtain all the info from a Node structure
       /// @param  dict This is the resource where everything needs to be stored.
       /// @param  structure This is the structure to be analized, it has to be Node.
+      /// @param  father This is the father scene_node. By default  NULL
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
       bool openGEX_BoneNode(resource_dict &dict, openDDL_identifier_structure *structure, scene_node *father = NULL){
@@ -1210,10 +1211,43 @@ namespace octet
       }
 
       ////////////////////////////////////////////////////////////////////////////////
+      /// @brief This will obtain all the info from a Material structure
+      /// @param  dict This is the resource where everything needs to be stored.
+      /// @param  structure This is the structure to be analized, it has to be Node.
+      /// @return True if everything went well, false if there was some problem
+      ////////////////////////////////////////////////////////////////////////////////
+      bool openGEX_Material(resource_dict &dict, openDDL_identifier_structure *structure){
+        bool no_error = true;
+        bool two_sided = false;
+        int tempID;
+        //Obtain the name of the structure
+        char * name = structure->get_name();
+        //Check properties
+        int numProperties = structure->get_number_properties();
+        if (numProperties > 1){
+          printf("(((ERROR! Material structures are supposed to have only 1 property)))\n");
+        }
+        else if (numProperties == 1){
+          openDDL_properties * current_property = structure->get_property(0);
+          tempID = identifiers_.get_value(current_property->identifierID);
+          if (tempID == 55){
+            two_sided = current_property->literal.value.bool_;
+          }
+          else{
+            printf("(((ERROR! The Material structure is expecting a two_sided property)))\n");
+            no_error = false;
+          }
+        }
+        //Check substructures
+
+        return no_error;
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////
       /// @brief This will obtain all the info from a GeometryNode structure
       /// @param  dict This is the resource where everything needs to be stored.
       /// @param  structure This is the structure to be analized, it has to be GeometryNode.
-      /// @param  father This is the scene_node father to this structure (by default NULL).
+      /// @param  father This is the father scene_node. By default  NULL
       /// @return True if everything went well, false if there was some problem
       ///   Note: This function will check the properties of the structure
       ///   And it will check for the referencies. It will prepare to build the node
@@ -1239,36 +1273,35 @@ namespace octet
         //Creating matrix of transforms
         mat4t nodeToParent;
         nodeToParent.loadIdentity(); //and initialize it to identity!
-
+        //Obtain the name of the structure
+        char * name = structure->get_name();
         //Obtain the properties (may not have)
         int numProperties = structure->get_number_properties();
         for (int i = 0; i < numProperties; ++i){
-          openDDL_properties *currentProperty;
-          currentProperty = structure->get_property(i);
-          tempID = identifiers_.get_value(currentProperty->identifierID);
+          openDDL_properties *current_property;
+          current_property = structure->get_property(i);
+          tempID = identifiers_.get_value(current_property->identifierID);
           switch (tempID){
           case 57:
             //Property visible
             values_specified[0] = true;
-            values_properties[0] = currentProperty->literal.value.bool_;
+            values_properties[0] = current_property->literal.value.bool_;
             break;
           case 52:
             //Property shadow
             values_specified[1] = true;
-            values_properties[1] = currentProperty->literal.value.bool_;
+            values_properties[1] = current_property->literal.value.bool_;
             break;
           case 48:
             //Property motion_blur
             values_specified[2] = true;
-            values_properties[2] = currentProperty->literal.value.bool_;
+            values_properties[2] = current_property->literal.value.bool_;
             break;
           default:
             printf("(((ERROR: Property %i non valid!)))\n", tempID);
             break;
           }
         }
-        //Obtain the name of the structure
-        char * name = structure->get_name();
         //Check substructures
         int numSubstructures = structure->get_number_substructures();
         //Some variables to check the quantity of some substructures
@@ -1366,9 +1399,8 @@ namespace octet
           no_error = false;
         } else{
           if (numName == 0){ //it has no name, so generate an autoname
-            if (DEBUGOPENGEX) printf("As it has no name, let's generate an auto name \n");
-            nameNode = new char[2];
-            nameNode = "No";
+            if (DEBUGOPENGEX) printf("As it has no name, assign the structure name \n");
+            nameNode = name;
           }
           //Creating new mesh_instance
           mesh_instance * object = new mesh_instance(node, current_mesh, current_material, current_skeleton);
@@ -1396,36 +1428,35 @@ namespace octet
         //Creating matrix of transforms
         mat4t nodeToParent;
         nodeToParent.loadIdentity(); //and initialize it to identity!
-
+        //Obtain the name of the structure
+        char * name = structure->get_name();
         //Obtain the properties (may not have)
         int numProperties = structure->get_number_properties();
         for (int i = 0; i < numProperties; ++i){
-          openDDL_properties *currentProperty;
-          currentProperty = structure->get_property(i);
-          tempID = identifiers_.get_value(currentProperty->identifierID);
+          openDDL_properties *current_property;
+          current_property = structure->get_property(i);
+          tempID = identifiers_.get_value(current_property->identifierID);
           switch (tempID){
           case 57:
             //Property visible
             values_specified[0] = true;
-            values_properties[0] = currentProperty->literal.value.bool_;
+            values_properties[0] = current_property->literal.value.bool_;
             break;
           case 52:
             //Property shadow
             values_specified[1] = true;
-            values_properties[1] = currentProperty->literal.value.bool_;
+            values_properties[1] = current_property->literal.value.bool_;
             break;
           case 48:
             //Property motion_blur
             values_specified[2] = true;
-            values_properties[2] = currentProperty->literal.value.bool_;
+            values_properties[2] = current_property->literal.value.bool_;
             break;
           default:
             printf("(((ERROR: Property %i non valid!)))\n", tempID);
             break;
           }
         }
-        //Obtain the name of the structure
-        char * name = structure->get_name();
         //Check substructures
         int numSubstructures = structure->get_number_substructures();
         dynarray<int> lod (numSubstructures);
@@ -1440,9 +1471,9 @@ namespace octet
           else{
             lod[i] = 0;
             no_error = openGEX_Mesh(current_mesh, lod[i], substructure);
+            dict.set_resource(name, current_mesh);
           }
         }
-
         return no_error;
       }
 
@@ -1481,6 +1512,7 @@ namespace octet
           case 16: //Material
             if (DEBUGOPENGEX) printf("Material\n");
             //Process Material structure
+            no_error = openGEX_Material(dict, structure);
             break;
           }
         }
