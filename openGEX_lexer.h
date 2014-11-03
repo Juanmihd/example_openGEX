@@ -21,7 +21,12 @@ namespace octet
 {
   namespace loaders{
     //Some enum to get the values of attrib and Param structures
-    enum GEX_ATTRIB { GEX_DIFFUSE = 0, GEX_SPECULAR = 1, GEX_EMISSION = 2, GEX_OPACITY = 3, GEX_TRANSPARENCY = 4, GEX_NORMAL = 5, GEX_LIGHT = 6 };
+    enum GEX_ATTRIB { GEX_NO_VALUE = -1, 
+      GEX_DIFFUSE = 0, GEX_SPECULAR = 1, GEX_EMISSION = 2, GEX_OPACITY = 3, GEX_TRANSPARENCY = 4, //Color Texture Material
+      GEX_NORMAL = 5, //Texture Material
+      GEX_LIGHT = 6, //Color Light
+      GEX_PROJECTION = 7 //Texture Light
+    };
     enum GEX_PARAM {
       GEX_SPEC_POWER = 0, //Material
       GEX_INTENSITY = 1, //LightObject
@@ -414,10 +419,19 @@ namespace octet
           int tempID = identifiers_.get_value(current_property->identifierID);
           if (tempID == 36){ //attrib
             //attrib might have different values:
-            // "diffuse", "specular", "emission", "opacity", "transparency"
+            // "diffuse", "specular", "emission", "opacity", "transparency", "light"
             int size_attrib = current_property->literal.size_string_;
             char * value_attrib = current_property->literal.value.string_;
             switch (size_attrib){
+            case 5://light
+              if (same_word("light", value_attrib, size_attrib)){
+                attrib_output = GEX_LIGHT;
+                }
+              else{
+                printf("(((ERROR! The property attrib has a wrong value!)))\n");
+                no_error = false;
+              }
+              break;
             case 7://diffuse or opacity
               if (same_word("diffuse", value_attrib, size_attrib)){
                 attrib_output = GEX_DIFFUSE;
@@ -442,7 +456,7 @@ namespace octet
                 no_error = false;
               }
               break;
-            case 9://transparency
+            case 12://transparency
               if (same_word("transparency", value_attrib, size_attrib)){
                 attrib_output = GEX_TRANSPARENCY;
               }
@@ -610,9 +624,83 @@ namespace octet
       /// @param  structure This is the structure to be analized, it has to be Texture.
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_Texture(openDDL_identifier_structure *structure){
+      bool openGEX_Texture(char *texture_url, uint16_t &index, GEX_ATTRIB &type, openDDL_identifier_structure *structure){
         bool no_error = true;
-
+        //Check properties (may have two, attrib (OBLIGATORY), texcoord (optional)
+        int num_properties = structure->get_number_properties();
+        type = GEX_NO_VALUE;
+        for (int i = 0; i < num_properties; ++i){
+          openDDL_properties * current_property = structure->get_property(i);
+          int tempID = identifiers_.get_value(current_property->identifierID);
+          switch (tempID){
+          case 36: //attrib
+            int size_attrib = current_property->literal.size_string_;
+            char * value_attrib = current_property->literal.value.string_;
+            switch (size_attrib){
+            case 6://normal
+              if (same_word("normal", value_attrib, size_attrib)){
+                type = GEX_NORMAL;
+              }
+              else{
+                printf("(((ERROR! The property attrib has a wrong value!)))\n");
+                no_error = false;
+              }
+              break;
+            case 7://diffuse or opacity
+              if (same_word("diffuse", value_attrib, size_attrib)){
+                type = GEX_DIFFUSE;
+              }
+              else if (same_word("opacity", value_attrib, size_attrib)){
+                type = GEX_OPACITY;
+              }
+              else{
+                printf("(((ERROR! The property attrib has a wrong value!)))\n");
+                no_error = false;
+              }
+              break;
+            case 8://specular or emission
+              if (same_word("specular", value_attrib, size_attrib)){
+                type = GEX_SPECULAR;
+              }
+              else if (same_word("emission", value_attrib, size_attrib)){
+                type = GEX_EMISSION;
+              }
+              else{
+                printf("(((ERROR! The property attrib has a wrong value!)))\n");
+                no_error = false;
+              }
+              break;
+            case 12://transparency
+              if (same_word("transparency", value_attrib, size_attrib)){
+                type = GEX_TRANSPARENCY;
+              }
+              else{
+                printf("(((ERROR! The property attrib has a wrong value!)))\n");
+                no_error = false;
+              }
+              break;
+            case 10://projection
+              if (same_word("projection", value_attrib, size_attrib)){
+                type = GEX_PROJECTION;
+              }
+              else{
+                printf("(((ERROR! The property attrib has a wrong value!)))\n");
+                no_error = false;
+              }
+              break;
+            default:
+              printf("(((ERROR! The property attrib has a wrong value!)))\n");
+              no_error = false;
+              break;
+            }
+            break;
+          case 54: //textcoord
+            break;
+          default:
+            break;
+          }
+        }
+        //Check substructures (has to have a string, and may have some transforms, and some animations)
         return no_error;
       }
 
@@ -1470,6 +1558,9 @@ namespace octet
         GEX_ATTRIB value_attrib;
         float param_value;
         GEX_PARAM param_type;
+        GEX_ATTRIB type_texture;
+        uint16_t index_texture;
+        char *texture_url;
         //Check all the substructures (all of them has to be of mesh type)
         int numNames = 0;
         for (int i = 0; i < numSubstructures && no_error; ++i){
@@ -1493,6 +1584,7 @@ namespace octet
             no_error = openGEX_Param(param_value, param_type, substructure);
             break;
           case 29: //Texture
+            no_error = openGEX_Texture(texture_url, index_texture, type_texture, substructure);
             break;
           default:
             no_error = false;
