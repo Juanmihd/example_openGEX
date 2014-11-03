@@ -26,7 +26,7 @@ namespace octet{
     struct openDDL_properties;
     struct openDDL_data_literal;
     
-    enum structureType { notYetType = -1, identifierStructureType = 0, dataTypeStructureType = 1 };
+    enum structureType { NOT_YET_TYPE = -1, IDENTIFIER_TYPE = 0, DATA_TYPE_TYPE = 1 };
     enum value_type_DDL   { UINT = 0, INT = 1, BOOL = 2, FLOAT = 3, STRING = 4, REF = 5, TYPE = 6};
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -92,7 +92,7 @@ namespace octet{
         father_structure = NULL;
         name = NULL;
         nameID = -1;
-        type = notYetType;
+        type = NOT_YET_TYPE;
       }
     public:
       ////////////////////////////////////////////////////////////////////////////////
@@ -227,7 +227,7 @@ namespace octet{
       /// @brief This will initialize the structure with type "identifier"
       ////////////////////////////////////////////////////////////////////////////////
       void init(){
-        type = identifierStructureType;
+        type = IDENTIFIER_TYPE;
       }
     public:
       ////////////////////////////////////////////////////////////////////////////////
@@ -332,7 +332,7 @@ namespace octet{
       /// @brief This will initialize the structure with type "data_ñtype"
       ////////////////////////////////////////////////////////////////////////////////
       void init(){
-        type = dataTypeStructureType;
+        type = DATA_TYPE_TYPE;
       }
     public:
       ////////////////////////////////////////////////////////////////////////////////

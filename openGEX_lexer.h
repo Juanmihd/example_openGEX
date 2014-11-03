@@ -62,6 +62,74 @@ namespace octet
       }
 
       ////////////////////////////////////////////////////////////////////////////////
+      /// @brief This function will translate from the char* to the proper GEX_ATTRIB
+      /// @param  attrib  The attrib to be translated
+      /// @param  size_attrib The size of the word
+      /// return  The proper GEX_ATTRIB
+      ////////////////////////////////////////////////////////////////////////////////
+      GEX_ATTRIB obtain_attrib(char *attrib, int size_attrib){
+        switch (size_attrib){
+        case 5://light
+          if (same_word("light", attrib, size_attrib)){
+           return GEX_LIGHT;
+          }
+          else{
+            return GEX_NO_VALUE;
+          }
+          break;
+        case 6://normal
+          if (same_word("normal", attrib, size_attrib)){
+            return GEX_NORMAL;
+          }
+          else{
+            return GEX_NO_VALUE;
+          }
+          break;
+        case 7://diffuse or opacity
+          if (same_word("diffuse", attrib, size_attrib)){
+            return GEX_DIFFUSE;
+          }
+          else if (same_word("opacity", attrib, size_attrib)){
+            return GEX_OPACITY;
+          }
+          else{
+            return GEX_NO_VALUE;
+          }
+          break;
+        case 8://specular or emission
+          if (same_word("specular", attrib, size_attrib)){
+            return GEX_SPECULAR;
+          }
+          else if (same_word("emission", attrib, size_attrib)){
+            return GEX_EMISSION;
+          }
+          else{
+            return GEX_NO_VALUE;
+          }
+          break;
+        case 10://projection
+          if (same_word("projection", attrib, size_attrib)){
+            return GEX_PROJECTION;
+          }
+          else{
+            return GEX_NO_VALUE;
+          }
+          break;
+        case 12://transparency
+          if (same_word("transparency", attrib, size_attrib)){
+            return GEX_TRANSPARENCY;
+          }
+          else{
+            return GEX_NO_VALUE;
+          }
+          break;
+        default:
+          return GEX_NO_VALUE;
+          break;
+        }
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////
       /// @brief This function prints properly a openDDL_data_literal!
       /// @param  value The literal to be printed
       ////////////////////////////////////////////////////////////////////////////////
@@ -422,53 +490,10 @@ namespace octet
             // "diffuse", "specular", "emission", "opacity", "transparency", "light"
             int size_attrib = current_property->literal.size_string_;
             char * value_attrib = current_property->literal.value.string_;
-            switch (size_attrib){
-            case 5://light
-              if (same_word("light", value_attrib, size_attrib)){
-                attrib_output = GEX_LIGHT;
-                }
-              else{
-                printf("(((ERROR! The property attrib has a wrong value!)))\n");
-                no_error = false;
-              }
-              break;
-            case 7://diffuse or opacity
-              if (same_word("diffuse", value_attrib, size_attrib)){
-                attrib_output = GEX_DIFFUSE;
-              }
-              else if (same_word("opacity", value_attrib, size_attrib)){
-                attrib_output = GEX_OPACITY;
-              }
-              else{
-                printf("(((ERROR! The property attrib has a wrong value!)))\n");
-                no_error = false;
-              }
-              break;
-            case 8://specular or emission
-              if (same_word("specular", value_attrib, size_attrib)){
-                attrib_output = GEX_SPECULAR;
-              }
-              else if (same_word("emission", value_attrib, size_attrib)){
-                attrib_output = GEX_EMISSION;
-              }
-              else{
-                printf("(((ERROR! The property attrib has a wrong value!)))\n");
-                no_error = false;
-              }
-              break;
-            case 12://transparency
-              if (same_word("transparency", value_attrib, size_attrib)){
-                attrib_output = GEX_TRANSPARENCY;
-              }
-              else{
-                printf("(((ERROR! The property attrib has a wrong value!)))\n");
-                no_error = false;
-              }
-              break;
-            default:
-              printf("(((ERROR! The property attrib has a wrong value!)))\n");
+            attrib_output = obtain_attrib(value_attrib, size_attrib);
+            if (attrib_output == GEX_NO_VALUE){
+              printf("(((ERROR! The attrib value has some mistake!)))\n");
               no_error = false;
-              break;
             }
           }
           else{
@@ -624,7 +649,7 @@ namespace octet
       /// @param  structure This is the structure to be analized, it has to be Texture.
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_Texture(char *texture_url, uint16_t &index, GEX_ATTRIB &type, openDDL_identifier_structure *structure){
+      bool openGEX_Texture(char *texture_url, int &size_url, uint16_t &index, GEX_ATTRIB &type, openDDL_identifier_structure *structure){
         bool no_error = true;
         //Check properties (may have two, attrib (OBLIGATORY), texcoord (optional)
         int num_properties = structure->get_number_properties();
@@ -632,75 +657,108 @@ namespace octet
         for (int i = 0; i < num_properties; ++i){
           openDDL_properties * current_property = structure->get_property(i);
           int tempID = identifiers_.get_value(current_property->identifierID);
+          int size_attrib;
+          char * value_attrib;
           switch (tempID){
           case 36: //attrib
-            int size_attrib = current_property->literal.size_string_;
-            char * value_attrib = current_property->literal.value.string_;
-            switch (size_attrib){
-            case 6://normal
-              if (same_word("normal", value_attrib, size_attrib)){
-                type = GEX_NORMAL;
-              }
-              else{
-                printf("(((ERROR! The property attrib has a wrong value!)))\n");
-                no_error = false;
-              }
-              break;
-            case 7://diffuse or opacity
-              if (same_word("diffuse", value_attrib, size_attrib)){
-                type = GEX_DIFFUSE;
-              }
-              else if (same_word("opacity", value_attrib, size_attrib)){
-                type = GEX_OPACITY;
-              }
-              else{
-                printf("(((ERROR! The property attrib has a wrong value!)))\n");
-                no_error = false;
-              }
-              break;
-            case 8://specular or emission
-              if (same_word("specular", value_attrib, size_attrib)){
-                type = GEX_SPECULAR;
-              }
-              else if (same_word("emission", value_attrib, size_attrib)){
-                type = GEX_EMISSION;
-              }
-              else{
-                printf("(((ERROR! The property attrib has a wrong value!)))\n");
-                no_error = false;
-              }
-              break;
-            case 12://transparency
-              if (same_word("transparency", value_attrib, size_attrib)){
-                type = GEX_TRANSPARENCY;
-              }
-              else{
-                printf("(((ERROR! The property attrib has a wrong value!)))\n");
-                no_error = false;
-              }
-              break;
-            case 10://projection
-              if (same_word("projection", value_attrib, size_attrib)){
-                type = GEX_PROJECTION;
-              }
-              else{
-                printf("(((ERROR! The property attrib has a wrong value!)))\n");
-                no_error = false;
-              }
-              break;
-            default:
-              printf("(((ERROR! The property attrib has a wrong value!)))\n");
+            size_attrib = current_property->literal.size_string_;
+            value_attrib = current_property->literal.value.string_;
+            type = obtain_attrib(value_attrib, size_attrib);
+            if (type == GEX_NO_VALUE){
+              printf("(((ERROR! The attrib value has some mistake!)))\n");
               no_error = false;
-              break;
             }
             break;
           case 54: //textcoord
+            index = current_property->literal.value.u_integer_literal_;
             break;
           default:
+            printf("(((ERROR! The structure Texture has some wrong property!)))\n");
+            no_error = false;
             break;
           }
         }
         //Check substructures (has to have a string, and may have some transforms, and some animations)
+        int number_substructures = structure->get_number_substructures();
+        int counter_substructure;
+        bool string_founded = false;
+        bool object_only = false;
+        mat4t transformMatrix;
+        mat4t nodeToParent;
+        nodeToParent.loadIdentity();
+        for (counter_substructure = 0; counter_substructure < number_substructures && !string_founded; ++counter_substructure){
+          openDDL_structure *substructure = structure->get_substructure(counter_substructure);
+          if (substructure->get_type_structure() == DATA_TYPE_TYPE){
+            openDDL_data_list *data_list = ((openDDL_data_type_structure *)substructure)->get_data_list(0);
+            size_url = data_list->data_list[0]->size_string_;
+            texture_url = data_list->data_list[0]->value.string_;
+          }
+          else if (substructure->get_type_structure() == IDENTIFIER_TYPE){
+            int tempID = ((openDDL_identifier_structure *)substructure)->get_identifierID();
+            switch (tempID){
+              //Get Transforms (may not have)
+            case 32://Transform
+              no_error = openGEX_Transform(transformMatrix, object_only, (openDDL_identifier_structure *)substructure);
+              nodeToParent.multMatrix(transformMatrix);
+              break;
+            case 33://Translation
+              no_error = openGEX_Translate(transformMatrix, object_only, (openDDL_identifier_structure *)substructure);
+              nodeToParent.multMatrix(transformMatrix);
+              break;
+            case 25://Rotation
+              no_error = openGEX_Rotate(transformMatrix, object_only, (openDDL_identifier_structure *)substructure);
+              nodeToParent.multMatrix(transformMatrix);
+              break;
+            case 26://Scale
+              no_error = openGEX_Scale(transformMatrix, object_only, (openDDL_identifier_structure *)substructure);
+              nodeToParent.multMatrix(transformMatrix);
+              break;
+              //Get Animation
+            case 0://Animation
+              //IGNORE ANIMATIONS FOR NOW!!!! TO DO!
+              break;
+            default:
+              printf("(((ERROR!! The structure Texture has an invalid substructure!)))\n");
+              no_error = false;
+              break;
+            }
+          }
+          else{
+            printf("(((ERROR!! If this is happening, it's supposed to be an error of the importer. Tell Juanmi Huertas please: juanmihd@gmail.com)))\n");
+            no_error = false;
+          }
+        }
+        for (; counter_substructure < number_substructures; ++counter_substructure){
+          openDDL_identifier_structure *substructure = (openDDL_identifier_structure *)structure->get_substructure(counter_substructure);
+          int tempID = (substructure)->get_identifierID();
+          switch (tempID){
+            //Get Transforms (may not have)
+          case 32://Transform
+            no_error = openGEX_Transform(transformMatrix, object_only, substructure);
+            nodeToParent.multMatrix(transformMatrix);
+            break;
+          case 33://Translation
+            no_error = openGEX_Translate(transformMatrix, object_only, substructure);
+            nodeToParent.multMatrix(transformMatrix);
+            break;
+          case 25://Rotation
+            no_error = openGEX_Rotate(transformMatrix, object_only, substructure);
+            nodeToParent.multMatrix(transformMatrix);
+            break;
+          case 26://Scale
+            no_error = openGEX_Scale(transformMatrix, object_only, substructure);
+            nodeToParent.multMatrix(transformMatrix);
+            break;
+            //Get Animation
+          case 0://Animation
+            //IGNORE ANIMATIONS FOR NOW!!!! TO DO!
+            break;
+          default:
+            printf("(((ERROR!! The structure Texture has an invalid substructure!)))\n");
+            no_error = false;
+            break;
+          }
+        }
         return no_error;
       }
 
@@ -1560,7 +1618,8 @@ namespace octet
         GEX_PARAM param_type;
         GEX_ATTRIB type_texture;
         uint16_t index_texture;
-        char *texture_url;
+        char *texture_url = NULL;
+        int size_url;
         //Check all the substructures (all of them has to be of mesh type)
         int numNames = 0;
         for (int i = 0; i < numSubstructures && no_error; ++i){
@@ -1584,7 +1643,7 @@ namespace octet
             no_error = openGEX_Param(param_value, param_type, substructure);
             break;
           case 29: //Texture
-            no_error = openGEX_Texture(texture_url, index_texture, type_texture, substructure);
+            no_error = openGEX_Texture(texture_url, size_url, index_texture, type_texture, substructure);
             break;
           default:
             no_error = false;
@@ -1592,6 +1651,12 @@ namespace octet
             break;
           }
         }
+        //Post process all that info
+
+        //Store that info into scenes and materials of octet
+
+        //And copy all that into a dict
+
         return no_error;
       }
 
