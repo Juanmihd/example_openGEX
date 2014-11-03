@@ -12,7 +12,6 @@
 
 #include "openDDL_lexer.h"
 #include "openGEX_identifiers.h"
-#include "openGEX_structures.h"
 
 namespace octet
 {
