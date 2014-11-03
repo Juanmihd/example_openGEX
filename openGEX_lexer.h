@@ -393,6 +393,42 @@ namespace octet
       }
 
       ////////////////////////////////////////////////////////////////////////////////
+      /// @brief This will obtain all the info from a Color structure
+      /// @param  name  This is a pointer to char, it will return here the value of the Color
+      /// @param  structure This is the structure to be analized, it has to be Color.
+      /// @return True if everything went well, false if there was some problem
+      ////////////////////////////////////////////////////////////////////////////////
+      bool openGEX_Color(vec4 &color, openDDL_identifier_structure *structure){
+        bool no_error = true;
+
+        return no_error;
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief This will obtain all the info from a Param structure
+      /// @param  name  This is a pointer to char, it will return here the value of the Param
+      /// @param  structure This is the structure to be analized, it has to be Param.
+      /// @return True if everything went well, false if there was some problem
+      ////////////////////////////////////////////////////////////////////////////////
+      bool openGEX_Param(openDDL_identifier_structure *structure){
+        bool no_error = true;
+
+        return no_error;
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief This will obtain all the info from a Texture structure
+      /// @param  name  This is a pointer to char, it will return here the value of the Texture
+      /// @param  structure This is the structure to be analized, it has to be Texture.
+      /// @return True if everything went well, false if there was some problem
+      ////////////////////////////////////////////////////////////////////////////////
+      bool openGEX_Texture(openDDL_identifier_structure *structure){
+        bool no_error = true;
+
+        return no_error;
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////
       /// @brief This will obtain all the info from a MaterialRef structure
       /// @param  name  This is a pointer to char, it will return here the value of the MaterialRef
       /// @param  structure This is the structure to be analized, it has to be MaterialRef.
@@ -1239,7 +1275,37 @@ namespace octet
           }
         }
         //Check substructures
-
+        int numSubstructures = structure->get_number_substructures();
+        char * nameNode = NULL;
+        int sizeName = 0;
+        //Check all the substructures (all of them has to be of mesh type)
+        int numNames = 0;
+        for (int i = 0; i < numSubstructures && no_error; ++i){
+          openDDL_identifier_structure *substructure = (openDDL_identifier_structure *)structure->get_substructure(i);
+          tempID = substructure->get_identifierID();
+          switch (tempID){
+          case 21: //Name
+            if (numNames == 0){
+              ++numNames;
+              no_error = openGEX_Name(nameNode, sizeName, substructure);
+            }
+            else{
+              no_error = false;
+              printf("(((ERROR: The structure Material can only have as substructure a Mesh)))\n");
+            }
+            break;
+          case 9:  //Color
+            break;
+          case 24: //Param
+            break;
+          case 29: //Texture
+            break;
+          default:
+            no_error = false;
+            printf("(((ERROR: The structure Material cannot have this type of substructure)))\n");
+            break;
+          }
+        }
         return no_error;
       }
 
@@ -1306,7 +1372,7 @@ namespace octet
         int numSubstructures = structure->get_number_substructures();
         //Some variables to check the quantity of some substructures
         int numMorph = 0; //0 or 1
-        int numName = 0; //0 or 1
+        int numNames = 0; //0 or 1
         int numObjectRef = 0; //It has to be 1!!
         //This is to get some info from the substructures
         mat4t transformMatrix;
@@ -1321,9 +1387,9 @@ namespace octet
           tempID = substructure->get_identifierID();
           switch (tempID){
           //Get Name (may not have)
-          case 21://Name¡
-            if (numName == 0){
-              ++numName;
+          case 21://Name
+            if (numNames == 0){
+              ++numNames;
               no_error = openGEX_Name(nameNode, sizeName, substructure);
             }
             else{
@@ -1373,20 +1439,20 @@ namespace octet
             break;
           //Get Animation
           case 0://Animation
-            //IGNORE ANIMATIONS FOR NOW!!!!
+            //IGNORE ANIMATIONS FOR NOW!!!! TO DO!
             break;
           //Get Nodes (children)
           case 4://BoneNode
             no_error = openGEX_BoneNode(dict, substructure, node);
             break;
           case 7://CameraNode
-            //IGNORE CAMERAS FOR NOW!!!!
+            //IGNORE CAMERAS FOR NOW!!!! TO DO!
             break;
           case 10://GeometryNode
             no_error = openGEX_GeometryNode(dict, substructure, node);
             break;
           case 14://LightNode
-            //IGNORE LIGHTS FOR NOW!!!!
+            //IGNORE LIGHTS FOR NOW!!!! TO DO!
             break;
           case 22://Nodes
             no_error = openGEX_Node(dict, substructure, node);
@@ -1398,7 +1464,7 @@ namespace octet
           printf("(((ERROR!! The GeometricNode structure has to have one ObjectRef!)))\n");
           no_error = false;
         } else{
-          if (numName == 0){ //it has no name, so generate an autoname
+          if (numNames == 0){ //it has no name, so get the structure name
             if (DEBUGOPENGEX) printf("As it has no name, assign the structure name \n");
             nameNode = name;
           }
@@ -1464,14 +1530,14 @@ namespace octet
         for (int i = 0; i < numSubstructures && no_error; ++i){
           openDDL_identifier_structure *substructure = (openDDL_identifier_structure *)structure->get_substructure(i);
           tempID = substructure->get_identifierID();
-          if (tempID != 18){//Mesh
-            no_error = false;
-            printf("(((ERROR: The structure GeometricObject can only have as substructure a Mesh)))\n");
-          }
-          else{
+          if (tempID == 18){//Mesh
             lod[i] = 0;
             no_error = openGEX_Mesh(current_mesh, lod[i], substructure);
             dict.set_resource(name, current_mesh);
+          }
+          else{
+            no_error = false;
+            printf("(((ERROR: The structure GeometricObject can only have as substructure a Mesh)))\n");
           }
         }
         return no_error;
