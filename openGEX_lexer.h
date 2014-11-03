@@ -20,6 +20,13 @@
 namespace octet
 {
   namespace loaders{
+    enum ATTRIB { GEX_DIFFUSE = 0, GEX_SPECULAR = 1, GEX_EMISSION = 2, GEX_OPACITY = 3, GEX_TRANSPARENCY = 4, GEX_NORMAL = 5, GEX_LIGHT = 6 };
+    enum PARAM {
+      GEX_SPEC_POWER = 0, //Material
+      GEX_INTENSITY = 1, //LightObject
+      GEX_FOV = 2, GEX_NEAR = 3, GEX_FAR = 4, //CameraObject
+      GEX_BEGIN = 5, GEX_END = 6, GEX_SCALE = 7, GEX_SCALE = 8 //Atten
+    };
     enum { DEBUGDATA = 0, DEBUGSTRUCTURE = 0, DEBUGOPENGEX = 1 };
     class openGEX_lexer : public openDDL_lexer{
       typedef gex_ident::gex_ident_enum gex_ident_list;
@@ -398,7 +405,7 @@ namespace octet
       /// @param  structure This is the structure to be analized, it has to be Color.
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_Color(vec4 &color, openDDL_identifier_structure *structure){
+      bool openGEX_Color(vec4 &color, ATTRIB &attrib_output, openDDL_identifier_structure *structure){
         bool no_error = true;
         //Check properties (has to have one, attrib)
         if (structure->get_number_properties() == 1){
@@ -412,10 +419,10 @@ namespace octet
             switch (size_attrib){
             case 7://diffuse or opacity
               if (same_word("diffuse", value_attrib, size_attrib)){
-
+                attrib_output = GEX_DIFFUSE;
               }
               else if (same_word("opacity", value_attrib, size_attrib)){
-
+                attrib_output = GEX_OPACITY;
               }
               else{
                 printf("(((ERROR! The property attrib has a wrong value!)))\n");
@@ -424,10 +431,10 @@ namespace octet
               break;
             case 8://specular or emission
               if (same_word("specular", value_attrib, size_attrib)){
-
+                attrib_output = GEX_SPECULAR;
               }
               else if (same_word("emission", value_attrib, size_attrib)){
-
+                attrib_output = GEX_EMISSION;
               }
               else{
                 printf("(((ERROR! The property attrib has a wrong value!)))\n");
@@ -436,7 +443,7 @@ namespace octet
               break;
             case 9://transparency
               if (same_word("transparency", value_attrib, size_attrib)){
-
+                attrib_output = GEX_TRANSPARENCY;
               }
               else{
                 printf("(((ERROR! The property attrib has a wrong value!)))\n");
@@ -455,10 +462,29 @@ namespace octet
           }
         }
         else{
-          printf("(((ERROR! It has to have one (and only one) property!)))\n");
+          printf("(((ERROR! The structure Color has to have one (and only one) property!)))\n");
           no_error = false;
         }
         //Check substructures (has to have one, float[3] or float[4])
+        if (structure->get_number_substructures() == 1){
+          openDDL_data_type_structure *substructure = (openDDL_data_type_structure *) structure->get_substructure(0);
+          int size_display = substructure->get_integer_literal();
+          if (size_display != 3 && size_display != 4){
+            no_error = false;
+            printf("(((ERROR! The substructure of the Color structure is wrong!)))\n");
+          }
+          else{
+            color = vec4(0);
+            openDDL_data_list *data_list = substructure->get_data_list(0);
+            for (int i = 0; i < size_display; ++i){
+              color[i] = data_list->data_list[i]->value.float_;
+            }
+          }
+        }
+        else{
+          printf("(((ERROR! The structure Color has to have one (and only one) substructure!)))\n");
+          no_error = false;
+        }
         return no_error;
       }
 
@@ -468,9 +494,97 @@ namespace octet
       /// @param  structure This is the structure to be analized, it has to be Param.
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_Param(openDDL_identifier_structure *structure){
+      bool openGEX_Param(float &value, int type, openDDL_identifier_structure *structure){
         bool no_error = true;
+        //Check the property (has to have only one, param)
+        if (structure->get_number_properties() == 1){
+          openDDL_properties * current_property = structure->get_property(0);
+          if (identifiers_.get_value(current_property->identifierID == 36)){ //attrib
+            //Some of the possible values of attrib are:
+            //"specular_power" (for Material), 
+            //"intensity" (for LightObject), 
+            //"fov", "near", "far" (for CameraObject), 
+            //"begin", "end", "scale", "offset" (for Atten)
+            int size_attrib = current_property->literal.size_string_;
+            char * value_attrib = current_property->literal.value.string_;
+            switch (size_attrib){
+            case 3://fov, far or end
+              if (same_word("fov", value_attrib, size_attrib)){
 
+              }
+              else if (same_word("far", value_attrib, size_attrib)){
+
+              }
+              else if (same_word("end", value_attrib, size_attrib)){
+
+              }
+              else{
+                printf("(((ERROR: The property attrib of the structure Param has a wrong value!)))\n");
+                no_error = false;
+              }
+              break;
+            case 4://near
+              if (same_word("near", value_attrib, size_attrib)){
+
+              }
+              else{
+                printf("(((ERROR: The property attrib of the structure Param has a wrong value!)))\n");
+                no_error = false;
+              }
+              break;
+            case 5://begin or scale
+              if (same_word("begin", value_attrib, size_attrib)){
+
+              }
+              else if (same_word("scale", value_attrib, size_attrib)){
+
+              }
+              else{
+                printf("(((ERROR: The property attrib of the structure Param has a wrong value!)))\n");
+                no_error = false;
+              }
+              break;
+            case 6://offset
+              if (same_word("offset", value_attrib, size_attrib)){
+
+              }
+              else{
+                printf("(((ERROR: The property attrib of the structure Param has a wrong value!)))\n");
+                no_error = false;
+              }
+              break;
+            case 9://intensity
+              if (same_word("intensity", value_attrib, size_attrib)){
+
+              }
+              else{
+                printf("(((ERROR: The property attrib of the structure Param has a wrong value!)))\n");
+                no_error = false;
+              }
+              break;
+            case 14://specular_power
+              if (same_word("specular_power", value_attrib, size_attrib)){
+
+              }
+              else{
+                printf("(((ERROR: The property attrib of the structure Param has a wrong value!)))\n");
+                no_error = false;
+              }
+              break;
+            default:
+              break;
+            }
+          }
+          else{
+            printf("(((ERROR! The structure Param has to a property of type attrib)))\n");
+            no_error = false;
+          }
+        }
+        else{
+          printf("(((ERROR! The structure Param has to have one (and only one) property!)))\n");
+          no_error = false;
+        }
+        //CHeck the substructures (has to hav eonly one, with one float!)
         return no_error;
       }
 
@@ -1336,6 +1450,10 @@ namespace octet
         int numSubstructures = structure->get_number_substructures();
         char * nameNode = NULL;
         int sizeName = 0;
+        vec4 value_color;
+        ATTRIB value_attrib;
+        float param_value;
+        int param_type;
         //Check all the substructures (all of them has to be of mesh type)
         int numNames = 0;
         for (int i = 0; i < numSubstructures && no_error; ++i){
@@ -1353,8 +1471,10 @@ namespace octet
             }
             break;
           case 9:  //Color
+            no_error = openGEX_Color(value_color, value_attrib, substructure);
             break;
           case 24: //Param
+            no_error = openGEX_Param(param_value, param_type, substructure);
             break;
           case 29: //Texture
             break;
