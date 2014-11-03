@@ -20,12 +20,13 @@
 namespace octet
 {
   namespace loaders{
-    enum ATTRIB { GEX_DIFFUSE = 0, GEX_SPECULAR = 1, GEX_EMISSION = 2, GEX_OPACITY = 3, GEX_TRANSPARENCY = 4, GEX_NORMAL = 5, GEX_LIGHT = 6 };
-    enum PARAM {
+    //Some enum to get the values of attrib and Param structures
+    enum GEX_ATTRIB { GEX_DIFFUSE = 0, GEX_SPECULAR = 1, GEX_EMISSION = 2, GEX_OPACITY = 3, GEX_TRANSPARENCY = 4, GEX_NORMAL = 5, GEX_LIGHT = 6 };
+    enum GEX_PARAM {
       GEX_SPEC_POWER = 0, //Material
       GEX_INTENSITY = 1, //LightObject
       GEX_FOV = 2, GEX_NEAR = 3, GEX_FAR = 4, //CameraObject
-      GEX_BEGIN = 5, GEX_END = 6, GEX_SCALE = 7, GEX_SCALE = 8 //Atten
+      GEX_BEGIN = 5, GEX_END = 6, GEX_SCALE = 7, GEX_OFFSET = 8 //Atten
     };
     enum { DEBUGDATA = 0, DEBUGSTRUCTURE = 0, DEBUGOPENGEX = 1 };
     class openGEX_lexer : public openDDL_lexer{
@@ -405,7 +406,7 @@ namespace octet
       /// @param  structure This is the structure to be analized, it has to be Color.
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_Color(vec4 &color, ATTRIB &attrib_output, openDDL_identifier_structure *structure){
+      bool openGEX_Color(vec4 &color, GEX_ATTRIB &attrib_output, openDDL_identifier_structure *structure){
         bool no_error = true;
         //Check properties (has to have one, attrib)
         if (structure->get_number_properties() == 1){
@@ -494,7 +495,7 @@ namespace octet
       /// @param  structure This is the structure to be analized, it has to be Param.
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_Param(float &value, int type, openDDL_identifier_structure *structure){
+      bool openGEX_Param(float &value, GEX_PARAM type, openDDL_identifier_structure *structure){
         bool no_error = true;
         //Check the property (has to have only one, param)
         if (structure->get_number_properties() == 1){
@@ -510,13 +511,13 @@ namespace octet
             switch (size_attrib){
             case 3://fov, far or end
               if (same_word("fov", value_attrib, size_attrib)){
-
+                type = GEX_FOV;
               }
               else if (same_word("far", value_attrib, size_attrib)){
-
+                type = GEX_FAR;
               }
               else if (same_word("end", value_attrib, size_attrib)){
-
+                type = GEX_END;
               }
               else{
                 printf("(((ERROR: The property attrib of the structure Param has a wrong value!)))\n");
@@ -525,7 +526,7 @@ namespace octet
               break;
             case 4://near
               if (same_word("near", value_attrib, size_attrib)){
-
+                type = GEX_NEAR;
               }
               else{
                 printf("(((ERROR: The property attrib of the structure Param has a wrong value!)))\n");
@@ -534,10 +535,10 @@ namespace octet
               break;
             case 5://begin or scale
               if (same_word("begin", value_attrib, size_attrib)){
-
+                type = GEX_BEGIN;
               }
               else if (same_word("scale", value_attrib, size_attrib)){
-
+                type = GEX_SCALE;
               }
               else{
                 printf("(((ERROR: The property attrib of the structure Param has a wrong value!)))\n");
@@ -546,7 +547,7 @@ namespace octet
               break;
             case 6://offset
               if (same_word("offset", value_attrib, size_attrib)){
-
+                type = GEX_OFFSET;
               }
               else{
                 printf("(((ERROR: The property attrib of the structure Param has a wrong value!)))\n");
@@ -555,7 +556,7 @@ namespace octet
               break;
             case 9://intensity
               if (same_word("intensity", value_attrib, size_attrib)){
-
+                type = GEX_INTENSITY;
               }
               else{
                 printf("(((ERROR: The property attrib of the structure Param has a wrong value!)))\n");
@@ -564,7 +565,7 @@ namespace octet
               break;
             case 14://specular_power
               if (same_word("specular_power", value_attrib, size_attrib)){
-
+                type = GEX_SPEC_POWER;
               }
               else{
                 printf("(((ERROR: The property attrib of the structure Param has a wrong value!)))\n");
@@ -585,6 +586,21 @@ namespace octet
           no_error = false;
         }
         //CHeck the substructures (has to hav eonly one, with one float!)
+        if (structure->get_number_substructures() == 1){
+          openDDL_data_type_structure *substructure = (openDDL_data_type_structure *)structure->get_substructure(0);
+          int size_display = substructure->get_integer_literal();
+          if (size_display == 1){
+            value = substructure->get_data_list(0)->data_list[0]->value.float_;
+          }
+          else{
+            no_error = false;
+            printf("(((ERROR! The substructure of the Param structure is wrong!)))\n");
+          }
+        }
+        else{
+          printf("(((ERROR! The structure Param has to have one (and only one) substructure!)))\n");
+          no_error = false;
+        }
         return no_error;
       }
 
@@ -1451,9 +1467,9 @@ namespace octet
         char * nameNode = NULL;
         int sizeName = 0;
         vec4 value_color;
-        ATTRIB value_attrib;
+        GEX_ATTRIB value_attrib;
         float param_value;
-        int param_type;
+        GEX_PARAM param_type;
         //Check all the substructures (all of them has to be of mesh type)
         int numNames = 0;
         for (int i = 0; i < numSubstructures && no_error; ++i){
