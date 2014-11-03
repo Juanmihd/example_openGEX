@@ -443,7 +443,7 @@ namespace octet
       /// @param  structure This is the structure to be analized, it has to be Name.
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_Name(char *name, int nameSize, openDDL_identifier_structure *structure){
+      bool openGEX_Name(char *&name, int nameSize, openDDL_identifier_structure *structure){
         bool no_error = true;
         if (structure->get_number_properties() != 0){
           printf("(((ERROR: A structure of the type Name cannot have properties)))\n");
@@ -461,6 +461,7 @@ namespace octet
             no_error = false;
           }
           else{
+            delete name;
             name = data_list_name->data_list[0]->value.string_;
             nameSize = data_list_name->data_list[0]->size_string_;
           }
@@ -644,7 +645,7 @@ namespace octet
       /// @param  structure This is the structure to be analized, it has to be Texture.
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_Texture(char *texture_url, int &size_url, uint16_t &index, GEX_ATTRIB &type, openDDL_identifier_structure *structure){
+      bool openGEX_Texture(char *&texture_url, int &size_url, uint16_t &index, GEX_ATTRIB &type, openDDL_identifier_structure *structure){
         bool no_error = true;
         //Check properties (may have two, attrib (OBLIGATORY), texcoord (optional)
         int num_properties = structure->get_number_properties();
@@ -763,7 +764,7 @@ namespace octet
       /// @param  structure This is the structure to be analized, it has to be ObjectRef.
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_ObjectRef(char *object_ref, openDDL_identifier_structure *structure){
+      bool openGEX_ObjectRef(char *&object_ref, openDDL_identifier_structure *structure){
         bool no_error = true;
         //This structure cannot have properties
         if (structure->get_number_properties() > 0){
@@ -773,7 +774,8 @@ namespace octet
         //And it has to have one single substructure of data type ref
         if (structure->get_number_substructures() == 1){
           openDDL_data_type_structure * substructure = (openDDL_data_type_structure *)structure->get_substructure(0);
-          object_ref = substructure->get_data_list(0)->data_list[0]->value.ref_;
+          openDDL_data_list * data_list_ref = substructure->get_data_list(0);
+          object_ref = data_list_ref->data_list[0]->value.ref_;
         }
         else{
           no_error = true;
@@ -788,7 +790,7 @@ namespace octet
       /// @param  structure This is the structure to be analized, it has to be MaterialRef.
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_MaterialRef(char *material_ref, openDDL_identifier_structure *structure){
+      bool openGEX_MaterialRef(char *&material_ref, openDDL_identifier_structure *structure){
         bool no_error = true;
         //This structure cannot have properties
         if (structure->get_number_properties() > 0){
@@ -1763,7 +1765,7 @@ namespace octet
         char * nameNode = NULL;
         int sizeName = 0;
         bool object_only = false;
-        char * ref_object = NULL;
+        char * object_ref = NULL;
         char * ref_material = NULL;
         //Check all the substructures
         for (int i = 0; i < numSubstructures; ++i){
@@ -1784,11 +1786,12 @@ namespace octet
           case 23://ObjectRef
             if (numObjectRef == 0){
               ++numObjectRef;
-              no_error = openGEX_ObjectRef(ref_object, substructure);
-              if (!ref_meshes.contains(ref_object)){
-                ref_meshes[ref_object] = NULL;
+              no_error = openGEX_ObjectRef(object_ref, substructure);
+              printf("It's here!\n");
+              if (!ref_meshes.contains(object_ref)){
+                ref_meshes[object_ref] = NULL;
               }
-              current_object->set_mesh(ref_meshes[ref_object]);
+              current_object->set_mesh(ref_meshes[object_ref]);
             }
             else{
               printf("(((ERROR: It has more than one Morph, it can only have one (or none)!!!)))\n");

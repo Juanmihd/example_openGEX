@@ -2,7 +2,7 @@
 ///
 /// @file openGEX_identifiers.h
 /// @author Juanmi Huertas Delgado
-/// @brief This will contain the identifiers of the structures and substructures and attributes
+/// @brief This will contain the identifiers of the structures and substructures and properties
 ///
 
 /// @brief This will be the list of identifiers of openGEX
