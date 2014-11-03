@@ -940,9 +940,57 @@ namespace octet
       /// @param  structure This is the structure to be analized, it has to be Node.
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_IndexArray(uint32_t **indices, int num_indices, openDDL_identifier_structure *structure, scene_node *father = NULL){
+      bool openGEX_IndexArray(uint32_t **indices, int &num_indices, openDDL_identifier_structure *structure, scene_node *father = NULL){
         bool no_error = true;
-
+        //Get the value of the properties!
+        bool clock_wise = false;
+        int material_index = 0;
+        int numProperties = structure->get_number_properties();
+        int restart = -1;
+        if (numProperties > 2){
+          no_error = false;
+          printf("(((ERROR! The structure Scale can have 0, 1 or 2 properties only!!)))\n");
+        }
+        else{
+          for (int i = 0; i < numProperties && no_error; ++i){
+            openDDL_properties * current_property = structure->get_property(i);
+            int typeProperty = identifiers_.get_value(current_property->identifierID);
+            if (typeProperty == 46){//material
+              material_index = current_property->literal.value.u_integer_literal_;
+            }
+            else if (typeProperty == 51){//restart
+              restart = current_property->literal.value.u_integer_literal_;
+            }
+            else if (typeProperty == 41){//front
+              //front can ve ccw or cw, so first check the size of the string
+              if (current_property->literal.size_string_ == 2){
+                if (same_word("cw", current_property->literal.value.string_, 2))
+                  clock_wise = true;
+                else{
+                  no_error = false;
+                  printf("(((ERRROR: The string in the property front is wrong!)))\n");
+                }
+              }
+              else if(current_property->literal.size_string_ == 3){
+                if (same_word("ccw", current_property->literal.value.string_, 3))
+                  clock_wise = false;
+                else{
+                  no_error = false;
+                  printf("(((ERRROR: The string in the property front is wrong!)))\n");
+                }
+              }
+              else{
+                no_error = false;
+                printf("(((ERRROR: The string in the property front has a wrong size!)))\n");
+              }
+            }
+            else{
+              printf("(((ERROR: This cannot be a property of this structure!)))\n");
+              no_error = false;
+            }
+          }
+        }
+        //Check substructures (it has to have one! and it will be a data_list or data_list_array of uints)
         return no_error;
       }
 
@@ -1044,12 +1092,11 @@ namespace octet
           mat4t identity;
           identity.loadIdentity();
           mesh::sink<float> sink_(current_mesh, identity);
-          /*sink_.reserve(num_vertexes,num_indices);
+          sink_.reserve(num_vertexes,num_indices);
           for (int i = 0; i < num_vertexes; ++i)
             sink_.add_vertex(positions[i], normals[i], uvw[i]);
           for (int i = 0; i < num_indices; ++i)
             sink_.add_triangle(indices[i][0], indices[i][1], indices[i][2]);
-            */
         }
 
         return no_error;
