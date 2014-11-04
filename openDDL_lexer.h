@@ -650,6 +650,7 @@ namespace octet
           new_word[new_size] = caracter;
           ++new_size;
         }
+        new_word[new_size] = '\0';
 
         return true;
       }
@@ -995,9 +996,6 @@ namespace octet
             break;
           }
         }
-
-
-
         if (DEBUGGING) printf("\n\tCurrent character after the word %s!! %c\n\n", string((char*)tempChar, size), *currentChar);
 
         return true;

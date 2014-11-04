@@ -19,9 +19,9 @@ namespace octet { namespace loaders {
       string url;
       /// Buffer of the file to process
       dynarray<uint8_t> buffer;
+    public:
       /// This is the lexer that decodes each block of text from the buffer
       openGEX_lexer lexer;
-    public:
       /// Constructor of the openGEX_loader class
       openGEX_loader(){
       }
@@ -39,14 +39,7 @@ namespace octet { namespace loaders {
           printf("Error loading the openGEX file (openDDL process)!\n");
           return false;
         }
-        printf("The lexer DDL process has finished successfully!\nAnd now... starting the openGEX process!\n");
-        resource_dict dict;
-        if (!lexer.openGEX_data(dict)){
-          printf("Error loading the openGEX file (openGEX process)!\n");
-          return false;
-        }
-        printf("HUGE SUCCESS!!\n");
-        //If it has arrived there, it was ok! so return true
+        printf("The lexer DDL process has finished successfully!\n");
         return true;
       }
 

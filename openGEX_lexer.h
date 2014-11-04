@@ -29,7 +29,7 @@ namespace octet
       GEX_FOV = 2, GEX_NEAR = 3, GEX_FAR = 4, //CameraObject
       GEX_BEGIN = 5, GEX_END = 6, GEX_SCALE = 7, GEX_OFFSET = 8 //Atten
     };
-    enum { DEBUGDATA = 1, DEBUGSTRUCTURE = 1, DEBUGOPENGEX = 0 };
+    enum { DEBUGDATA = 0, DEBUGSTRUCTURE = 0, DEBUGOPENGEX = 0 };
 
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief This class is the openGEX lexer, it will read the array of characters and get tokes
@@ -134,6 +134,24 @@ namespace octet
         }
       }
 
+    public:
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief This function prints properly a mesh::vertex!
+      /// @param  value The vertex to be printed
+      ////////////////////////////////////////////////////////////////////////////////
+      void print_vertex(mesh::vertex vertex, int print=0){
+        if (print == 0){//print position
+          printf("X: %f, Y: %f, Z: %f \n", vertex.pos.v[0], vertex.pos.v[1], vertex.pos.v[2]);
+        }
+        else if (print == 1){//print normals
+          printf("X: %f, Y: %f, Z: %f \n", vertex.normal.v[0], vertex.normal.v[1], vertex.normal.v[2]);
+        }
+        else{//print uv
+
+        }
+      }
+
+      private:
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief This function prints properly a openDDL_data_literal!
       /// @param  value The literal to be printed
@@ -790,12 +808,19 @@ namespace octet
       /// @param  structure This is the structure to be analized, it has to be MaterialRef.
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_MaterialRef(char *&material_ref, openDDL_identifier_structure *structure){
+      bool openGEX_MaterialRef(char *&material_ref, uint32_t &index, openDDL_identifier_structure *structure){
         bool no_error = true;
         //This structure cannot have properties
-        if (structure->get_number_properties() > 0){
+        if (structure->get_number_properties() > 1){
           no_error = true;
-          printf("(((ERROR: A ObjectRef structure cannot have properties!)))\n");
+          printf("(((ERROR: A MaterialRef structure cannot have more than 1 properties!)))\n");
+        }
+        else if (structure->get_number_properties() == 1){
+          openDDL_properties * current_property = structure->get_property(0);
+          int tempID = identifiers_.get_value(current_property->identifierID);
+          if (tempID == 42){ //index
+            index = current_property->literal.value.u_integer_literal_;
+          }
         }
         //And it has to have one single substructure of data type ref
         if (structure->get_number_substructures() == 1){
@@ -804,7 +829,7 @@ namespace octet
         }
         else{
           no_error = true;
-          printf("(((ERROR: A ObjectRef structure has to have one single substructure!)))\n");
+          printf("(((ERROR: A MaterialRef structure has to have one single substructure!)))\n");
         }
         return no_error;
       }
@@ -1435,6 +1460,7 @@ namespace octet
               for (int j = 0; j < size_data_list; ++j){
                 indices[i*size_data_list + j] = data_list->data_list[j]->value.u_integer_literal_;
               }
+              if(DEBUGOPENGEX) printf("(%u, %u, %u)\n", indices[i*size_data_list], indices[i*size_data_list + 1], indices[i*size_data_list + 2]);
             }
           }
         }
@@ -1485,7 +1511,7 @@ namespace octet
             switch (size_primitive){ //Check the size of the primitive
             case 6: //points
               if (same_word("points", new_primitive, size_primitive)){
-                valuePrimitive = GL_POINT;
+                valuePrimitive = GL_POINTS;
               }
               else{
                 printf("(((ERROR! The property primitive has a wrong content!)))\n");
@@ -1596,15 +1622,30 @@ namespace octet
           current_mesh->set_num_indices(num_indices);
           current_mesh->set_num_vertices(num_vertexes);
           current_mesh->set_mode(valuePrimitive);
+          current_mesh->add_attribute(attribute_pos, 3, GL_FLOAT, 0);
+          current_mesh->add_attribute(attribute_normal, 3, GL_FLOAT, 12);
+          current_mesh->add_attribute(attribute_uv, 2, GL_FLOAT, 24);
+          current_mesh->set_params(32, num_indices, num_vertexes, valuePrimitive, GL_UNSIGNED_INT);
           gl_resource::wolock vl(current_mesh->get_vertices());
           gl_resource::wolock il(current_mesh->get_indices());
           uint32_t *idx = il.u32();
-          mesh::vertex *vtx = (mesh::vertex *)vl.u8();
+          mesh::vertex *vtx = (mesh::vertex *)vl.f32();
           for (int i = 0; i < num_vertexes; ++i){
             vtx[i] = vertices[i];
+            if(DEBUGOPENGEX) print_vertex(vtx[i]);
           }
+          int count = 3;
+          if (DEBUGOPENGEX)printf("-->");
           for (int i = 0; i < num_indices; ++i){
             idx[i] = indices[i];
+            if (DEBUGOPENGEX){
+              printf("%u, ", idx[i]);
+              count--;
+              if (count == 0){
+                printf("\n->");
+                count = 3;
+              }
+            }
           }
         }
         return no_error;
@@ -1728,9 +1769,6 @@ namespace octet
         if (father != NULL){
           father->add_child(node);
         }
-        //Creating matrix of transforms
-        mat4t nodeToParent;
-        nodeToParent.loadIdentity(); //and initialize it to identity!
         //Obtain the name of the structure
         char * name = structure->get_name();
         //Obtain the properties (may not have)
@@ -1766,10 +1804,17 @@ namespace octet
         int numMorph = 0; //0 or 1
         int numNames = 0; //0 or 1
         int numObjectRef = 0; //It has to be 1!!
+        //Creating matrix of transforms
+        mat4t nodeToParent;
+        nodeToParent.loadIdentity(); //and initialize it to identity!
         //This is to get some info from the substructures
         mat4t transformMatrix;
+        transformMatrix.loadIdentity();
         float *values = NULL;
         int numValues;
+        dynarray<uint32_t> mat_index;
+        mat_index.resize(10);
+        int num_mat_index = 0;
         char * nameNode = NULL;
         int sizeName = 0;
         bool object_only = false;
@@ -1807,7 +1852,8 @@ namespace octet
             break;
           //Get MaterialRef
           case 17://MaterialRef
-            no_error = openGEX_MaterialRef(ref_material, substructure);
+            no_error = openGEX_MaterialRef(ref_material, mat_index[num_mat_index], substructure);
+            ++num_mat_index;
             if (!ref_materials.contains(ref_material))
               ref_materials[ref_material] = NULL;
             else
@@ -1872,6 +1918,12 @@ namespace octet
             if (DEBUGOPENGEX) printf("As it has no name, assign the structure name \n");
             nameNode = name;
           }
+          //node->access_nodeToParent().multMatrix(nodeToParent);
+          printf("Matrix:\n");
+          printf("%f, %f, %f, %f\n", node->get_nodeToParent()[0][0], node->get_nodeToParent()[0][1], node->get_nodeToParent()[0][2], node->get_nodeToParent()[0][3]);
+          printf("%f, %f, %f, %f\n", node->get_nodeToParent()[1][0], node->get_nodeToParent()[1][1], node->get_nodeToParent()[1][2], node->get_nodeToParent()[1][3]);
+          printf("%f, %f, %f, %f\n", node->get_nodeToParent()[2][0], node->get_nodeToParent()[2][1], node->get_nodeToParent()[2][2], node->get_nodeToParent()[2][3]);
+          printf("%f, %f, %f, %f\n", node->get_nodeToParent()[3][0], node->get_nodeToParent()[3][1], node->get_nodeToParent()[3][2], node->get_nodeToParent()[3][3]);
           dict.set_resource(nameNode, current_object);
         }
         return no_error;
