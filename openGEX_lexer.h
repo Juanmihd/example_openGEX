@@ -1918,12 +1918,13 @@ namespace octet
             if (DEBUGOPENGEX) printf("As it has no name, assign the structure name \n");
             nameNode = name;
           }
-          //node->access_nodeToParent().multMatrix(nodeToParent);
+          node->access_nodeToParent().multMatrix(nodeToParent);
           printf("Matrix:\n");
           printf("%f, %f, %f, %f\n", node->get_nodeToParent()[0][0], node->get_nodeToParent()[0][1], node->get_nodeToParent()[0][2], node->get_nodeToParent()[0][3]);
           printf("%f, %f, %f, %f\n", node->get_nodeToParent()[1][0], node->get_nodeToParent()[1][1], node->get_nodeToParent()[1][2], node->get_nodeToParent()[1][3]);
           printf("%f, %f, %f, %f\n", node->get_nodeToParent()[2][0], node->get_nodeToParent()[2][1], node->get_nodeToParent()[2][2], node->get_nodeToParent()[2][3]);
           printf("%f, %f, %f, %f\n", node->get_nodeToParent()[3][0], node->get_nodeToParent()[3][1], node->get_nodeToParent()[3][2], node->get_nodeToParent()[3][3]);
+          current_object->set_node(node);
           dict.set_resource(nameNode, current_object);
         }
         return no_error;
