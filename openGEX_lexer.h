@@ -29,7 +29,7 @@ namespace octet
       GEX_FOV = 2, GEX_NEAR = 3, GEX_FAR = 4, //CameraObject
       GEX_BEGIN = 5, GEX_END = 6, GEX_SCALE = 7, GEX_OFFSET = 8 //Atten
     };
-    enum { DEBUGDATA = 1, DEBUGSTRUCTURE = 1, DEBUGOPENGEX = 1 };
+    enum { DEBUGDATA = 1, DEBUGSTRUCTURE = 1, DEBUGOPENGEX = 0 };
 
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief This class is the openGEX lexer, it will read the array of characters and get tokes
@@ -1144,12 +1144,25 @@ namespace octet
       }
 
       ////////////////////////////////////////////////////////////////////////////////
+      /// @brief This will obtain all the info from a BoneNode structure
+      /// @param  dict This is the resource where everything needs to be stored.
+      /// @param  structure This is the structure to be analized, it has to be Node.
+      /// @param  father This is the father scene_node. By default  NULL
+      /// @return True if everything went well, false if there was some problem
+      ////////////////////////////////////////////////////////////////////////////////
+      bool openGEX_BoneNode(resource_dict &dict, openDDL_identifier_structure *structure, scene_node *father = NULL){
+        bool no_error = true;
+
+        return no_error;
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////
       /// @brief This will obtain all the info from a VertexArray structure
       /// @param  dict This is the resource where everything needs to be stored.
       /// @param  structure This is the structure to be analized, it has to be Node.
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_VertexArray(vec3 *positions, vec3 *normals, vec3 *uvw, int &num_vertexes, openDDL_identifier_structure *structure, scene_node *father = NULL){
+      bool openGEX_VertexArray(mesh::vertex *&vertices, int &num_vertexes, openDDL_identifier_structure *structure, scene_node *father = NULL){
         bool no_error = true;
         //Get the value of the properties!
         char * attrib_value = NULL;
@@ -1255,8 +1268,8 @@ namespace octet
             openDDL_data_literal * new_data_list = data_list->data_list[0];
             float a, b, c;
             if (current_attrib == 0){ //pos
-              if (positions == NULL)
-                positions = new vec3[num_vertexes];
+              if (vertices == NULL)
+                vertices = new mesh::vertex[num_vertexes];
               for (int i = 0; i < num_vertexes; ++i){
                 a = new_data_list->value.float_;
                 ++new_data_list;
@@ -1264,12 +1277,12 @@ namespace octet
                 ++new_data_list;
                 c = new_data_list->value.float_;
                 ++new_data_list;
-                positions[i] = vec3(a, b, c);
+                vertices[i].pos = vec3(a, b, c);
               }
             }
             else if (current_attrib == 1){//normal
-              if (normals == NULL)
-                normals = new vec3[num_vertexes];
+              if (vertices == NULL)
+                vertices = new mesh::vertex[num_vertexes];
               for (int i = 0; i < num_vertexes; ++i){
                 a = new_data_list->value.float_;
                 ++new_data_list;
@@ -1277,52 +1290,51 @@ namespace octet
                 ++new_data_list;
                 c = new_data_list->value.float_;
                 ++new_data_list;
-                normals[i] = vec3(a, b, c);
+                vertices[i].normal = vec3(a, b, c);
               }
             }
             else if (current_attrib == 2){//uv
-              if (uvw == NULL)
-                uvw = new vec3[num_vertexes];
+              if (vertices == NULL)
+                vertices = new mesh::vertex[num_vertexes];
               for (int i = 0; i < num_vertexes; ++i){
                 a = new_data_list->value.float_;
                 ++new_data_list;
                 b = new_data_list->value.float_;
                 ++new_data_list;
-                uvw[i] = vec3(a, b, 1);
+                vertices[i].uv = vec2(a, b);
               }
             }
           }
           else{
             num_vertexes = number_data_lists;
             if (size_data_list == 2 && current_attrib == 2){ //uv
-              if (uvw == NULL)
-                uvw = new vec3[num_vertexes];
+              if (vertices == NULL)
+                vertices = new mesh::vertex[num_vertexes];
               for (int i = 0; i < number_data_lists; ++i){
                 data_list = substructure->get_data_list(i);
-                uvw[i] = vec3(data_list->data_list[0]->value.float_,
-                               data_list->data_list[1]->value.float_,
-                               1);
+                vertices[i].uv = vec2(data_list->data_list[0]->value.float_,
+                                      data_list->data_list[1]->value.float_);
               }
             }
             else if (size_data_list == 3){
               if (current_attrib == 0){ //pos
-                if (positions == NULL)
-                  positions = new vec3[num_vertexes];
+                if (vertices == NULL)
+                  vertices = new mesh::vertex[num_vertexes];
                 for (int i = 0; i < number_data_lists; ++i){
                   data_list = substructure->get_data_list(i);
-                  positions[i] = vec3(data_list->data_list[0]->value.float_,
-                                       data_list->data_list[1]->value.float_, 
-                                       data_list->data_list[2]->value.float_);
+                  vertices[i].pos = vec3(data_list->data_list[0]->value.float_,
+                                        data_list->data_list[1]->value.float_, 
+                                        data_list->data_list[2]->value.float_);
                 }
               }
               else if (current_attrib == 1){ //normal
-                if (normals == NULL)
-                  normals = new vec3[num_vertexes];
+                if (vertices == NULL)
+                  vertices = new mesh::vertex[num_vertexes];
                 for (int i = 0; i < number_data_lists; ++i){
                   data_list = substructure->get_data_list(i);
-                  normals[i] = vec3(data_list->data_list[0]->value.float_,
-                                     data_list->data_list[1]->value.float_,
-                                     data_list->data_list[2]->value.float_);
+                  vertices[i].normal = vec3(data_list->data_list[0]->value.float_,
+                                            data_list->data_list[1]->value.float_,
+                                            data_list->data_list[2]->value.float_);
                 }
               }
               else{
@@ -1345,7 +1357,7 @@ namespace octet
       /// @param  structure This is the structure to be analized, it has to be Node.
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_IndexArray(uint32_t *indices, int &num_indices, openDDL_identifier_structure *structure, scene_node *father = NULL){
+      bool openGEX_IndexArray(uint32_t *&indices, int &num_indices, openDDL_identifier_structure *structure, scene_node *father = NULL){
         bool no_error = true;
         //Get the value of the properties!
         bool clock_wise = false;
@@ -1435,7 +1447,7 @@ namespace octet
       /// @param  structure This is the structure to be analized, it has to be Node.
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_Skin(mesh *current_mesh, openDDL_identifier_structure *structure, scene_node *father = NULL){
+      bool openGEX_Skin(mesh *&current_mesh, openDDL_identifier_structure *structure, scene_node *father = NULL){
         bool no_error = true;
 
         return no_error;
@@ -1448,7 +1460,7 @@ namespace octet
       /// @param  structure This is the structure to be analized, it has to be Node.
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_Mesh(mesh *current_mesh, int &lod, openDDL_identifier_structure *structure){
+      bool openGEX_Mesh(mesh *&current_mesh, int &lod, openDDL_identifier_structure *structure){
         bool no_error = true;
         int tempID;
         uint16_t valuePrimitive = GL_TRIANGLES;
@@ -1536,9 +1548,7 @@ namespace octet
         int numVertexArray = 0;
         int numIndexArray = 0;
         int numSkin = 0;
-        vec3 *positions = NULL;
-        vec3 *normals = NULL;
-        vec3 *uvw = NULL;
+        mesh::vertex * vertices = NULL;
         uint32_t *indices = NULL;
         int num_vertexes, num_indices;
         //Check all the substructures (all of them has to be of mesh type)
@@ -1548,7 +1558,7 @@ namespace octet
           switch (tempID){
           case 35://VertexArray
             ++numVertexArray;
-            no_error = openGEX_VertexArray(positions, normals, uvw, num_vertexes, substructure);
+            no_error = openGEX_VertexArray(vertices, num_vertexes, substructure);
             break;
           case 12://IndexArray
             if (numIndexArray == 0){
@@ -1576,42 +1586,27 @@ namespace octet
             break;
           }
         }
-        if (numVertexArray != 1){
+        if (numVertexArray < 1){
           no_error = false;
           printf("(((ERROR: The structure Mesh has to have one VertexArray substructure)))\n");
         }
         else{ //Post processing after reading all the substructures!
-          current_mesh->allocate(num_vertexes, num_indices);
-          //Now we need to pass from position,normals,uvw to a buffer of data with all the info posx,posy,posz,norx,nory,norz,u,v,w...
-          float * vertices = new float[num_vertexes * 9];
-          for (int i = 0; i < num_vertexes; ++i){
-            for (int j = 0; j < 3; ++j){ //Copying position
-              vertices[i * 9 + j] = positions[i][j];
-            }
-            for (int j = 0; j < 3; ++j){ //Copying normals
-              vertices[i * 9 + 3 + j] = normals[i][j];
-            }
-            for (int j = 0; j < 3; ++j){ //Copying uvw
-              vertices[i * 9 + 6 + j] = uvw[i][j];
-            }
-          }
-          current_mesh->get_vertices()->assign(vertices, 0, (sizeof(float) * num_vertexes * 9));
-          current_mesh->get_indices()->assign(indices, 0, (sizeof(uint32_t) * num_indices));
+          current_mesh = new mesh();
+          current_mesh->allocate(sizeof(mesh::vertex) * num_vertexes, sizeof(uint32_t) * num_indices);
+          current_mesh->set_num_indices(num_indices);
+          current_mesh->set_num_vertices(num_vertexes);
           current_mesh->set_mode(valuePrimitive);
+          gl_resource::wolock vl(current_mesh->get_vertices());
+          gl_resource::wolock il(current_mesh->get_indices());
+          uint32_t *idx = il.u32();
+          mesh::vertex *vtx = (mesh::vertex *)vl.u8();
+          for (int i = 0; i < num_vertexes; ++i){
+            vtx[i] = vertices[i];
+          }
+          for (int i = 0; i < num_indices; ++i){
+            idx[i] = indices[i];
+          }
         }
-        return no_error;
-      }
-
-      ////////////////////////////////////////////////////////////////////////////////
-      /// @brief This will obtain all the info from a Node structure
-      /// @param  dict This is the resource where everything needs to be stored.
-      /// @param  structure This is the structure to be analized, it has to be Node.
-      /// @param  father This is the father scene_node. By default  NULL
-      /// @return True if everything went well, false if there was some problem
-      ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_BoneNode(resource_dict &dict, openDDL_identifier_structure *structure, scene_node *father = NULL){
-        bool no_error = true;
-
         return no_error;
       }
 
@@ -1686,11 +1681,24 @@ namespace octet
             break;
           }
         }
-        //Post process all that info
-
-        //Store that info into scenes and materials of octet
-
-        //And copy all that into a dict
+        //Post process all that info a material of octet
+        material * new_material;
+        if (texture_url != NULL){ //if the material has a texture
+          new_material = new material(new image(texture_url));
+        }
+        else{//It has no texture
+          new_material = new material(value_color);
+        }
+        //And copy all that into the dict and the mesh_instances referenced
+        if (numNames == 0){ //if it has no name, add the name of the structure!
+          nameNode = name;
+        }
+        dict.set_resource(nameNode, new_material);
+        //Add the material to all those mesh_instances waiting for it!
+        int num_objects_ref = ref_materials_inv[name].size();
+        for (int i = 0; i < num_objects_ref; ++i){
+          ref_materials_inv[name][i]->set_material(new_material);
+        }
 
         return no_error;
       }
@@ -1870,13 +1878,10 @@ namespace octet
       }
 
       ////////////////////////////////////////////////////////////////////////////////
-      /// @brief This will obtain all the info from a GeometryNode structure
+      /// @brief This will obtain all the info from a GeometryObject structure
+      /// @param  dict This is the resource where everything needs to be stored.
       /// @param  structure This is the structure to be analized, it has to be GeometryNode.
       /// @return True if everything went well, false if there was some problem
-      ///   Note: This function will check the properties of the structure
-      ///   And it will check for the referencies. It will prepare to build the node
-      ///   assigning a pointer to a mesh that it will be created later
-      ///   GeometryObject will contain the node to the mesh!
       ////////////////////////////////////////////////////////////////////////////////
       bool openGEX_GeometryObject(resource_dict &dict, openDDL_identifier_structure *structure){
         int tempID;
@@ -1928,8 +1933,10 @@ namespace octet
             lod[i] = 0;
             no_error = openGEX_Mesh(current_mesh, lod[i], substructure);
             dict.set_resource(name, current_mesh);
-            int num_objects_ref = ref_meshes_inv.get_size();
-            //COMPLETE THIS PART ASIGNING THE CURRENT MESH TO THE OBJECTS EXPECTING THAT!
+            int num_objects_ref = ref_meshes_inv[name].size();
+            for (int i = 0; i < num_objects_ref; ++i){
+              ref_meshes_inv[name][i]->set_mesh(current_mesh);
+            }
           }
           else{
             no_error = false;

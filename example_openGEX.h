@@ -15,6 +15,14 @@ namespace octet {
     example_openGEX(int argc, char **argv) : app(argc, argv) {
     }
 
+    void print_mesh(mesh * current_mesh){
+      int num_vertices = current_mesh->get_num_vertices();
+      int num_indices = current_mesh->get_num_indices();
+      for (int i = 0; i < num_vertices; ++i){
+
+      }
+    }
+
     /// this is called once OpenGL is initialized
     void app_init() {
       app_scene = new visual_scene();
@@ -25,17 +33,22 @@ namespace octet {
         printf("It did not work!!");
       }
 
+      if (!openGEXLoader.process_resources(dict)){
+        printf("It did not work!!");
+      }
+
+      printf("Size of dict is: %i\n", dict.get_size());
 
       dynarray<resource*> meshes;
       dict.find_all(meshes, atom_mesh);
-
       if (meshes.size()) {
         material *mat = new material(new image("assets/duckCM.gif"));
-        mesh *duck = meshes[0]->get_mesh();
+        mesh *cube = meshes[0]->get_mesh();
+        printf("Size of meshes %i vertices and %i indices\n", cube->get_num_indices(), cube->get_num_vertices());
         scene_node *node = new scene_node();
-        node->translate(vec3(-50, -50, 0));
+        node->translate(vec3(-150, -150, 0));
         app_scene->add_child(node);
-        app_scene->add_mesh_instance(new mesh_instance(node, duck, mat));
+        app_scene->add_mesh_instance(new mesh_instance(node, cube, mat));
 
         scene_node *light_node = new scene_node();
         light *_light = new light();
@@ -44,7 +57,6 @@ namespace octet {
         light_node->translate(vec3(0, 0, 100));
         app_scene->add_light_instance(new light_instance(light_node, _light));
       }
-
       app_scene->create_default_camera_and_lights();
     }
 
