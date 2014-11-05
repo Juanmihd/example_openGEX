@@ -81,6 +81,13 @@ namespace octet {
       if (mesh_instances.size()) {
         mesh_instance * current_instance = mesh_instances[0]->get_mesh_instance();
         print_mat4t(current_instance->get_node()->get_nodeToParent());
+        //current_instance->get_node()->scale(vec3(0.1));
+        app_scene->add_child(current_instance->get_node());
+        app_scene->add_mesh_instance(current_instance);
+
+        current_instance = mesh_instances[1]->get_mesh_instance();
+        print_mat4t(current_instance->get_node()->get_nodeToParent());
+        //current_instance->get_node()->scale(vec3(0.1));
         app_scene->add_child(current_instance->get_node());
         app_scene->add_mesh_instance(current_instance);
         
