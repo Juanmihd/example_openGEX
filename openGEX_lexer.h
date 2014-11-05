@@ -1678,8 +1678,44 @@ namespace octet
       /// @param  structure This is the structure to be analized, it has to be Node.
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_Skin(mesh *&current_mesh, openDDL_identifier_structure *structure, scene_node *father = NULL){
+      bool openGEX_Skin(mesh *&current_mesh, openDDL_identifier_structure *structure, atom_t instance){
         bool no_error = true;
+        //Check properties (this Structure cannot have properties!)
+        int num_properties = structure->get_number_properties();
+        if (num_properties != 0){
+          no_error = false;
+          printf("(((ERROR!! The structure Skin cannot have properties!)))");
+        }
+        //Check substructures, it has to have 1 and only 1 of each one of these: 
+        //            Skeleton, BoneCountArray, BoneIndexArray, BoneWeightArray
+        //And it may have one or none of Transform
+        int num_substructures = structure->get_number_substructures();
+        bool contains_transform = false;
+        bool contains_skeleton = false;
+        bool contains_bone_count = false;
+        bool contains_bone_index = false;
+        bool contains_bone_weight = false;
+        //Now check all the substructures
+        for (unsigned int i = 0; i < num_substructures; ++i){
+          openDDL_identifier_structure * substructure = (openDDL_identifier_structure *) structure->get_substructure(i);
+          //Check the type of the substructure
+          switch (substructure->get_identifierID()){
+          case 32: //Transform
+            break;
+          case 27: //Skeleton
+            break;
+          case 2:  //BoneCountArray
+            break;
+          case 3:  //BoneIndexArray
+            break;
+          case 6:  //BoneWeightArray
+            break;
+          default:
+            no_error = false;
+            printf("(((ERROR->)
+            break;
+          }
+        }
 
         return no_error;
       }
@@ -1689,9 +1725,10 @@ namespace octet
       /// @param  dict This is the resource where everything needs to be stored.
       /// @param  lod Level of detail (it has to be different for any mesh in a same GeometryObject
       /// @param  structure This is the structure to be analized, it has to be Node.
+      /// @param  instance  This is an atom (equivalente to string! but cheaper!) with the name of the mesh_instance that contains the mesh
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_Mesh(mesh *&current_mesh, int &lod, openDDL_identifier_structure *structure){
+      bool openGEX_Mesh(mesh *&current_mesh, int &lod, openDDL_identifier_structure *structure, atom_t instance){
         bool no_error = true;
         int tempID;
         uint16_t valuePrimitive = GL_TRIANGLES;
@@ -1804,7 +1841,7 @@ namespace octet
           case 28://Skin
             if (numSkin == 0){
               ++numSkin;
-              no_error = openGEX_Skin(current_mesh, substructure);
+              no_error = openGEX_Skin(current_mesh, substructure, instance);
             }
             else{
               no_error = false;
@@ -2188,7 +2225,7 @@ namespace octet
           tempID = substructure->get_identifierID();
           if (tempID == 18){//Mesh
             lod[i] = 0;
-            no_error = openGEX_Mesh(current_mesh, lod[i], substructure);
+            no_error = openGEX_Mesh(current_mesh, lod[i], substructure, app_utils::get_atom(name));
             dict.set_resource(name, current_mesh);
             int num_objects_ref = ref_meshes_inv[name].size();
             for (int i = 0; i < num_objects_ref; ++i){
