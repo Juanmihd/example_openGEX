@@ -1701,18 +1701,53 @@ namespace octet
           //Check the type of the substructure
           switch (substructure->get_identifierID()){
           case 32: //Transform
+            if (!contains_transform){
+              contains_transform = true;
+            }
+            else{
+              no_error = false;
+              printf("(((ERROR: The structure Skin has two or more Transform. It's invalid, it can only have one Transform!)))");
+            }
             break;
           case 27: //Skeleton
+            if (!contains_skeleton){
+              contains_skeleton = true;
+            }
+            else{
+              no_error = false;
+              printf("(((ERROR: The structure Skin has two or more Skeleton. It's invalid, it can only have one Skeleton!)))");
+            }
             break;
           case 2:  //BoneCountArray
+            if (!contains_bone_count){
+              contains_bone_count = true;
+            }
+            else{
+              no_error = false;
+              printf("(((ERROR: The structure Skin has two or more BoneCountArray. It's invalid, it can only have one BoneCountArray!)))");
+            }
             break;
           case 3:  //BoneIndexArray
+            if (!contains_bone_index){
+              contains_bone_index = true;
+            }
+            else{
+              no_error = false;
+              printf("(((ERROR: The structure Skin has two or more BoneIndexArray. It's invalid, it can only have one BoneIndexArray!)))");
+            }
             break;
           case 6:  //BoneWeightArray
+            if (!contains_bone_weight){
+              contains_bone_weight = true;
+            }
+            else{
+              no_error = false;
+              printf("(((ERROR: The structure Skin has two or more BoneWeightArray. It's invalid, it can only have one BoneWeightArray!)))");
+            }
             break;
           default:
             no_error = false;
-            printf("(((ERROR->)
+            printf("(((ERROR->The structure Skin has an invaled substructure!)))");
             break;
           }
         }
