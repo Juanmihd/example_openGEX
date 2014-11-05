@@ -18,6 +18,7 @@ namespace octet {
     example_openGEX(int argc, char **argv) : app(argc, argv) {
     }
 
+    //This is an auxiliary function to print meshes in case that it's needed
     void print_mesh(mesh * current_mesh){
       int num_vertices = current_mesh->get_num_vertices();
       int num_indices = current_mesh->get_num_indices();
@@ -43,6 +44,7 @@ namespace octet {
       }
     }
 
+    //This is an auxiliary function to print matrixes...
     void print_mat4t(mat4t matrix){
       printf("Matrix:\n");
       printf("%f, %f, %f, %f\n", matrix[0][0], matrix[0][1], matrix[0][2], matrix[0][3]);
@@ -50,6 +52,7 @@ namespace octet {
       printf("%f, %f, %f, %f\n", matrix[2][0], matrix[2][1], matrix[2][2], matrix[2][3]);
       printf("%f, %f, %f, %f\n", matrix[3][0], matrix[3][1], matrix[3][2], matrix[3][3]);
     }
+
     /// this is called once OpenGL is initialized
     void app_init() {
       app_scene = new visual_scene();
@@ -66,27 +69,21 @@ namespace octet {
 
       dynarray<resource*> meshes;
       dynarray<resource*> mesh_instances;
+      dynarray<resource*> materials;
       dict.find_all(meshes, atom_mesh);
       printf("I've found %i meshes!\n", meshes.size());
       dict.find_all(mesh_instances, atom_mesh_instance);
       printf("I've found %i instances!\n", mesh_instances.size());
+      dict.find_all(materials, atom_material);
+      printf("I've found %i materials!\n", materials.size());
+
 
       if (mesh_instances.size()) {
-     /*   mesh_instance * current_instance = mesh_instances[0]->get_mesh_instance();
+        mesh_instance * current_instance = mesh_instances[0]->get_mesh_instance();
         print_mat4t(current_instance->get_node()->get_nodeToParent());
-        app_scene->add_mesh_instance(current_instance);*/
-        material *mat = new material(vec4(1,0,0,1));
-        mesh *cube = meshes[0]->get_mesh();
-        //print_mesh(cube);
-        scene_node *node = new scene_node();
-        node->rotate(-90, vec3(1, 0, 0));
-        node->translate(vec3(0, 0, 0));
-        /*node->rotate(-90, vec3(1, 0, 0));
-        node->translate(vec3(0, 80, -150));*/
-        node->scale(vec3(0.2));
-        app_scene->add_child(node);
-        app_scene->add_mesh_instance(new mesh_instance(node, cube, mat));
-
+        app_scene->add_child(current_instance->get_node());
+        app_scene->add_mesh_instance(current_instance);
+        
         scene_node *light_node = new scene_node();
         light *_light = new light();
         _light->set_attenuation(1, 0, -1);
@@ -108,7 +105,6 @@ namespace octet {
       }
       else if (is_key_down('W')){
         app_scene->get_camera_instance(0)->get_node()->access_nodeToParent().translate(0, 2.5, 0);
-
       }
       if (is_key_down('A')){
         app_scene->get_camera_instance(0)->get_node()->access_nodeToParent().translate(-2.5, 0, 0);
@@ -140,13 +136,14 @@ namespace octet {
       // draw the scene
       app_scene->render((float)vx / vy);
       
+      // Updating the screen with the keyboard
       keyboard();
 
       // tumble the duck  (there is only one mesh instance)
       mesh_instance *mi = app_scene->get_mesh_instance(0);
       if (mi) {
         scene_node *node = mi->get_node();
-        node->rotate(0.5, vec3(0, 0, 1));
+        //node->rotate(0.5, vec3(0, 0, 1));
       }
     }
   };
