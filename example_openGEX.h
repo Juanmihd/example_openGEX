@@ -71,17 +71,16 @@ namespace octet {
       dynarray<resource*> mesh_instances;
       dynarray<resource*> materials;
       dict.find_all(meshes, atom_mesh);
-      //printf("I've found %i meshes!\n", meshes.size());
+      printf("I've found %i meshes!\n", meshes.size());
       dict.find_all(mesh_instances, atom_mesh_instance);
-      //printf("I've found %i instances!\n", mesh_instances.size());
+      printf("I've found %i instances!\n", mesh_instances.size());
       dict.find_all(materials, atom_material);
-      //printf("I've found %i materials!\n", materials.size());
+      printf("I've found %i materials!\n", materials.size());
 
 
       if (mesh_instances.size()) {
         mesh_instance * current_instance = mesh_instances[0]->get_mesh_instance();
         //print_mat4t(current_instance->get_node()->get_nodeToParent());
-        //current_instance->get_node()->scale(vec3(0.1));
         app_scene->add_child(current_instance->get_node());
         app_scene->add_mesh_instance(current_instance);
 
