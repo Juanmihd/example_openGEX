@@ -29,7 +29,7 @@ namespace octet
       GEX_FOV = 2, GEX_NEAR = 3, GEX_FAR = 4, //CameraObject
       GEX_BEGIN = 5, GEX_END = 6, GEX_SCALE = 7, GEX_OFFSET = 8 //Atten
     };
-    enum { DEBUGDATA = 0, DEBUGSTRUCTURE = 0, DEBUGOPENGEX = 0 };
+    enum { DEBUGDATA = 1, DEBUGSTRUCTURE = 1, DEBUGOPENGEX = 0 };
 
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief This class is the openGEX lexer, it will read the array of characters and get tokes
@@ -1176,8 +1176,107 @@ namespace octet
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
       bool openGEX_BoneNode(resource_dict &dict, openDDL_identifier_structure *structure, scene_node *father = NULL){
+        int tempID;
         bool no_error = true;
+        //Creating new node
+        scene_node *node;
+        node = new scene_node();
+        //If it's not a Top-Level class, add it to his father
+        if (father != NULL){
+          father->add_child(node);
+        }
+        //Obtain the name of the structure
+        char * name = structure->get_name();
+        //BoneNode has no properties!
+        int numProperties = structure->get_number_properties();
+        if (numProperties != 0){
+          no_error = true;
+          printf("(((ERROR! BoneNode cannot have properties!!");
+        }
+        //Check substructures
+        int numSubstructures = structure->get_number_substructures();
+        //Some variables to check the quantity of some substructures
+        int numNames = 0; //0 or 1
+        //Creating matrix of transforms
+        mat4t nodeToParent;
+        nodeToParent.loadIdentity(); //and initialize it to identity!
+        //This is to get some info from the substructures
+        mat4t transformMatrix;
+        transformMatrix.loadIdentity();
+        float *values = NULL;
+        int numValues;
+        dynarray<uint32_t> mat_index;
+        mat_index.resize(10);
+        int num_mat_index = 0;
+        char * nameNode = NULL;
+        int sizeName = 0;
+        bool object_only = false;
+        //Check all the substructures
+        for (int i = 0; i < numSubstructures; ++i){
+          openDDL_identifier_structure *substructure = (openDDL_identifier_structure *)structure->get_substructure(i);
+          tempID = substructure->get_identifierID();
+          switch (tempID){
+            //Get Name (may not have)
+          case 21://Name
+            if (numNames == 0){
+              ++numNames;
+              no_error = openGEX_Name(nameNode, sizeName, substructure);
+            }
+            else{
+              printf("(((ERROR: It has more than one Morph, it can only have one (or none)!!!)))\n");
+            }
+            break;
+            //Get Transforms (may not have)
+          case 32://Transform
+            no_error = openGEX_Transform(transformMatrix, object_only, substructure);
+            nodeToParent.multMatrix(transformMatrix);
+            break;
+          case 33://Translation
+            no_error = openGEX_Translate(transformMatrix, object_only, substructure);
+            nodeToParent.multMatrix(transformMatrix);
+            break;
+          case 25://Rotation
+            no_error = openGEX_Rotate(transformMatrix, object_only, substructure);
+            nodeToParent.multMatrix(transformMatrix);
+            break;
+          case 26://Scale
+            no_error = openGEX_Scale(transformMatrix, object_only, substructure);
+            nodeToParent.multMatrix(transformMatrix);
+            break;
+            //Get Animation
+          case 0://Animation
+            //IGNORE ANIMATIONS FOR NOW!!!! TO DO!
+            break;
+            //Get Nodes (children)
+          case 4://BoneNode
+            no_error = openGEX_BoneNode(dict, substructure, node);
+            break;
+          case 7://CameraNode
+            //IGNORE CAMERAS FOR NOW!!!! TO DO!
+            break;
+          case 10://GeometryNode
+            no_error = openGEX_GeometryNode(dict, substructure, node);
+            break;
+          case 14://LightNode
+            //IGNORE LIGHTS FOR NOW!!!! TO DO!
+            break;
+          case 22://Nodes
+            no_error = openGEX_Node(dict, substructure, node);
+            break;
+          }
+        }
+        //Sum up after reading all substructures
+        if (numNames == 0){ //it has no name, so get the structure name
+          if (DEBUGOPENGEX) printf("As it has no name, assign the structure name \n");
+          nameNode = name;
+        }
+        // We are working with transpose matrix in octet!!! So transpose it to be able to work properly!
+        node->access_nodeToParent().multMatrix(nodeToParent.transpose4x4());
 
+        //Add the id for the animations
+        node->set_sid(app_utils::get_atom(nameNode));
+        //dict.set_resource(nameNode, current_object);
+        
         return no_error;
       }
 
@@ -1918,12 +2017,11 @@ namespace octet
             if (DEBUGOPENGEX) printf("As it has no name, assign the structure name \n");
             nameNode = name;
           }
-          node->access_nodeToParent().multMatrix(nodeToParent);
-          printf("Matrix:\n");
-          printf("%f, %f, %f, %f\n", node->get_nodeToParent()[0][0], node->get_nodeToParent()[0][1], node->get_nodeToParent()[0][2], node->get_nodeToParent()[0][3]);
-          printf("%f, %f, %f, %f\n", node->get_nodeToParent()[1][0], node->get_nodeToParent()[1][1], node->get_nodeToParent()[1][2], node->get_nodeToParent()[1][3]);
-          printf("%f, %f, %f, %f\n", node->get_nodeToParent()[2][0], node->get_nodeToParent()[2][1], node->get_nodeToParent()[2][2], node->get_nodeToParent()[2][3]);
-          printf("%f, %f, %f, %f\n", node->get_nodeToParent()[3][0], node->get_nodeToParent()[3][1], node->get_nodeToParent()[3][2], node->get_nodeToParent()[3][3]);
+          // We are working with transpose matrix in octet!!!
+          node->access_nodeToParent().multMatrix(nodeToParent.transpose4x4());
+
+          //Add the id for the animations
+          node->set_sid(app_utils::get_atom(nameNode));
           current_object->set_node(node);
           dict.set_resource(nameNode, current_object);
         }
