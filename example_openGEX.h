@@ -63,7 +63,7 @@ namespace octet {
         printf("It did not work!!");
       }
 
-      if (!openGEXLoader.process_resources(dict)){
+      if (!openGEXLoader.process_resources(&dict)){
         printf("It did not work!!");
       }
 

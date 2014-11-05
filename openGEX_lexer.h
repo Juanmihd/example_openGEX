@@ -46,6 +46,9 @@ namespace octet
       dictionary<ref<scene_node>> dict_nodes;
       dictionary<ref<scene_node>> dict_bone_nodes;
 
+      //This is (a pointer to) the dictionary where everything will need to be stored! The octet dict! Be careful!
+      resource_dict *dict;
+
       //Some values needed to process correctly the file
       //This are the values that are obtained by Metric structures and that define the measurement and orientation
       float distance_multiplier; //default value = 1.0f
@@ -319,7 +322,7 @@ namespace octet
           if (DEBUGSTRUCTURE) printf("The ammount of substructures is: %i\n", numSubstructures);
           for (int i = 0; i < numSubstructures; ++i){
             resource_dict dict;
-            openGEX_structure(dict, structure->get_substructure(i));
+            openGEX_structure(structure->get_substructure(i));
           }
         }
          
@@ -1166,7 +1169,7 @@ namespace octet
       /// @param  structure This is the structure to be analized, it has to be Node.
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_Node(resource_dict &dict, openDDL_identifier_structure *structure, scene_node *father = NULL){
+      bool openGEX_Node(openDDL_identifier_structure *structure, scene_node *father = NULL){
         int tempID;
         bool no_error = true;
         //Creating new node
@@ -1194,8 +1197,6 @@ namespace octet
         //This is to get some info from the substructures
         mat4t transformMatrix;
         transformMatrix.loadIdentity();
-        float *values = NULL;
-        int numValues;
         dynarray<uint32_t> mat_index;
         mat_index.resize(10);
         int num_mat_index = 0;
@@ -1240,19 +1241,19 @@ namespace octet
             break;
             //Get Nodes (children)
           case 4://BoneNode
-            no_error = openGEX_BoneNode(dict, substructure, node);
+            no_error = openGEX_BoneNode(substructure, node);
             break;
           case 7://CameraNode
             //IGNORE CAMERAS FOR NOW!!!! TO DO!
             break;
           case 10://GeometryNode
-            no_error = openGEX_GeometryNode(dict, substructure, node);
+            no_error = openGEX_GeometryNode(substructure, node);
             break;
           case 14://LightNode
             //IGNORE LIGHTS FOR NOW!!!! TO DO!
             break;
           case 22://Nodes
-            no_error = openGEX_Node(dict, substructure, node);
+            no_error = openGEX_Node(substructure, node);
             break;
           }
         }
@@ -1279,7 +1280,7 @@ namespace octet
       /// @param  father This is the father scene_node. By default  NULL
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_BoneNode(resource_dict &dict, openDDL_identifier_structure *structure, scene_node *father = NULL){
+      bool openGEX_BoneNode(openDDL_identifier_structure *structure, scene_node *father = NULL){
         int tempID;
         bool no_error = true;
         //Creating new node
@@ -1307,8 +1308,6 @@ namespace octet
         //This is to get some info from the substructures
         mat4t transformMatrix;
         transformMatrix.loadIdentity();
-        float *values = NULL;
-        int numValues;
         dynarray<uint32_t> mat_index;
         mat_index.resize(10);
         int num_mat_index = 0;
@@ -1353,19 +1352,19 @@ namespace octet
             break;
             //Get Nodes (children)
           case 4://BoneNode
-            no_error = openGEX_BoneNode(dict, substructure, node);
+            no_error = openGEX_BoneNode(substructure, node);
             break;
           case 7://CameraNode
             //IGNORE CAMERAS FOR NOW!!!! TO DO!
             break;
           case 10://GeometryNode
-            no_error = openGEX_GeometryNode(dict, substructure, node);
+            no_error = openGEX_GeometryNode(substructure, node);
             break;
           case 14://LightNode
             //IGNORE LIGHTS FOR NOW!!!! TO DO!
             break;
           case 22://Nodes
-            no_error = openGEX_Node(dict, substructure, node);
+            no_error = openGEX_Node(substructure, node);
             break;
           }
         }
@@ -1673,12 +1672,24 @@ namespace octet
       }
 
       ////////////////////////////////////////////////////////////////////////////////
+      /// @brief This will obtain all the info from a Skeleton structure
+      /// @param  dict This is the resource where everything needs to be stored.
+      /// @param  structure This is the structure to be analized, it has to be Node.
+      /// @return True if everything went well, false if there was some problem
+      ////////////////////////////////////////////////////////////////////////////////
+      bool openGEX_Skeleton(skin *current_skin, openDDL_identifier_structure *structure, scene_node *father){
+        bool no_error = true;
+
+        return no_error;
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////
       /// @brief This will obtain all the info from a Skin structure
       /// @param  dict This is the resource where everything needs to be stored.
       /// @param  structure This is the structure to be analized, it has to be Node.
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_Skin(mesh *&current_mesh, openDDL_identifier_structure *structure, atom_t instance){
+      bool openGEX_Skin(mesh *current_mesh, openDDL_identifier_structure *structure, atom_t instance){
         bool no_error = true;
         //Check properties (this Structure cannot have properties!)
         int num_properties = structure->get_number_properties();
@@ -1695,14 +1706,19 @@ namespace octet
         bool contains_bone_count = false;
         bool contains_bone_index = false;
         bool contains_bone_weight = false;
+        bool object_only = false;
+        mat4t transformMatrix;
+        //Get ready the mesh...
+        skin * current_skin = new skin();
         //Now check all the substructures
-        for (unsigned int i = 0; i < num_substructures; ++i){
+        for (int i = 0; i < num_substructures; ++i){
           openDDL_identifier_structure * substructure = (openDDL_identifier_structure *) structure->get_substructure(i);
           //Check the type of the substructure
           switch (substructure->get_identifierID()){
           case 32: //Transform
             if (!contains_transform){
               contains_transform = true;
+              no_error = openGEX_Transform(transformMatrix, object_only, substructure);
             }
             else{
               no_error = false;
@@ -1712,6 +1728,7 @@ namespace octet
           case 27: //Skeleton
             if (!contains_skeleton){
               contains_skeleton = true;
+
             }
             else{
               no_error = false;
@@ -1751,7 +1768,15 @@ namespace octet
             break;
           }
         }
-
+        //Post-processing info of the Skin. Check if it has Skeleton, and the Bone-----Array
+        if (!contains_skeleton || !contains_bone_count || !contains_bone_index || !contains_bone_weight){
+          no_error = false;
+          printf("(((ERROR!! The structure Skin is missing some of their substructures!)))");
+        }
+        else{ //It contains all that it needs, so, check it!
+          //Set the skin with the given transform (identity if it has no transform!)
+          current_skin->set_bindToModel(transformMatrix.transpose4x4());
+        }
         return no_error;
       }
 
@@ -1934,7 +1959,7 @@ namespace octet
       /// @param  structure This is the structure to be analized, it has to be Node.
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_Material(resource_dict &dict, openDDL_identifier_structure *structure){
+      bool openGEX_Material(openDDL_identifier_structure *structure){
         bool no_error = true;
         bool two_sided = false;
         int tempID;
@@ -1963,7 +1988,7 @@ namespace octet
         vec4 value_color;
         GEX_ATTRIB value_attrib;
         float param_value;
-        GEX_PARAM param_type;
+        GEX_PARAM param_type = GEX_BEGIN;
         GEX_ATTRIB type_texture;
         uint16_t index_texture;
         char *texture_url = NULL;
@@ -2011,7 +2036,7 @@ namespace octet
         if (numNames == 0){ //if it has no name, add the name of the structure!
           nameNode = name;
         }
-        dict.set_resource(nameNode, new_material);
+        dict->set_resource(nameNode, new_material);
         //Add the material to all those mesh_instances waiting for it!
         int num_objects_ref = ref_materials_inv[name].size();
         for (int i = 0; i < num_objects_ref; ++i){
@@ -2032,7 +2057,7 @@ namespace octet
       ///   assigning a pointer to a mesh that it will be created later
       ///   GeometryObject will contain the node to the mesh!
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_GeometryNode(resource_dict &dict, openDDL_identifier_structure *structure, scene_node *father = NULL){
+      bool openGEX_GeometryNode(openDDL_identifier_structure *structure, scene_node *father = NULL){
         int tempID;
         bool no_error = true;
         bool values_specified[3] = { false, false, false }; //values => visible, shadow, motion_blur
@@ -2170,19 +2195,19 @@ namespace octet
             break;
           //Get Nodes (children)
           case 4://BoneNode
-            no_error = openGEX_BoneNode(dict, substructure, node);
+            no_error = openGEX_BoneNode(substructure, node);
             break;
           case 7://CameraNode
             //IGNORE CAMERAS FOR NOW!!!! TO DO!
             break;
           case 10://GeometryNode
-            no_error = openGEX_GeometryNode(dict, substructure, node);
+            no_error = openGEX_GeometryNode(substructure, node);
             break;
           case 14://LightNode
             //IGNORE LIGHTS FOR NOW!!!! TO DO!
             break;
           case 22://Nodes
-            no_error = openGEX_Node(dict, substructure, node);
+            no_error = openGEX_Node(substructure, node);
             break;
           }
         }
@@ -2201,7 +2226,7 @@ namespace octet
           //Add the id for the animations
           node->set_sid(app_utils::get_atom(nameNode));
           current_object->set_node(node);
-          dict.set_resource(nameNode, current_object);
+          dict->set_resource(nameNode, current_object);
         }
         return no_error;
       }
@@ -2212,7 +2237,7 @@ namespace octet
       /// @param  structure This is the structure to be analized, it has to be GeometryNode.
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_GeometryObject(resource_dict &dict, openDDL_identifier_structure *structure){
+      bool openGEX_GeometryObject(openDDL_identifier_structure *structure){
         int tempID;
         bool no_error = true;
         bool values_specified[3] = { false, false, false }; //values => visible, shadow, motion_blur
@@ -2261,7 +2286,7 @@ namespace octet
           if (tempID == 18){//Mesh
             lod[i] = 0;
             no_error = openGEX_Mesh(current_mesh, lod[i], substructure, app_utils::get_atom(name));
-            dict.set_resource(name, current_mesh);
+            dict->set_resource(name, current_mesh);
             int num_objects_ref = ref_meshes_inv[name].size();
             for (int i = 0; i < num_objects_ref; ++i){
               ref_meshes_inv[name][i]->set_mesh(current_mesh);
@@ -2279,7 +2304,7 @@ namespace octet
       /// @brief This will process the identifier structure and store it info into octet (previously analized by openDDL lexer)
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_identifier_structure(resource_dict &dict, openDDL_identifier_structure * structure){
+      bool openGEX_identifier_structure(openDDL_identifier_structure * structure){
         currentStructure = structure;
         bool no_error = true;
         int tempID;
@@ -2300,17 +2325,17 @@ namespace octet
           case 10: //GeometryNode 
             if (DEBUGOPENGEX) printf("GeometryNode\n");
             //Process GeometryNode structure
-            no_error = openGEX_GeometryNode(dict, structure);
+            no_error = openGEX_GeometryNode(structure);
             break;
           case 11: //GeometryObject
             if (DEBUGOPENGEX) printf("GeometryObject\n");
             //Process GeometryObject structure
-            no_error = openGEX_GeometryObject(dict, structure);
+            no_error = openGEX_GeometryObject(structure);
             break;
           case 16: //Material
             if (DEBUGOPENGEX) printf("Material\n");
             //Process Material structure
-            no_error = openGEX_Material(dict, structure);
+            no_error = openGEX_Material(structure);
             break;
           }
         }
@@ -2321,13 +2346,13 @@ namespace octet
       /// @brief This will check which type of structure to openGEX (previously analized by openDDL lexer)
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_structure(resource_dict &dict, openDDL_structure * structure){
+      bool openGEX_structure(openDDL_structure * structure){
         ++nesting;
         bool no_error = true;
         //Check the type of the structure!
         if (structure->get_type_structure() == 0){ //That means that it's a identifier structure!
           if (DEBUGSTRUCTURE) no_error = printf_identifier_structure((openDDL_identifier_structure*)structure); 
-          no_error = openGEX_identifier_structure(dict, (openDDL_identifier_structure*)structure);
+          no_error = openGEX_identifier_structure((openDDL_identifier_structure*)structure);
         }
         else{// That means that it's a data_type structure!!
           if (DEBUGSTRUCTURE) no_error = printf_data_type_structure((openDDL_data_type_structure*)structure);
@@ -2349,7 +2374,8 @@ namespace octet
       /// @brief This function will analize all the data obtained by the openDDL lexer process
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_data(resource_dict &dict){
+      bool openGEX_data(resource_dict *new_dict){
+        dict = new_dict;
         bool no_error = true;
         int numStructures = openDDL_file.size();
         openDDL_structure * topLevelStructure;
@@ -2360,7 +2386,7 @@ namespace octet
           topLevelStructure = openDDL_file[i];
           //Check the type of the structure and the identificator or data_type!
           if (DEBUGSTRUCTURE) printf("\n-- Top-level structure %i:\n", i + 1);
-          no_error = openGEX_structure(dict, topLevelStructure);
+          no_error = openGEX_structure(topLevelStructure);
         }
         if (DEBUGSTRUCTURE) printf("\n");
         return no_error;

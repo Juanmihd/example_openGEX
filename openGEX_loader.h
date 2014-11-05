@@ -43,7 +43,7 @@ namespace octet { namespace loaders {
         return true;
       }
 
-      bool process_resources(resource_dict &dict){
+      bool process_resources(resource_dict *dict){
         printf("And now start the openGEX process...\n");
         if (!lexer.openGEX_data(dict)){
           printf("Error loading the openGEX file (openGEX process)!\n");
@@ -52,6 +52,7 @@ namespace octet { namespace loaders {
         else
           printf("The openGEX lecture of data went great!\n");
         //Import the file into octet (return false if there was any problem)
+        return true;
       }
 
     };
