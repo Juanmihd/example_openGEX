@@ -705,6 +705,8 @@ namespace octet
         bool string_founded = false;
         bool object_only = false;
         dynarray<mat4t> transformMatrixes;
+        if (transformMatrixes.size() < 1)
+          transformMatrixes.resize(1);
         mat4t nodeToParent;
         nodeToParent.loadIdentity();
         for (counter_substructure = 0; counter_substructure < number_substructures && !string_founded; ++counter_substructure){
@@ -881,14 +883,14 @@ namespace octet
         } else{
         //Obtain the values from the substructures (float[16]) that will be converted into a mat4t!!!
           openDDL_data_type_structure * substructure = (openDDL_data_type_structure *)structure->get_substructure(0);
-          int size_data_list = substructure->get_number_lists();
+          unsigned int size_data_list = substructure->get_number_lists();
           if (transformMatrix.size() < size_data_list)
             transformMatrix.resize(size_data_list);
-          for (int i = 0; i < size_data_list; ++i){
+          for (unsigned int i = 0; i < size_data_list; ++j){
             float values[16];
             openDDL_data_list * data_list_values = substructure->get_data_list(i);
-            for (int i = 0; i < 16; ++i){
-              values[i] = data_list_values->data_list[i]->value.float_;
+            for (int j = 0; j < 16; ++j){
+              values[j] = data_list_values->data_list[j]->value.float_;
             }
             //Obtain the matrix from this values
             transformMatrix[i].init_transpose(values);
@@ -1203,6 +1205,8 @@ namespace octet
         nodeToParent.loadIdentity(); //and initialize it to identity!
         //This is to get some info from the substructures
         dynarray<mat4t> transformMatrixes;
+        if (transformMatrixes.size() < 1)
+          transformMatrixes.resize(1);
         dynarray<uint32_t> mat_index;
         mat_index.resize(10);
         int num_mat_index = 0;
@@ -1313,6 +1317,8 @@ namespace octet
         nodeToParent.loadIdentity(); //and initialize it to identity!
         //This is to get some info from the substructures
         dynarray<mat4t> transformMatrixes;
+        if (transformMatrixes.size() < 1)
+          transformMatrixes.resize(1);
         dynarray<uint32_t> mat_index;
         mat_index.resize(10);
         int num_mat_index = 0;
@@ -1738,6 +1744,8 @@ namespace octet
         bool contains_bone_weight = false;
         bool object_only = false;
         dynarray<mat4t> transformMatrixes;
+        if (transformMatrixes.size() < 1)
+          transformMatrixes.resize(1);
         //Get ready the mesh...
         skin * current_skin = new skin();
         //Now check all the substructures
