@@ -878,7 +878,7 @@ namespace octet
         }
         //Check that the substructures are correct!
         if (structure->get_number_substructures() != 1){
-          printf("(((ERROR!! The data substructure of the structure Transform has to be only one!!)))");
+          printf("(((ERROR!! The data substructure of the structure Transform has to be only one!!)))\n");
           no_error = false;
         } else{
         //Obtain the values from the substructures (float[16]) that will be converted into a mat4t!!!
@@ -949,7 +949,7 @@ namespace octet
         }
         //Check that the substructures are correct!
         if (structure->get_number_substructures() != 1){
-          printf("(((ERROR!! The data substructure of the structure Transform has to be only one!!)))");
+          printf("(((ERROR!! The data substructure of the structure Transform has to be only one!!)))\n");
           no_error = false;
         }
         else{
@@ -1023,7 +1023,7 @@ namespace octet
         }
         //Check that the substructures are correct!
         if (structure->get_number_substructures() != 1){
-          printf("(((ERROR!! The data substructure of the structure Transform has to be only one!!)))");
+          printf("(((ERROR!! The data substructure of the structure Transform has to be only one!!)))\n");
           no_error = false;
         }
         else{
@@ -1147,7 +1147,7 @@ namespace octet
         }
         //Check that the substructures are correct!
         if (structure->get_number_substructures() != 1){
-          printf("(((ERROR!! The data substructure of the structure Transform has to be only one!!)))");
+          printf("(((ERROR!! The data substructure of the structure Transform has to be only one!!)))\n");
           no_error = false;
         }
         else{
@@ -1682,6 +1682,39 @@ namespace octet
       }
 
       ////////////////////////////////////////////////////////////////////////////////
+      /// @brief This will obtain all the info from a BoneRefArray structure
+      /// @param  dict This is the resource where everything needs to be stored.
+      /// @return True if everything went well, false if there was some problem
+      ////////////////////////////////////////////////////////////////////////////////
+      bool openGEX_BoneRefArray(dynarray<atom_t> &ref_array, openDDL_identifier_structure *structure){
+        printf("BONEREFARRAY!");
+        bool no_error = true;
+        //Check properties (it cannot have properties!)
+        if (structure->get_number_properties() != 0){
+          no_error = false;
+          printf("(((ERROR -> The structure BoneRefArray cannot have properties!)))\n");
+        }
+        //Check substructures (it can have only one substructure (array of bones)
+        if (structure->get_number_substructures() == 1){
+          //Obtain the data_list_array
+          openDDL_data_type_structure *substructure = (openDDL_data_type_structure *)structure->get_substructure(0);
+          openDDL_data_list *data_list = substructure->get_data_list(0);
+          int num_ref = data_list->data_list.size();
+          ref_array.resize(num_ref);
+          for (int i = 0; i < num_ref; ++i){
+            ref_array[i] = app_utils::get_atom(data_list->data_list[i]->value.ref_);
+            printf("%s, ", data_list->data_list[i]->value.ref_);
+          }
+        }
+        else{
+          no_error = false;
+          printf("(((ERROR -> The structure BoneRefArray has a wrong number of substructures)))\n");
+        }
+        
+        return no_error;
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////
       /// @brief This will obtain all the info from a Skeleton structure
       /// @param  dict This is the resource where everything needs to be stored.
       /// @param  structure This is the structure to be analized, it has to be Node.
@@ -1698,6 +1731,7 @@ namespace octet
         bool contains_bone_ref = false;
         bool contains_transform = false;
         bool object_only = false;
+        dynarray<atom_t> bone_array;
         dynarray<mat4t> matrixTransform;
         int number_substructures = structure->get_number_substructures();
         for (int i = 0; i < number_substructures; ++i){
@@ -1707,10 +1741,11 @@ namespace octet
           case 5:  //BoneRefArray
             if (!contains_bone_ref){
               contains_bone_ref = true;
+              no_error = openGEX_BoneRefArray(bone_array, substructure);
             }
             else{
               no_error = false;
-              printf("(((ERROR-> The structure Skeleton can only contain one single structure of BoneRefArray!)))");
+              printf("(((ERROR-> The structure Skeleton can only contain one single structure of BoneRefArray!)))\n");
             }
             break;
           case 32: //Transform
@@ -1720,7 +1755,7 @@ namespace octet
             }
             else{
               no_error = false;
-              printf("(((ERROR-> The structure Skeleton can only contain one single structure of BoneRefArray!)))");
+              printf("(((ERROR-> The structure Skeleton can only contain one single structure of BoneRefArray!)))\n");
             }
             break;
           default:
@@ -1745,7 +1780,7 @@ namespace octet
         int num_properties = structure->get_number_properties();
         if (num_properties != 0){
           no_error = false;
-          printf("(((ERROR!! The structure Skin cannot have properties!)))");
+          printf("(((ERROR!! The structure Skin cannot have properties!)))\n");
         }
         //Check substructures, it has to have 1 and only 1 of each one of these: 
         //            Skeleton, BoneCountArray, BoneIndexArray, BoneWeightArray
@@ -1774,7 +1809,7 @@ namespace octet
             }
             else{
               no_error = false;
-              printf("(((ERROR: The structure Skin has two or more Transform. It's invalid, it can only have one Transform!)))");
+              printf("(((ERROR: The structure Skin has two or more Transform. It's invalid, it can only have one Transform!)))\n");
             }
             break;
           case 27: //Skeleton
@@ -1784,7 +1819,7 @@ namespace octet
             }
             else{
               no_error = false;
-              printf("(((ERROR: The structure Skin has two or more Skeleton. It's invalid, it can only have one Skeleton!)))");
+              printf("(((ERROR: The structure Skin has two or more Skeleton. It's invalid, it can only have one Skeleton!)))\n");
             }
             break;
           case 2:  //BoneCountArray
@@ -1793,7 +1828,7 @@ namespace octet
             }
             else{
               no_error = false;
-              printf("(((ERROR: The structure Skin has two or more BoneCountArray. It's invalid, it can only have one BoneCountArray!)))");
+              printf("(((ERROR: The structure Skin has two or more BoneCountArray. It's invalid, it can only have one BoneCountArray!)))\n");
             }
             break;
           case 3:  //BoneIndexArray
@@ -1802,7 +1837,7 @@ namespace octet
             }
             else{
               no_error = false;
-              printf("(((ERROR: The structure Skin has two or more BoneIndexArray. It's invalid, it can only have one BoneIndexArray!)))");
+              printf("(((ERROR: The structure Skin has two or more BoneIndexArray. It's invalid, it can only have one BoneIndexArray!)))\n");
             }
             break;
           case 6:  //BoneWeightArray
@@ -1811,19 +1846,19 @@ namespace octet
             }
             else{
               no_error = false;
-              printf("(((ERROR: The structure Skin has two or more BoneWeightArray. It's invalid, it can only have one BoneWeightArray!)))");
+              printf("(((ERROR: The structure Skin has two or more BoneWeightArray. It's invalid, it can only have one BoneWeightArray!)))\n");
             }
             break;
           default:
             no_error = false;
-            printf("(((ERROR->The structure Skin has an invaled substructure!)))");
+            printf("(((ERROR->The structure Skin has an invaled substructure!)))\n");
             break;
           }
         }
         //Post-processing info of the Skin. Check if it has Skeleton, and the Bone-----Array
         if (!contains_skeleton || !contains_bone_count || !contains_bone_index || !contains_bone_weight){
           no_error = false;
-          printf("(((ERROR!! The structure Skin is missing some of their substructures!)))");
+          printf("(((ERROR!! The structure Skin is missing some of their substructures!)))\n");
         }
         else{ //It contains all that it needs, so, check it!
           //Set the skin with the given transform (identity if it has no transform!)
@@ -1932,7 +1967,7 @@ namespace octet
         uint32_t *indices = NULL;
         int num_vertexes, num_indices;
         //Check all the substructures (all of them has to be of mesh type)
-        for (int i = 0; i < numSubstructures && no_error; ++i){
+        for (int i = 0; i < numSubstructures; ++i){
           openDDL_identifier_structure *substructure = (openDDL_identifier_structure *)structure->get_substructure(i);
           tempID = substructure->get_identifierID();
           switch (tempID){
