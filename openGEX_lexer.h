@@ -886,7 +886,7 @@ namespace octet
           unsigned int size_data_list = substructure->get_number_lists();
           if (transformMatrix.size() < size_data_list)
             transformMatrix.resize(size_data_list);
-          for (unsigned int i = 0; i < size_data_list; ++j){
+          for (unsigned int i = 0; i < size_data_list; ++i){
             float values[16];
             openDDL_data_list * data_list_values = substructure->get_data_list(i);
             for (int j = 0; j < 16; ++j){
@@ -895,7 +895,6 @@ namespace octet
             //Obtain the matrix from this values
             transformMatrix[i].init_transpose(values);
           }
-          
         }
         return no_error;
       }
@@ -1697,7 +1696,7 @@ namespace octet
         }
         //Check substructures (Skeleton structure has to have one BoneRefArray and one Transform
         bool contains_bone_ref = false;
-        bool contains_trasnform = false;
+        bool contains_transform = false;
         bool object_only = false;
         dynarray<mat4t> matrixTransform;
         int number_substructures = structure->get_number_substructures();
@@ -1706,9 +1705,23 @@ namespace octet
           int tempID = substructure->get_identifierID();
           switch (tempID){
           case 5:  //BoneRefArray
+            if (!contains_bone_ref){
+              contains_bone_ref = true;
+            }
+            else{
+              no_error = false;
+              printf("(((ERROR-> The structure Skeleton can only contain one single structure of BoneRefArray!)))");
+            }
             break;
           case 32: //Transform
-            no_error = openGEX_Transform(matrixTransform, object_only, substructure);
+            if (!contains_transform){
+              contains_transform = true;
+              no_error = openGEX_Transform(matrixTransform, object_only, substructure);
+            }
+            else{
+              no_error = false;
+              printf("(((ERROR-> The structure Skeleton can only contain one single structure of BoneRefArray!)))");
+            }
             break;
           default:
             no_error = false;
@@ -1716,6 +1729,7 @@ namespace octet
             break;
           }
         }
+        //Post process everything!
         return no_error;
       }
 
