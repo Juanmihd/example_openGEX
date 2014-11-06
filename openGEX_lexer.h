@@ -1677,9 +1677,31 @@ namespace octet
       /// @param  structure This is the structure to be analized, it has to be Node.
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_Skeleton(skin *current_skin, openDDL_identifier_structure *structure, scene_node *father){
+      bool openGEX_Skeleton(skin *current_skin, openDDL_identifier_structure *structure, atom_t instance){
         bool no_error = true;
-
+        //Check properties (Skeleton structure has no properties)
+        if (structure->get_number_properties() != 0){
+          no_error = false;
+          printf("(((ERRROR -> The structure Skeleton cannot have properties!)))\n");
+        }
+        //Check substructures (Skeleton structure has to have one BoneRefArray and one Transform
+        bool contains_bone_ref = false;
+        bool contains_trasnform = false;
+        int number_substructures = structure->get_number_substructures();
+        for (int i = 0; i < number_substructures; ++i){
+          openDDL_identifier_structure *substructure = (openDDL_identifier_structure *)structure->get_substructure(i);
+          int tempID = substructure->get_identifierID();
+          switch (tempID){
+          case 5:  //BoneRefArray
+            break;
+          case 32: //Transform
+            break;
+          default:
+            no_error = false;
+            printf("(((ERROR! The structure Skeleton has an invalid substructure!)))\n");
+            break;
+          }
+        }
         return no_error;
       }
 
@@ -1728,7 +1750,7 @@ namespace octet
           case 27: //Skeleton
             if (!contains_skeleton){
               contains_skeleton = true;
-
+              no_error = openGEX_Skeleton(current_skin, substructure, instance);
             }
             else{
               no_error = false;
