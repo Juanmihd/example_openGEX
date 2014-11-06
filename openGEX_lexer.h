@@ -1687,7 +1687,6 @@ namespace octet
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
       bool openGEX_BoneRefArray(dynarray<atom_t> &ref_array, openDDL_identifier_structure *structure){
-        printf("BONEREFARRAY!");
         bool no_error = true;
         //Check properties (it cannot have properties!)
         if (structure->get_number_properties() != 0){
@@ -1703,7 +1702,6 @@ namespace octet
           ref_array.resize(num_ref);
           for (int i = 0; i < num_ref; ++i){
             ref_array[i] = app_utils::get_atom(data_list->data_list[i]->value.ref_);
-            printf("%s, ", data_list->data_list[i]->value.ref_);
           }
         }
         else{
@@ -1764,7 +1762,13 @@ namespace octet
             break;
           }
         }
+        //Chek that no substructure is missing!
+        if (!contains_bone_ref || !contains_transform){
+          no_error = false;
+          printf("(((ERROR!-> The structure Skeleton is missing some of their substructures!)))\n");
+        }
         //Post process everything!
+        
         return no_error;
       }
 
