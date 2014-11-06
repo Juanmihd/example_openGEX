@@ -704,7 +704,7 @@ namespace octet
         int counter_substructure;
         bool string_founded = false;
         bool object_only = false;
-        mat4t transformMatrix;
+        dynarray<mat4t> transformMatrixes;
         mat4t nodeToParent;
         nodeToParent.loadIdentity();
         for (counter_substructure = 0; counter_substructure < number_substructures && !string_founded; ++counter_substructure){
@@ -719,20 +719,20 @@ namespace octet
             switch (tempID){
               //Get Transforms (may not have)
             case 32://Transform
-              no_error = openGEX_Transform(transformMatrix, object_only, (openDDL_identifier_structure *)substructure);
-              nodeToParent.multMatrix(transformMatrix);
+              no_error = openGEX_Transform(transformMatrixes, object_only, (openDDL_identifier_structure *)substructure);
+              nodeToParent.multMatrix(transformMatrixes[0]);
               break;
             case 33://Translation
-              no_error = openGEX_Translate(transformMatrix, object_only, (openDDL_identifier_structure *)substructure);
-              nodeToParent.multMatrix(transformMatrix);
+              no_error = openGEX_Translate(transformMatrixes[0], object_only, (openDDL_identifier_structure *)substructure);
+              nodeToParent.multMatrix(transformMatrixes[0]);
               break;
             case 25://Rotation
-              no_error = openGEX_Rotate(transformMatrix, object_only, (openDDL_identifier_structure *)substructure);
-              nodeToParent.multMatrix(transformMatrix);
+              no_error = openGEX_Rotate(transformMatrixes[0], object_only, (openDDL_identifier_structure *)substructure);
+              nodeToParent.multMatrix(transformMatrixes[0]);
               break;
             case 26://Scale
-              no_error = openGEX_Scale(transformMatrix, object_only, (openDDL_identifier_structure *)substructure);
-              nodeToParent.multMatrix(transformMatrix);
+              no_error = openGEX_Scale(transformMatrixes[0], object_only, (openDDL_identifier_structure *)substructure);
+              nodeToParent.multMatrix(transformMatrixes[0]);
               break;
               //Get Animation
             case 0://Animation
@@ -755,20 +755,20 @@ namespace octet
           switch (tempID){
             //Get Transforms (may not have)
           case 32://Transform
-            no_error = openGEX_Transform(transformMatrix, object_only, substructure);
-            nodeToParent.multMatrix(transformMatrix);
+            no_error = openGEX_Transform(transformMatrixes, object_only, substructure);
+            nodeToParent.multMatrix(transformMatrixes[0]);
             break;
           case 33://Translation
-            no_error = openGEX_Translate(transformMatrix, object_only, substructure);
-            nodeToParent.multMatrix(transformMatrix);
+            no_error = openGEX_Translate(transformMatrixes[0], object_only, substructure);
+            nodeToParent.multMatrix(transformMatrixes[0]);
             break;
           case 25://Rotation
-            no_error = openGEX_Rotate(transformMatrix, object_only, substructure);
-            nodeToParent.multMatrix(transformMatrix);
+            no_error = openGEX_Rotate(transformMatrixes[0], object_only, substructure);
+            nodeToParent.multMatrix(transformMatrixes[0]);
             break;
           case 26://Scale
-            no_error = openGEX_Scale(transformMatrix, object_only, substructure);
-            nodeToParent.multMatrix(transformMatrix);
+            no_error = openGEX_Scale(transformMatrixes[0], object_only, substructure);
+            nodeToParent.multMatrix(transformMatrixes[0]);
             break;
             //Get Animation
           case 0://Animation
@@ -861,7 +861,7 @@ namespace octet
       /// @param  structure This is the structure to be analized, it has to be Transform.
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_Transform(mat4t &transformMatrix, bool &object_only, openDDL_identifier_structure *structure){
+      bool openGEX_Transform(dynarray<mat4t> &transformMatrix, bool &object_only, openDDL_identifier_structure *structure){
         bool no_error = true;
         //Check that the structure is correct!
         //Get the value of the properties!
@@ -880,13 +880,20 @@ namespace octet
           no_error = false;
         } else{
         //Obtain the values from the substructures (float[16]) that will be converted into a mat4t!!!
-          float values[16];
-          openDDL_data_list * data_list_values = ((openDDL_data_type_structure *)structure->get_substructure(0))->get_data_list(0);
-          for (int i = 0; i < 16; ++i){
-            values[i] = data_list_values->data_list[i]->value.float_;
+          openDDL_data_type_structure * substructure = (openDDL_data_type_structure *)structure->get_substructure(0);
+          int size_data_list = substructure->get_number_lists();
+          if (transformMatrix.size() < size_data_list)
+            transformMatrix.resize(size_data_list);
+          for (int i = 0; i < size_data_list; ++i){
+            float values[16];
+            openDDL_data_list * data_list_values = substructure->get_data_list(i);
+            for (int i = 0; i < 16; ++i){
+              values[i] = data_list_values->data_list[i]->value.float_;
+            }
+            //Obtain the matrix from this values
+            transformMatrix[i].init_transpose(values);
           }
-          //Obtain the matrix from this values
-          transformMatrix.init_transpose(values);
+          
         }
         return no_error;
       }
@@ -1195,8 +1202,7 @@ namespace octet
         mat4t nodeToParent;
         nodeToParent.loadIdentity(); //and initialize it to identity!
         //This is to get some info from the substructures
-        mat4t transformMatrix;
-        transformMatrix.loadIdentity();
+        dynarray<mat4t> transformMatrixes;
         dynarray<uint32_t> mat_index;
         mat_index.resize(10);
         int num_mat_index = 0;
@@ -1220,20 +1226,20 @@ namespace octet
             break;
             //Get Transforms (may not have)
           case 32://Transform
-            no_error = openGEX_Transform(transformMatrix, object_only, substructure);
-            nodeToParent.multMatrix(transformMatrix);
+            no_error = openGEX_Transform(transformMatrixes, object_only, substructure);
+            nodeToParent.multMatrix(transformMatrixes[0]);
             break;
           case 33://Translation
-            no_error = openGEX_Translate(transformMatrix, object_only, substructure);
-            nodeToParent.multMatrix(transformMatrix);
+            no_error = openGEX_Translate(transformMatrixes[0], object_only, substructure);
+            nodeToParent.multMatrix(transformMatrixes[0]);
             break;
           case 25://Rotation
-            no_error = openGEX_Rotate(transformMatrix, object_only, substructure);
-            nodeToParent.multMatrix(transformMatrix);
+            no_error = openGEX_Rotate(transformMatrixes[0], object_only, substructure);
+            nodeToParent.multMatrix(transformMatrixes[0]);
             break;
           case 26://Scale
-            no_error = openGEX_Scale(transformMatrix, object_only, substructure);
-            nodeToParent.multMatrix(transformMatrix);
+            no_error = openGEX_Scale(transformMatrixes[0], object_only, substructure);
+            nodeToParent.multMatrix(transformMatrixes[0]);
             break;
             //Get Animation
           case 0://Animation
@@ -1306,8 +1312,7 @@ namespace octet
         mat4t nodeToParent;
         nodeToParent.loadIdentity(); //and initialize it to identity!
         //This is to get some info from the substructures
-        mat4t transformMatrix;
-        transformMatrix.loadIdentity();
+        dynarray<mat4t> transformMatrixes;
         dynarray<uint32_t> mat_index;
         mat_index.resize(10);
         int num_mat_index = 0;
@@ -1331,20 +1336,20 @@ namespace octet
             break;
             //Get Transforms (may not have)
           case 32://Transform
-            no_error = openGEX_Transform(transformMatrix, object_only, substructure);
-            nodeToParent.multMatrix(transformMatrix);
+            no_error = openGEX_Transform(transformMatrixes, object_only, substructure);
+            nodeToParent.multMatrix(transformMatrixes[0]);
             break;
           case 33://Translation
-            no_error = openGEX_Translate(transformMatrix, object_only, substructure);
-            nodeToParent.multMatrix(transformMatrix);
+            no_error = openGEX_Translate(transformMatrixes[0], object_only, substructure);
+            nodeToParent.multMatrix(transformMatrixes[0]);
             break;
           case 25://Rotation
-            no_error = openGEX_Rotate(transformMatrix, object_only, substructure);
-            nodeToParent.multMatrix(transformMatrix);
+            no_error = openGEX_Rotate(transformMatrixes[0], object_only, substructure);
+            nodeToParent.multMatrix(transformMatrixes[0]);
             break;
           case 26://Scale
-            no_error = openGEX_Scale(transformMatrix, object_only, substructure);
-            nodeToParent.multMatrix(transformMatrix);
+            no_error = openGEX_Scale(transformMatrixes[0], object_only, substructure);
+            nodeToParent.multMatrix(transformMatrixes[0]);
             break;
             //Get Animation
           case 0://Animation
@@ -1687,6 +1692,8 @@ namespace octet
         //Check substructures (Skeleton structure has to have one BoneRefArray and one Transform
         bool contains_bone_ref = false;
         bool contains_trasnform = false;
+        bool object_only = false;
+        dynarray<mat4t> matrixTransform;
         int number_substructures = structure->get_number_substructures();
         for (int i = 0; i < number_substructures; ++i){
           openDDL_identifier_structure *substructure = (openDDL_identifier_structure *)structure->get_substructure(i);
@@ -1695,6 +1702,7 @@ namespace octet
           case 5:  //BoneRefArray
             break;
           case 32: //Transform
+            no_error = openGEX_Transform(matrixTransform, object_only, substructure);
             break;
           default:
             no_error = false;
@@ -1729,7 +1737,7 @@ namespace octet
         bool contains_bone_index = false;
         bool contains_bone_weight = false;
         bool object_only = false;
-        mat4t transformMatrix;
+        dynarray<mat4t> transformMatrixes;
         //Get ready the mesh...
         skin * current_skin = new skin();
         //Now check all the substructures
@@ -1740,7 +1748,7 @@ namespace octet
           case 32: //Transform
             if (!contains_transform){
               contains_transform = true;
-              no_error = openGEX_Transform(transformMatrix, object_only, substructure);
+              no_error = openGEX_Transform(transformMatrixes, object_only, substructure);
             }
             else{
               no_error = false;
@@ -1797,7 +1805,7 @@ namespace octet
         }
         else{ //It contains all that it needs, so, check it!
           //Set the skin with the given transform (identity if it has no transform!)
-          current_skin->set_bindToModel(transformMatrix.transpose4x4());
+          current_skin->set_bindToModel(transformMatrixes[0].transpose4x4());
         }
         return no_error;
       }
@@ -2132,8 +2140,9 @@ namespace octet
         mat4t nodeToParent;
         nodeToParent.loadIdentity(); //and initialize it to identity!
         //This is to get some info from the substructures
-        mat4t transformMatrix;
-        transformMatrix.loadIdentity();
+        dynarray<mat4t> transformMatrixes;
+        if (transformMatrixes.size() < 1)
+          transformMatrixes.resize(1);
         float *values = NULL;
         int numValues;
         dynarray<uint32_t> mat_index;
@@ -2196,20 +2205,20 @@ namespace octet
             break;
           //Get Transforms (may not have)
           case 32://Transform
-            no_error = openGEX_Transform(transformMatrix, object_only, substructure);
-            nodeToParent.multMatrix(transformMatrix);
+            no_error = openGEX_Transform(transformMatrixes, object_only, substructure);
+            nodeToParent.multMatrix(transformMatrixes[0]);
             break;
           case 33://Translation
-            no_error = openGEX_Translate(transformMatrix, object_only, substructure);
-            nodeToParent.multMatrix(transformMatrix);
+            no_error = openGEX_Translate(transformMatrixes[0], object_only, substructure);
+            nodeToParent.multMatrix(transformMatrixes[0]);
             break;
           case 25://Rotation
-            no_error = openGEX_Rotate(transformMatrix, object_only, substructure);
-            nodeToParent.multMatrix(transformMatrix);
+            no_error = openGEX_Rotate(transformMatrixes[0], object_only, substructure);
+            nodeToParent.multMatrix(transformMatrixes[0]);
             break;
           case 26://Scale
-            no_error = openGEX_Scale(transformMatrix, object_only, substructure);
-            nodeToParent.multMatrix(transformMatrix);
+            no_error = openGEX_Scale(transformMatrixes[0], object_only, substructure);
+            nodeToParent.multMatrix(transformMatrixes[0]);
             break;
           //Get Animation
           case 0://Animation
