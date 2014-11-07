@@ -487,13 +487,43 @@ namespace octet
       }
 
       ////////////////////////////////////////////////////////////////////////////////
+      /// @brief This will obtain all the info from a Time structure
+      /// @param  structure This is the structure to be analized, it has to be Time.
+      /// @return True if everything went well, false if there was some problem
+      ////////////////////////////////////////////////////////////////////////////////
+      bool openGEX_Time(openDDL_identifier_structure *structure){
+        bool no_error = true;
+        //Check properties
+
+        //Check substructures
+        return no_error;
+      }
+        
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief This will obtain all the info from a Value structure
+      /// @param  structure This is the structure to be analized, it has to be Value.
+      /// @return True if everything went well, false if there was some problem
+      ////////////////////////////////////////////////////////////////////////////////
+      bool openGEX_Value(openDDL_identifier_structure *structure){
+        bool no_error = true;
+        //Check properties
+
+        //Check substructures
+        return no_error;
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////
       /// @brief This will obtain all the info from a Animation structure
-      /// @param  structure This is the structure to be analized, it has to be Name.
+      /// @param  structure This is the structure to be analized, it has to be Animation.
+      /// @param  father This is the scene_node of the item that posses this animation.
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
       bool openGEX_Animation(openDDL_identifier_structure *structure, scene_node * father){
         bool no_error = false;
         //Initialize variables
+        int clip = 0;
+        float begin = -1;
+        float end = -1;
         //Check properties (clip, begin, end)
         unsigned int num_properties = structure->get_number_properties();
         for (unsigned int i = 0; i < num_properties; ++i){
@@ -501,10 +531,13 @@ namespace octet
           int tempID = identifiers_.get_value(current_property->identifierID);
           switch(tempID){
           case 38: //clip
+            clip = current_property->literal.value.integer_;
             break;
           case 37: //begin
+            begin = current_property->literal.value.float_;
             break;
           case 40: //end
+            end = current_property->literal.value.float_;
             break;
           default:
             no_error = false;
@@ -513,6 +546,54 @@ namespace octet
           }
         }
         //Check substructures (series of tracks)
+        unsigned int num_substructures = structure->get_number_substructures();
+        for (unsigned int i = 0; i < num_substructures; ++i){
+          openDDL_identifier_structure *substructure = (openDDL_identifier_structure *)structure->get_substructure(i);
+          if (substructure->get_identifierID() == 31){//Track
+            //Check properties (target)
+            if (substructure->get_number_properties() != 1){
+              no_error = false;
+              printf("(((ERROR!! -> The Track structures has to have one property!)))\n");
+            }
+            else{
+              openDDL_properties * current_property = substructure->get_property(0);
+              if (identifiers_.get_value(current_property->identifierID) != 53){
+                no_error = false;
+                printf("(((ERROR--> The Track structure can have only target property)))\n");
+              }
+              else{
+                //Get the reference of 
+                char *reference = current_property->literal.value.ref_;
+                //Check substructures (Time & Value)
+                if (substructure->get_number_substructures() != 2){
+                  no_error = false;
+                  printf("(((ERROR!! -> The Track structures has to have two substructures!)))\n");
+                }
+                else{
+                  for (unsigned int j = 0; j < 2; ++j){
+                    openDDL_identifier_structure * sub_substructure = (openDDL_identifier_structure *)substructure->get_substructure(j);
+                    switch (substructure->get_identifierID()){
+                    case 30: //Time
+                      no_error = openGEX_Time(sub_substructure);
+                      break;
+                    case 34: //Value
+                      no_error = openGEX_Value(sub_substructure);
+                      break;
+                    default:
+                      no_error = false;
+                      printf("(((ERROR! The substructures for a structure of type Track has to be Time or Value!)))\n");
+                      break;
+                    }
+                  }
+                }
+              }
+            }
+          }
+          else{
+            no_error = false;
+            printf("(((ERROR! The structures of Animation time only accept Track substructures!)))\n");
+          }
+        }
         return no_error;
       }
 
