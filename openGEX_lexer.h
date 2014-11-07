@@ -487,6 +487,17 @@ namespace octet
       }
 
       ////////////////////////////////////////////////////////////////////////////////
+      /// @brief This will obtain all the info from a Animation structure
+      /// @param  structure This is the structure to be analized, it has to be Name.
+      /// @return True if everything went well, false if there was some problem
+      ////////////////////////////////////////////////////////////////////////////////
+      bool openGEX_Animation(openDDL_identifier_structure *structure){
+        bool no_error = false;
+
+        return no_error;
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////
       /// @brief This will obtain all the info from a Name structure
       /// @param  name  This is a pointer to char, it will return here the value of the Name
       /// @param  structure This is the structure to be analized, it has to be Name.
@@ -2032,7 +2043,7 @@ namespace octet
           case 28://Skin
             if (numSkin == 0){
               ++numSkin;
-              //no_error = openGEX_Skin(skin_skeleton, substructure, instance);
+              no_error = openGEX_Skin(skin_skeleton, substructure, instance);
             }
             else{
               no_error = false;
@@ -2080,6 +2091,7 @@ namespace octet
                 idx[i] = indices[index_i][i];
               }
               //Now, obtain the material!
+              //This is the material of this mesh
               material *current_material = 0;
               char *current_ref_material = info_current_object->ref_materials[material_indexes[index_i]];
               if (current_ref_material != "_DE_FA_UL_T"){
@@ -2095,6 +2107,7 @@ namespace octet
                 if (skin_skeleton.ref_skeleton == NULL)
                   current_mesh_instance = new mesh_instance(info_current_object->node, current_mesh, current_material);
                 else{
+                  //current_mesh_instance = new mesh_instance(info_current_object->node, current_mesh, current_material);
                   current_mesh_instance = new mesh_instance(info_current_object->node, current_mesh, current_material, skin_skeleton.ref_skeleton);
                 }
                 if (add_later_material){
@@ -2524,7 +2537,7 @@ namespace octet
             break;
           case  4: //BoneNode
             if (DEBUGOPENGEX) printf("BoneNode\n");
-            //no_error = openGEX_BoneNode(structure);
+            no_error = openGEX_BoneNode(structure);
             break;
           default:
             printf("(((ERROR!!!!-> It's reading a structure not suposed to be Top Level. Are you sure?)))\n");
