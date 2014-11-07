@@ -491,11 +491,48 @@ namespace octet
       /// @param  structure This is the structure to be analized, it has to be Time.
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_Time(openDDL_identifier_structure *structure){
+      bool openGEX_Time(dynarray<dynarray<float>> &values, atom_t &curve, openDDL_identifier_structure *structure){
         bool no_error = true;
         //Check properties
-
+        int num_properties = structure->get_number_properties();
+        if (num_properties > 1){
+          no_error = false;
+          printf("(((ERROR! The structure Time can have only one property as maximum!)))\n");
+        }
+        else if (num_properties == 1){
+          openDDL_properties *current_property = structure->get_property(0);
+          //check type of property
+          if (identifiers_.get_value(current_property->identifierID) == 39){ //curve property
+            curve = app_utils::get_atom(current_property->literal.value.string_);
+          }
+          else{
+            no_error = false;
+            printf("(((ERROR! The property is not a curve property, and it should!)))\n");
+          }
+        }
         //Check substructures
+        if (no_error){
+          //But first, check the type of curve
+          int num_values;
+          if (curve == app_utils::get_atom("linear")){ //if it's linear, it will have only one Key substructure!
+            num_values = 1;
+          }
+          else{ //So if it's bezier it will have 3 Key substructures!
+            num_values = 3;
+          }
+          values.resize(num_values);
+          for (unsigned int i_key = 0; i_key < num_values; ++i_key){
+            openDDL_identifier_structure * key_substructure = (openDDL_identifier_structure *)structure->get_substructure(i_key);
+            atom_t kind_value = app_utils::get_atom("value");
+            openDDL_data_type_structure *values_substructure = (openDDL_data_type_structure *)key_substructure->get_substructure(0);
+            for (unsigned int i_data_list; i_data_list < values_substructure->get_number_lists(); ++i_data_list){
+              openDDL_data_list *data_list = values_substructure->get_data_list(i_data_list);
+              for (unsigned int i = 0; i < data_list->data_list.size(); ++i){
+                values[i_key].push_back(data_list->data_list[i]->value.float_);
+              }
+            }
+          }
+        }
         return no_error;
       }
         
@@ -504,11 +541,50 @@ namespace octet
       /// @param  structure This is the structure to be analized, it has to be Value.
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_Value(openDDL_identifier_structure *structure){
+      bool openGEX_Value(dynarray<dynarray<dynarray<float>>> &values, atom_t &curve, openDDL_identifier_structure *structure){
         bool no_error = true;
         //Check properties
-
+        int num_properties = structure->get_number_properties();
+        if (num_properties > 1){
+          no_error = false;
+          printf("(((ERROR! The structure Time can have only one property as maximum!)))\n");
+        }
+        else if (num_properties == 1){
+          openDDL_properties *current_property = structure->get_property(0);
+          //check type of property
+          if (identifiers_.get_value(current_property->identifierID) == 39){ //curve property
+            curve = app_utils::get_atom(current_property->literal.value.string_);
+          }
+          else{
+            no_error = false;
+            printf("(((ERROR! The property is not a curve property, and it should!)))\n");
+          }
+        }
         //Check substructures
+        if (no_error){
+          //But first, check the type of curve
+          int num_values;
+          if (curve == app_utils::get_atom("linear")){ //if it's linear, it will have only one Key substructure!
+            num_values = 1;
+          }else if(curve==app_utils::get_atom("bezier")){ //So if it's bezier it will have 3 Key substructures!
+              num_values = 3;
+          }
+          else{ //And if it's tcb, it has 4 keys!
+            num_values = 4;
+          }
+          values.resize(num_values);
+          for (unsigned int i_key = 0; i_key < num_values; ++i_key){
+            openDDL_identifier_structure * key_substructure = (openDDL_identifier_structure *)structure->get_substructure(i_key);
+            atom_t kind_value = app_utils::get_atom("value");
+            openDDL_data_type_structure *values_substructure = (openDDL_data_type_structure *)key_substructure->get_substructure(0);
+            for (unsigned int i_data_list; i_data_list < values_substructure->get_number_lists(); ++i_data_list){
+              openDDL_data_list *data_list = values_substructure->get_data_list(i_data_list);
+              for (unsigned int i = 0; i < data_list->data_list.size(); ++i){
+                values[i_key].push_back(data_list->data_list[i]->value.float_);
+              }
+            }
+          }
+        }
         return no_error;
       }
 
@@ -550,34 +626,55 @@ namespace octet
         for (unsigned int i = 0; i < num_substructures; ++i){
           openDDL_identifier_structure *substructure = (openDDL_identifier_structure *)structure->get_substructure(i);
           if (substructure->get_identifierID() == 31){//Track
+            //This are the curves from each of the substructures. By default, "linear"
+            atom_t curve_time = app_utils::get_atom("linear");
+            atom_t curve_value = curve_time;
             //Check properties (target)
-            if (substructure->get_number_properties() != 1){
+            if (substructure->get_number_properties() != 1){//If it has 0 or more than 1 properties, it's an error
               no_error = false;
               printf("(((ERROR!! -> The Track structures has to have one property!)))\n");
             }
-            else{
+            else{//It has only one property, so analize it
               openDDL_properties * current_property = substructure->get_property(0);
-              if (identifiers_.get_value(current_property->identifierID) != 53){
+              if (identifiers_.get_value(current_property->identifierID) != 53){ //If the property it's not target, it's an error
                 no_error = false;
                 printf("(((ERROR--> The Track structure can have only target property)))\n");
               }
-              else{
-                //Get the reference of 
+              else{ //as is a target property, get the reference of it
                 char *reference = current_property->literal.value.ref_;
                 //Check substructures (Time & Value)
-                if (substructure->get_number_substructures() != 2){
+                if (substructure->get_number_substructures() != 2){ //It has to have 2 substructures. Error otherwise
                   no_error = false;
                   printf("(((ERROR!! -> The Track structures has to have two substructures!)))\n");
                 }
                 else{
+                  //So it has two structures, check them (it has to be one of Time and one of Value)
+                  dynarray<dynarray<float>> values_time;
+                  dynarray<dynarray<dynarray<float>>> values_value;
+                  bool time_detected = false;
+                  bool value_detected = false;
                   for (unsigned int j = 0; j < 2; ++j){
                     openDDL_identifier_structure * sub_substructure = (openDDL_identifier_structure *)substructure->get_substructure(j);
                     switch (substructure->get_identifierID()){
                     case 30: //Time
-                      no_error = openGEX_Time(sub_substructure);
+                      if (time_detected){
+                        no_error = false;
+                        printf("(((ERROR! This structure Track can only have one Time substructure!)))\n");
+                      }
+                      else{
+                        no_error = openGEX_Time(values_time, curve_time, sub_substructure);
+                        time_detected = true;
+                      }
                       break;
                     case 34: //Value
-                      no_error = openGEX_Value(sub_substructure);
+                      if (value_detected){
+                        no_error = false;
+                        printf("(((ERROR! This structure Track can only have one Value substructure!)))\n");
+                      }
+                      else{
+                        value_detected = true;
+                        no_error = openGEX_Value(values_value, curve_value, sub_substructure);
+                      }
                       break;
                     default:
                       no_error = false;
@@ -585,15 +682,17 @@ namespace octet
                       break;
                     }
                   }
+                  //Post process current Track before getting the next Track
+
                 }
               }
             }
           }
-          else{
+          else{//This is not a Track structure
             no_error = false;
             printf("(((ERROR! The structures of Animation time only accept Track substructures!)))\n");
           }
-        }
+        }//End of the study of substructures
         return no_error;
       }
 
