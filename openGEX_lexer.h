@@ -491,9 +491,28 @@ namespace octet
       /// @param  structure This is the structure to be analized, it has to be Name.
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_Animation(openDDL_identifier_structure *structure){
+      bool openGEX_Animation(openDDL_identifier_structure *structure, scene_node * father){
         bool no_error = false;
-
+        //Initialize variables
+        //Check properties (clip, begin, end)
+        unsigned int num_properties = structure->get_number_properties();
+        for (unsigned int i = 0; i < num_properties; ++i){
+          openDDL_properties * current_property = structure->get_property(i);
+          int tempID = identifiers_.get_value(current_property->identifierID);
+          switch(tempID){
+          case 38: //clip
+            break;
+          case 37: //begin
+            break;
+          case 40: //end
+            break;
+          default:
+            no_error = false;
+            printf("(((ERROR-> The struct Animation has an invalid property!!)))\n");
+            break;
+          }
+        }
+        //Check substructures (series of tracks)
         return no_error;
       }
 
