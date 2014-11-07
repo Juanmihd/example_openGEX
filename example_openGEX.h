@@ -41,21 +41,13 @@ namespace octet {
 
 
       if (mesh_instances.size()) {
-        mesh_instance * current_instance = mesh_instances[0]->get_mesh_instance();
-        //print_mat4t(current_instance->get_node()->get_nodeToParent());
-        printf("%s?", app_utils::get_atom_name(current_instance->get_node()->get_sid()));
-        app_scene->add_child(current_instance->get_node());
-        app_scene->add_mesh_instance(current_instance);
-        current_instance = mesh_instances[1]->get_mesh_instance();
-        //print_mat4t(current_instance->get_node()->get_nodeToParent());
-        app_scene->add_child(current_instance->get_node());
-        printf("%s?", app_utils::get_atom_name(current_instance->get_node()->get_sid()));
-        app_scene->add_mesh_instance(current_instance);
-        current_instance = mesh_instances[2]->get_mesh_instance();
-        //print_mat4t(current_instance->get_node()->get_nodeToParent());
-        app_scene->add_child(current_instance->get_node());
-        printf("%s?", app_utils::get_atom_name(current_instance->get_node()->get_sid()));
-        app_scene->add_mesh_instance(current_instance);
+        for (int i = 0; i < mesh_instances.size(); ++i){
+          mesh_instance * current_instance = mesh_instances[i]->get_mesh_instance();
+          //print_mat4t(current_instance->get_node()->get_nodeToParent());
+          printf("%s?\n", app_utils::get_atom_name(current_instance->get_node()->get_sid()));
+          app_scene->add_child(current_instance->get_node());
+          app_scene->add_mesh_instance(current_instance);
+        }
         
         scene_node *light_node = new scene_node();
         light *_light = new light();
@@ -111,7 +103,6 @@ namespace octet {
       
       // Updating the screen with the keyboard
       keyboard();
-
     }
   };
 }
