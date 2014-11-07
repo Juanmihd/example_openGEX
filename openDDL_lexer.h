@@ -929,11 +929,14 @@ namespace octet
           }
           //Check if it's a data_type
           else{
+            int value;
+            get_integer_literal(value, (char*)tempChar, size);
             int type = 1;
+            type = 0;
+            new_property->literal.value.integer_ = value;
+            new_property->literal.value_type = value_type_DDL::INT;
             if (type >= 0){
               // Set new property with the new value as data_type
-              new_property->literal.value_type = value_type_DDL::TYPE;
-              new_property->literal.value.type_ = type;
             }
           //Check if it's a reference
             else{
@@ -1016,6 +1019,7 @@ namespace octet
         openDDL_properties * new_property = new openDDL_properties();
         current_structure = structure;
         no_error = process_single_property(new_property);
+        //printf("Property %i with %i\n", identifiers_.get_value(new_property->identifierID), new_property->literal.value.integer_);
         structure->add_property(new_property);
 
         //it will have to expect more properties as long as it's not a )

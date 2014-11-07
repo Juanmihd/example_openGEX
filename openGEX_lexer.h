@@ -31,6 +31,23 @@ namespace octet
     };
     enum { DEBUGDATA = 0, DEBUGSTRUCTURE = 0, DEBUGOPENGEX = 0 };
 
+    struct ref_skin_skeleton{
+      skin *ref_skin;
+      skeleton *ref_skeleton;
+    };
+
+    struct index_mesh{
+      unsigned int index;
+      ref<mesh> ref_mesh;
+    };
+
+    struct info_mesh_instance : public resource{
+      ref<mesh_instance> ref_instance;
+      ref<scene_node> node;
+      atom_t name;
+      dynarray<char *> ref_materials;
+      dynarray<index_mesh> index_and_meshes;
+    };
 
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief This class is the openGEX lexer, it will read the array of characters and get tokes
@@ -38,10 +55,11 @@ namespace octet
     class openGEX_lexer : public openDDL_lexer{
       typedef gex_ident::gex_ident_enum gex_ident_list;
       //This will be used to handle the references to meshes and materials (and more will be probably added)
-      dictionary<ref<mesh>> ref_meshes;
-      dictionary<dynarray<ref<mesh_instance>>> ref_meshes_inv;
-      dictionary<ref<material>> ref_materials;
-      dictionary<dynarray<ref<mesh_instance>>> ref_materials_inv;
+      dictionary<dynarray<ref<info_mesh_instance>>> info_meshes_from_objectRef;  //This contains all the info required for a mesh_instance, knowing the mesh
+      
+      dictionary<ref<material>> ref_materials;      //This is the list of materials!
+      dictionary<dynarray<ref<mesh_instance>>> ref_materials_inv;             //from a materialRef (Material) gets which objectRef is using it
+
       //This dictionary is indexed with the openDDL name, not the structure name! (CAUTION!!)
       dictionary<ref<scene_node>> dict_nodes;
       dictionary<ref<scene_node>> dict_bone_nodes;
@@ -158,7 +176,11 @@ namespace octet
         }
       }
 
-      private:
+    private:
+
+      char get_char_from_int(int number){
+        return number + 48;
+      }
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief This function prints properly a openDDL_data_literal!
       /// @param  value The literal to be printed
@@ -1189,6 +1211,7 @@ namespace octet
         }
         //Obtain the name of the structure
         char * name = structure->get_name();
+        node->set_sid(app_utils::get_atom(name));
         //BoneNode has no properties!
         int numProperties = structure->get_number_properties();
         if (numProperties != 0){
@@ -1301,6 +1324,7 @@ namespace octet
         }
         //Obtain the name of the structure
         char * name = structure->get_name();
+        node->set_sid(app_utils::get_atom(name));
         //BoneNode has no properties!
         int numProperties = structure->get_number_properties();
         if (numProperties != 0){
@@ -1386,8 +1410,6 @@ namespace octet
         // We are working with transpose matrix in octet!!! So transpose it to be able to work properly!
         node->access_nodeToParent().multMatrix(nodeToParent.transpose4x4());
 
-        //Add the id for the animations
-        node->set_sid(app_utils::get_atom(nameNode));
         //Add the current bone to the dictionary of bones
         dict_nodes[name] = node;
         dict_bone_nodes[name] = node;
@@ -1596,11 +1618,10 @@ namespace octet
       /// @param  structure This is the structure to be analized, it has to be Node.
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_IndexArray(uint32_t *&indices, int &num_indices, openDDL_identifier_structure *structure, scene_node *father = NULL){
+      bool openGEX_IndexArray(uint32_t *&indices, int &num_indices, unsigned int &material_index, openDDL_identifier_structure *structure, scene_node *father = NULL){
         bool no_error = true;
         //Get the value of the properties!
         bool clock_wise = false;
-        int material_index = 0;
         int numProperties = structure->get_number_properties();
         int restart = -1;
         if (numProperties > 2){
@@ -1708,7 +1729,6 @@ namespace octet
           no_error = false;
           printf("(((ERROR -> The structure BoneRefArray has a wrong number of substructures)))\n");
         }
-        
         return no_error;
       }
 
@@ -1718,7 +1738,7 @@ namespace octet
       /// @param  structure This is the structure to be analized, it has to be Node.
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_Skeleton(skin *current_skin, openDDL_identifier_structure *structure, atom_t instance){
+      bool openGEX_Skeleton(ref_skin_skeleton &skin_skeleton, openDDL_identifier_structure *structure, atom_t instance){
         bool no_error = true;
         //Check properties (Skeleton structure has no properties)
         if (structure->get_number_properties() != 0){
@@ -1730,7 +1750,7 @@ namespace octet
         bool contains_transform = false;
         bool object_only = false;
         dynarray<atom_t> bone_array;
-        dynarray<mat4t> matrixTransform;
+        dynarray<mat4t> matrixTransforms;
         int number_substructures = structure->get_number_substructures();
         for (int i = 0; i < number_substructures; ++i){
           openDDL_identifier_structure *substructure = (openDDL_identifier_structure *)structure->get_substructure(i);
@@ -1749,7 +1769,7 @@ namespace octet
           case 32: //Transform
             if (!contains_transform){
               contains_transform = true;
-              no_error = openGEX_Transform(matrixTransform, object_only, substructure);
+              no_error = openGEX_Transform(matrixTransforms, object_only, substructure);
             }
             else{
               no_error = false;
@@ -1778,7 +1798,7 @@ namespace octet
       /// @param  structure This is the structure to be analized, it has to be Node.
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_Skin(mesh *current_mesh, openDDL_identifier_structure *structure, atom_t instance){
+      bool openGEX_Skin(ref_skin_skeleton &skin_skeleton, openDDL_identifier_structure *structure, atom_t instance){
         bool no_error = true;
         //Check properties (this Structure cannot have properties!)
         int num_properties = structure->get_number_properties();
@@ -1799,8 +1819,9 @@ namespace octet
         dynarray<mat4t> transformMatrixes;
         if (transformMatrixes.size() < 1)
           transformMatrixes.resize(1);
-        //Get ready the mesh...
-        skin * current_skin = new skin();
+        //Get ready the skin and skeleton...
+        skin_skeleton.ref_skin = new skin();
+        skin_skeleton.ref_skeleton = new skeleton();
         //Now check all the substructures
         for (int i = 0; i < num_substructures; ++i){
           openDDL_identifier_structure * substructure = (openDDL_identifier_structure *) structure->get_substructure(i);
@@ -1819,7 +1840,7 @@ namespace octet
           case 27: //Skeleton
             if (!contains_skeleton){
               contains_skeleton = true;
-              no_error = openGEX_Skeleton(current_skin, substructure, instance);
+              no_error = openGEX_Skeleton(skin_skeleton, substructure, instance);
             }
             else{
               no_error = false;
@@ -1866,7 +1887,7 @@ namespace octet
         }
         else{ //It contains all that it needs, so, check it!
           //Set the skin with the given transform (identity if it has no transform!)
-          current_skin->set_bindToModel(transformMatrixes[0].transpose4x4());
+          skin_skeleton.ref_skin->set_bindToModel(transformMatrixes[0].transpose4x4());
         }
         return no_error;
       }
@@ -1879,7 +1900,7 @@ namespace octet
       /// @param  instance  This is an atom (equivalente to string! but cheaper!) with the name of the mesh_instance that contains the mesh
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_Mesh(mesh *&current_mesh, int &lod, openDDL_identifier_structure *structure, atom_t instance){
+      bool openGEX_Mesh(char * objectRef, int &lod, openDDL_identifier_structure *structure, atom_t instance){
         bool no_error = true;
         int tempID;
         uint16_t valuePrimitive = GL_TRIANGLES;
@@ -1967,9 +1988,14 @@ namespace octet
         int numVertexArray = 0;
         int numIndexArray = 0;
         int numSkin = 0;
+        ref_skin_skeleton skin_skeleton;
+        skin_skeleton.ref_skeleton = NULL;
+        skin_skeleton.ref_skin = NULL;
         mesh::vertex * vertices = NULL;
-        uint32_t *indices = NULL;
-        int num_vertexes, num_indices;
+        dynarray<uint32_t *> indices;
+        dynarray<unsigned int> material_indexes;
+        dynarray<int> num_indices;
+        int num_vertexes;
         //Check all the substructures (all of them has to be of mesh type)
         for (int i = 0; i < numSubstructures; ++i){
           openDDL_identifier_structure *substructure = (openDDL_identifier_structure *)structure->get_substructure(i);
@@ -1980,19 +2006,16 @@ namespace octet
             no_error = openGEX_VertexArray(vertices, num_vertexes, substructure);
             break;
           case 12://IndexArray
-            if (numIndexArray == 0){
-              ++numIndexArray;
-              no_error = openGEX_IndexArray(indices, num_indices, substructure);
-            }
-            else{
-              no_error = false;
-              printf("(((ERROR: The structure Mesh can only have one IndexArray substructure)))\n");
-            }
+            indices.push_back(NULL);
+            material_indexes.push_back(0);
+            num_indices.push_back(0);
+            no_error = openGEX_IndexArray(indices[numIndexArray], num_indices[numIndexArray], material_indexes[numIndexArray], substructure);
+            ++numIndexArray;
             break;
           case 28://Skin
             if (numSkin == 0){
               ++numSkin;
-              no_error = openGEX_Skin(current_mesh, substructure, instance);
+              no_error = openGEX_Skin(skin_skeleton, substructure, instance);
             }
             else{
               no_error = false;
@@ -2009,34 +2032,70 @@ namespace octet
           no_error = false;
           printf("(((ERROR: The structure Mesh has to have one VertexArray substructure)))\n");
         }
-        else{ //Post processing after reading all the substructures!
-          current_mesh = new mesh();
-          current_mesh->allocate(sizeof(mesh::vertex) * num_vertexes, sizeof(uint32_t) * num_indices);
-          current_mesh->set_num_indices(num_indices);
-          current_mesh->set_num_vertices(num_vertexes);
-          current_mesh->set_mode(valuePrimitive);
-          current_mesh->add_attribute(attribute_pos, 3, GL_FLOAT, 0);
-          current_mesh->add_attribute(attribute_normal, 3, GL_FLOAT, 12);
-          current_mesh->add_attribute(attribute_uv, 2, GL_FLOAT, 24);
-          current_mesh->set_params(32, num_indices, num_vertexes, valuePrimitive, GL_UNSIGNED_INT);
-          gl_resource::wolock vl(current_mesh->get_vertices());
-          gl_resource::wolock il(current_mesh->get_indices());
-          uint32_t *idx = il.u32();
-          mesh::vertex *vtx = (mesh::vertex *)vl.f32();
-          for (int i = 0; i < num_vertexes; ++i){
-            vtx[i] = vertices[i];
-            if(DEBUGOPENGEX) print_vertex(vtx[i]);
-          }
-          int count = 3;
-          if (DEBUGOPENGEX)printf("-->");
-          for (int i = 0; i < num_indices; ++i){
-            idx[i] = indices[i];
-            if (DEBUGOPENGEX){
-              printf("%u, ", idx[i]);
-              count--;
-              if (count == 0){
-                printf("\n->");
-                count = 3;
+        else{ 
+          //Post processing after reading all the substructures!
+          unsigned int num_objects = info_meshes_from_objectRef[objectRef].size();
+          //It has to process for every single 
+          for (unsigned int index_objects = 0; index_objects < num_objects; ++index_objects){
+            info_mesh_instance *info_current_object = info_meshes_from_objectRef[objectRef][index_objects];
+            //Now create a mesh_isntance for every single IndexArray!
+            for (int index_i = 0; index_i < numIndexArray; ++index_i){
+              bool add_later_material = false;
+              //First, create the mesh!
+              mesh *current_mesh = new mesh(); 
+              mesh_instance * current_mesh_instance;
+              current_mesh->allocate(sizeof(mesh::vertex) * num_vertexes, sizeof(uint32_t) * num_indices[index_i]);
+              current_mesh->set_num_indices(num_indices[index_i]);
+              current_mesh->set_num_vertices(num_vertexes);
+              current_mesh->set_mode(valuePrimitive);
+              current_mesh->add_attribute(attribute_pos, 3, GL_FLOAT, 0);
+              current_mesh->add_attribute(attribute_normal, 3, GL_FLOAT, 12);
+              current_mesh->add_attribute(attribute_uv, 2, GL_FLOAT, 24);
+              current_mesh->set_params(32, num_indices[index_i], num_vertexes, valuePrimitive, GL_UNSIGNED_INT);
+              gl_resource::wolock vl(current_mesh->get_vertices());
+              gl_resource::wolock il(current_mesh->get_indices());
+              uint32_t *idx = il.u32();
+              mesh::vertex *vtx = (mesh::vertex *)vl.f32();
+              for (int i = 0; i < num_vertexes; ++i){
+                vtx[i] = vertices[i];
+              }
+              for (int i = 0; i < num_indices[index_i]; ++i){
+                idx[i] = indices[index_i][i];
+              }
+              //Now, obtain the material!
+              material *current_material = 0;
+              char *current_ref_material = info_current_object->ref_materials[material_indexes[index_i]];
+              //Check if it's been obtained already or not
+              if (current_ref_material != NULL && ref_materials[current_ref_material]){
+                current_material = ref_materials[current_ref_material];
+              }
+              else{ //It's NULL!
+                add_later_material = true;
+              }
+              //Now, finally, create the mesh_instance!
+              //If there is no skeleton
+              if (skin_skeleton.ref_skeleton == NULL)
+                current_mesh_instance = new mesh_instance(info_current_object->node, current_mesh, current_material);
+              else{
+                //Add skeleton!
+              }
+              if (add_later_material){
+                current_material = new material();
+                ref_materials[current_ref_material] = current_material;
+                ref_materials_inv[current_ref_material].push_back(current_mesh_instance);
+              }
+              const char *name = app_utils::get_atom_name(info_current_object->name);
+              char *new_name = new char[20];
+              if (index_i > 0){
+                new_name[0] = get_char_from_int(index_i);
+                for (int i = 1; i < 20 && *name != '/0'; ++i){
+                  new_name[i] = *name;
+                  ++name;
+                }
+                dict->set_resource(new_name, current_mesh_instance);
+              }
+              else{
+                dict->set_resource(name, current_mesh_instance);
               }
             }
           }
@@ -2128,9 +2187,8 @@ namespace octet
           nameNode = name;
         }
         dict->set_resource(nameNode, new_material);
-        //Add the material to all those mesh_instances waiting for it!
-        int num_objects_ref = ref_materials_inv[name].size();
-        for (int i = 0; i < num_objects_ref; ++i){
+        int num_instances = ref_materials_inv[name].size();
+        for (int i = 0; i < num_instances; ++i){
           ref_materials_inv[name][i]->set_material(new_material);
         }
 
@@ -2153,17 +2211,27 @@ namespace octet
         bool no_error = true;
         bool values_specified[3] = { false, false, false }; //values => visible, shadow, motion_blur
         bool values_properties[3] = { false, false, false };
-        mesh_instance * current_object;
-        current_object = new mesh_instance;
+        ref<info_mesh_instance> info_current_instance = new info_mesh_instance;
+        dynarray<mesh_instance *> mesh_instances;
+        mesh_instance * current_mesh_instance;
+        current_mesh_instance = new mesh_instance;
         //Creating new node
         scene_node *node;
         node = new scene_node();
+        //Assign that to the current info
+        //Obtain the name of the structure
+        char * name = structure->get_name();
+        node->set_sid(app_utils::get_atom(name));
+        info_current_instance->node = node;
+        unsigned int capacity_materials = 5;
+        info_current_instance->ref_materials.resize(capacity_materials);
+        for (int i = 0; i < 5; ++i){
+          info_current_instance->ref_materials[i] = NULL;
+        }
         //If it's not a Top-Level class, add it to his father
         if (father != NULL){
           father->add_child(node);
         }
-        //Obtain the name of the structure
-        char * name = structure->get_name();
         //Obtain the properties (may not have)
         int numProperties = structure->get_number_properties();
         for (int i = 0; i < numProperties; ++i){
@@ -2191,6 +2259,7 @@ namespace octet
             break;
           }
         }
+
         //Check substructures
         int numSubstructures = structure->get_number_substructures();
         //Some variables to check the quantity of some substructures
@@ -2206,14 +2275,14 @@ namespace octet
           transformMatrixes.resize(1);
         float *values = NULL;
         int numValues;
-        dynarray<uint32_t> mat_index;
-        mat_index.resize(10);
+        unsigned int mat_index;
         int num_mat_index = 0;
         char * nameNode = NULL;
         int sizeName = 0;
         bool object_only = false;
         char * object_ref = NULL;
         char * ref_material = NULL;
+
         //Check all the substructures
         for (int i = 0; i < numSubstructures; ++i){
           openDDL_identifier_structure *substructure = (openDDL_identifier_structure *)structure->get_substructure(i);
@@ -2224,6 +2293,7 @@ namespace octet
             if (numNames == 0){
               ++numNames;
               no_error = openGEX_Name(nameNode, sizeName, substructure);
+              info_current_instance->name = app_utils::get_atom(nameNode);
             }
             else{
               printf("(((ERROR: It has more than one Morph, it can only have one (or none)!!!)))\n");
@@ -2234,11 +2304,11 @@ namespace octet
             if (numObjectRef == 0){
               ++numObjectRef;
               no_error = openGEX_ObjectRef(object_ref, substructure);
-              if (!ref_meshes.contains(object_ref))
-                ref_meshes[object_ref] = NULL;
-              else
-                current_object->set_mesh(ref_meshes[object_ref]);
-              ref_meshes_inv[object_ref].push_back(current_object);
+              if (!info_meshes_from_objectRef.contains(object_ref))
+                info_meshes_from_objectRef[object_ref];
+              else{
+                //Think what will do here TODO
+              }
             }
             else{
               printf("(((ERROR: It has more than one Morph, it can only have one (or none)!!!)))\n");
@@ -2246,13 +2316,22 @@ namespace octet
             break;
           //Get MaterialRef
           case 17://MaterialRef
-            no_error = openGEX_MaterialRef(ref_material, mat_index[num_mat_index], substructure);
-            ++num_mat_index;
+            mat_index = 0;
+            no_error = openGEX_MaterialRef(ref_material, mat_index, substructure);
             if (!ref_materials.contains(ref_material))
               ref_materials[ref_material] = NULL;
-            else
-              current_object->set_material(ref_materials[ref_material]);
-            ref_materials_inv[ref_material].push_back(current_object);
+            else{
+              //Think what will do here TODO
+            }
+            ++num_mat_index;
+            if (mat_index > capacity_materials){
+              mat_index += 5;
+              info_current_instance->ref_materials.resize(mat_index);
+              for (int i = mat_index - 5 ; i < mat_index ; ++i){
+                info_current_instance->ref_materials[i] = NULL;
+              }
+            }
+            info_current_instance->ref_materials[mat_index] = ref_material;
             break;
           //Get Morph (may have one or none)
           case 20://Morph
@@ -2314,11 +2393,9 @@ namespace octet
           }
           // We are working with transpose matrix in octet!!!
           node->access_nodeToParent().multMatrix(nodeToParent.transpose4x4());
-
           //Add the id for the animations
           node->set_sid(app_utils::get_atom(nameNode));
-          current_object->set_node(node);
-          dict->set_resource(nameNode, current_object);
+          info_meshes_from_objectRef[object_ref].push_back(info_current_instance);
         }
         return no_error;
       }
@@ -2334,8 +2411,6 @@ namespace octet
         bool no_error = true;
         bool values_specified[3] = { false, false, false }; //values => visible, shadow, motion_blur
         bool values_properties[3] = { false, false, false };
-        //Creating mesh, material and skeleton
-        mesh * current_mesh = 0;
         //Creating matrix of transforms
         mat4t nodeToParent;
         nodeToParent.loadIdentity(); //and initialize it to identity!
@@ -2370,25 +2445,21 @@ namespace octet
         }
         //Check substructures
         int numSubstructures = structure->get_number_substructures();
-        dynarray<int> lod (numSubstructures);
+        dynarray<int> lod(numSubstructures);
         //Check all the substructures (all of them has to be of mesh type)
         for (int i = 0; i < numSubstructures && no_error; ++i){
           openDDL_identifier_structure *substructure = (openDDL_identifier_structure *)structure->get_substructure(i);
           tempID = substructure->get_identifierID();
           if (tempID == 18){//Mesh
             lod[i] = 0;
-            no_error = openGEX_Mesh(current_mesh, lod[i], substructure, app_utils::get_atom(name));
-            dict->set_resource(name, current_mesh);
-            int num_objects_ref = ref_meshes_inv[name].size();
-            for (int i = 0; i < num_objects_ref; ++i){
-              ref_meshes_inv[name][i]->set_mesh(current_mesh);
-            }
+            no_error = openGEX_Mesh(name, lod[i], substructure, app_utils::get_atom(name));
           }
           else{
             no_error = false;
             printf("(((ERROR: The structure GeometricObject can only have as substructure a Mesh)))\n");
           }
         }
+
         return no_error;
       }
 
