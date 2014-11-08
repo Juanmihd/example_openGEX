@@ -40,9 +40,9 @@ namespace octet {
       dict.find_all(materials, atom_material);
       printf("I've found %i materials!\n", materials.size());
 
-
-      if (mesh_instances.size()) {
-        for (int i = 0; i < mesh_instances.size(); ++i){
+      unsigned int mesh_instances_size = mesh_instances.size();
+      if (mesh_instances_size) {
+        for (unsigned int i = 0; i < mesh_instances_size; ++i){
           mesh_instance * current_instance = mesh_instances[i]->get_mesh_instance();
           //print_mat4t(current_instance->get_node()->get_nodeToParent());
           printf("%s?\n", app_utils::get_atom_name(current_instance->get_node()->get_sid()));

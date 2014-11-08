@@ -257,7 +257,6 @@ namespace octet
         return symbols_.contains(character.c_str());
       }
 
-
       //Here start some functions to get_literals!
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief  This function will check if it's a bool-literal and return it's value (will check if there is any problem)

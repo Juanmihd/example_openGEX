@@ -524,7 +524,7 @@ namespace octet
         //Check substructures
         if (no_error){
           //But first, check the type of curve
-          int num_values;
+          unsigned int num_values;
           if (curve == app_utils::get_atom("linear")){ //if it's linear, it will have only one Key substructure!
             num_values = 1;
           }
@@ -536,7 +536,7 @@ namespace octet
             openDDL_identifier_structure * key_substructure = (openDDL_identifier_structure *)structure->get_substructure(i_key);
             atom_t kind_value = app_utils::get_atom("value");
             openDDL_data_type_structure *values_substructure = (openDDL_data_type_structure *)key_substructure->get_substructure(0);
-            for (unsigned int i_data_list; i_data_list < values_substructure->get_number_lists(); ++i_data_list){
+            for (int i_data_list; i_data_list < values_substructure->get_number_lists(); ++i_data_list){
               openDDL_data_list *data_list = values_substructure->get_data_list(i_data_list);
               for (unsigned int i = 0; i < data_list->data_list.size(); ++i){
                 values[i_key].push_back(data_list->data_list[i]->value.float_);
@@ -576,7 +576,7 @@ namespace octet
         //Check substructures
         if (no_error){
           //But first, check the type of curve
-          int num_values;
+          unsigned int num_values;
           if (curve == app_utils::get_atom("linear")){ //if it's linear, it will have only one Key substructure!
             num_values = 1;
           }else if(curve==app_utils::get_atom("bezier")){ //So if it's bezier it will have 3 Key substructures!
@@ -590,10 +590,10 @@ namespace octet
             openDDL_identifier_structure * key_substructure = (openDDL_identifier_structure *)structure->get_substructure(i_key);
             atom_t kind_value = app_utils::get_atom("value");
             openDDL_data_type_structure *values_substructure = (openDDL_data_type_structure *)key_substructure->get_substructure(0);
-            for (unsigned int i_data_list; i_data_list < values_substructure->get_number_lists(); ++i_data_list){
+            for (int i_data_list; i_data_list < values_substructure->get_number_lists(); ++i_data_list){
               openDDL_data_list *data_list = values_substructure->get_data_list(i_data_list);
               for (unsigned int i = 0; i < data_list->data_list.size(); ++i){
-                values[i_key].push_back(data_list->data_list[i]->value.float_);
+                values[i_key].push_back((float) data_list->data_list[i]->value.float_);
               }
             }
           }
@@ -704,7 +704,6 @@ namespace octet
                   animation *new_animation = new animation();
                   new_animation->add_channel(father, father->get_sid(), app_utils::get_atom("transform"), app_utils::get_atom("matrix[1]"),values_time[0],values_value[0][0]);
 
-                  animation_instance *new_animation_instance;
                 }
               }
             }
