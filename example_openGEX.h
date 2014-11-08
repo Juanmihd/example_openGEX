@@ -24,11 +24,11 @@ namespace octet {
 
       resource_dict dict;
 
-      if (!openGEXLoader.loadFile("assets/openGEX/cubeGEX_2.txt")){
+      if (!openGEXLoader.load_file("assets/openGEX/cubeGEX_2.txt")){
         printf("It did not work!!");
       }
 
-      if (!openGEXLoader.process_resources(&dict)){
+      if (!openGEXLoader.process_resources(&dict,true)){
         printf("It did not work!!");
       }
 

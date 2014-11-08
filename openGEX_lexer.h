@@ -67,6 +67,9 @@ namespace octet
       //This is (a pointer to) the dictionary where everything will need to be stored! The octet dict! Be careful!
       resource_dict *dict;
 
+      //This boolean will be used to check if the bones & skin & skeleton has to be processed
+      bool check_skin_skeleton;
+
       //Some values needed to process correctly the file
       //This are the values that are obtained by Metric structures and that define the measurement and orientation
       float distance_multiplier; //default value = 1.0f
@@ -2317,7 +2320,7 @@ namespace octet
           case 28://Skin
             if (numSkin == 0){
               ++numSkin;
-              no_error = openGEX_Skin(skin_skeleton, substructure, instance);
+              if (check_skin_skeleton) no_error = openGEX_Skin(skin_skeleton, substructure, instance);
             }
             else{
               no_error = false;
@@ -2827,6 +2830,10 @@ namespace octet
             if (DEBUGOPENGEX) printf("BoneNode\n");
             no_error = openGEX_BoneNode(structure);
             break;
+          case 22: //Node
+            if (DEBUGOPENGEX) printf("BoneNode\n");
+            no_error = openGEX_Node(structure);
+            break;
           default:
             printf("(((ERROR!!!!-> It's reading a structure not suposed to be Top Level. Are you sure?)))\n");
             no_error = false;
@@ -2867,8 +2874,9 @@ namespace octet
       /// @brief This function will analize all the data obtained by the openDDL lexer process
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_data(resource_dict *new_dict){
+      bool openGEX_data(resource_dict *new_dict, bool skin_skeleton){
         dict = new_dict;
+        check_skin_skeleton = skin_skeleton;
         bool no_error = true;
         int numStructures = openDDL_file.size();
         openDDL_structure * topLevelStructure;

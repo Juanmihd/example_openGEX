@@ -2,7 +2,7 @@
 /// @file openGEX_loader.h
 /// @author Juanmi Huertas Delgado
 /// @brief This is the loader to load the files of OpenGEX
-///
+/// THis file contains the clas openGEX_loader, that's the class used to read openGEX files
 ////////////////////////////////////////////////////////////////////////////////
 
 #ifndef OPENGEX_LOADER_INCLUDED
@@ -11,9 +11,15 @@
 #include "openGEX_lexer.h"
 
 ////////////////////////////////////////////////////////////////////////////////
-/// @brief This class is the openGEX loader, it will open the file and call the lexer and so
+/// @brief This class is the openGEX loader. 
+///   To use this class you have to first load the file and then process it
+///   To load the file simply use the "load_file" function (passing the name of the file)
+///   Once that the file has been loaded correctly, you can analyze it and process it, with 
+///   the function "process_resources". This function will copy into a dictionary of resources
+///   all of the mesh_instances, and so of the method. 
 ////////////////////////////////////////////////////////////////////////////////
-namespace octet { namespace loaders {
+namespace octet { 
+  namespace loaders {
     class openGEX_loader {
       /// Source for the image for reloads
       string url;
@@ -31,7 +37,7 @@ namespace octet { namespace loaders {
       /// @param name is a constant pointer to a character (it will be the address of the file to open)
       /// @return It will return true if everything went well and false if there was some problems while reading the file
       ////////////////////////////////////////////////////////////////////////////////
-      bool loadFile(const char * name){
+      bool load_file(const char * name){
         app_utils::get_url(buffer, name);
         //Process the file (lexer) (return false if there was any problem)
         printf("Starting the lexer process\n");
@@ -43,9 +49,15 @@ namespace octet { namespace loaders {
         return true;
       }
 
-      bool process_resources(resource_dict *dict){
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief Process the resources of the file previously processed with the openDDL_lexer
+      /// @param dict is a constant pointer to a character (it will be the address of the file to open)
+      /// @param skin_skeleton is a constant pointer to a character (it will be the address of the file to open)
+      /// @return It will return true if everything went well and false if there was some problems while reading the file
+      ////////////////////////////////////////////////////////////////////////////////
+      bool process_resources(resource_dict *dict, bool skin_skeleton = false){
         printf("And now start the openGEX process...\n");
-        if (!lexer.openGEX_data(dict)){
+        if (!lexer.openGEX_data(dict, skin_skeleton)){
           printf("Error loading the openGEX file (openGEX process)!\n");
           return false;
         }
@@ -54,7 +66,6 @@ namespace octet { namespace loaders {
         //Import the file into octet (return false if there was any problem)
         return true;
       }
-
     };
   }
 }
