@@ -5,6 +5,9 @@
 ///
 /// NOTE: In the compiler several functions will have the boolean "no_error" this boolean is true when there is NO error, and false when error
 ///
+///   ToDo: Some parts of the openGEX lexer process are "order" dependent. After checking the current exporters in openGEX, it seems that the generated code it has always a 
+///           proper order, but, giving a look to the specification, the importer should be able to read the structures properly without mattering the order of the files. 
+///           this could be helped improving the openDDL_lexer and changing some small parts of these code (check some ToDo comments in the code)
 ////////////////////////////////////////////////////////////////////////////////
 
 #ifndef OPENGEX_LEXER_INCLUDED
@@ -69,6 +72,7 @@ namespace octet
 
       //This boolean will be used to check if the bones & skin & skeleton has to be processed
       bool check_skin_skeleton;
+      bool check_animation;
 
       //Some values needed to process correctly the file
       //This are the values that are obtained by Metric structures and that define the measurement and orientation
@@ -236,6 +240,7 @@ namespace octet
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief This will print the data type structure (previously analized by openDDL lexer)
+      /// @param  structure This is the structure to be printed, it has to be a data_type structure
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
       bool printf_data_type_structure(openDDL_data_type_structure * structure){
@@ -295,6 +300,7 @@ namespace octet
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief This will print the identifier structure (previously analized by openDDL lexer)
+      /// @param  structure This is the structure to be printed, it has to be a identifier structure
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
       bool printf_identifier_structure(openDDL_identifier_structure * structure){
@@ -491,6 +497,8 @@ namespace octet
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief This will obtain all the info from a Time structure
+      /// @param  values This function will return in a array of array of floats, the values of the structure Time
+      /// @param  curve This will get the type of the curve, this variable has to come with the value "linear" prestored (default value)
       /// @param  structure This is the structure to be analized, it has to be Time.
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
@@ -541,6 +549,8 @@ namespace octet
         
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief This will obtain all the info from a Value structure
+      /// @param  values This function will return in a array of array of floats, the values of the structure Value
+      /// @param  curve This will get the type of the curve, this variable has to come with the value "linear" prestored (default value)
       /// @param  structure This is the structure to be analized, it has to be Value.
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
@@ -593,6 +603,7 @@ namespace octet
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief This will obtain all the info from a Animation structure
+      /// @param  list_ref This is the list of references to transforms of the father structure
       /// @param  structure This is the structure to be analized, it has to be Animation.
       /// @param  father This is the scene_node of the item that posses this animation.
       /// @return True if everything went well, false if there was some problem
@@ -709,10 +720,11 @@ namespace octet
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief This will obtain all the info from a Name structure
       /// @param  name  This is a pointer to char, it will return here the value of the Name
+      /// @param  nameSize  This is the size of the name that it's obtained by this structure
       /// @param  structure This is the structure to be analized, it has to be Name.
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_Name(char *&name, int nameSize, openDDL_identifier_structure *structure){
+      bool openGEX_Name(char *&name, int &nameSize, openDDL_identifier_structure *structure){
         bool no_error = true;
         if (structure->get_number_properties() != 0){
           printf("(((ERROR: A structure of the type Name cannot have properties)))\n");
@@ -740,7 +752,8 @@ namespace octet
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief This will obtain all the info from a Color structure
-      /// @param  name  This is a pointer to char, it will return here the value of the Color
+      /// @param  color  This will return a vector with the color info (R,G,B,A)
+      /// @param  attrib_output  This will return the attribute of this color (it will depend if it belongs to a material, light...)
       /// @param  structure This is the structure to be analized, it has to be Color.
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
@@ -795,11 +808,12 @@ namespace octet
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief This will obtain all the info from a Param structure
-      /// @param  name  This is a pointer to char, it will return here the value of the Param
+      /// @param  value  This will return the value of the parameter contained in this structure
+      /// @param  type  This will return the type of the parameter contained in this structure
       /// @param  structure This is the structure to be analized, it has to be Param.
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_Param(float &value, GEX_PARAM type, openDDL_identifier_structure *structure){
+      bool openGEX_Param(float &value, GEX_PARAM &type, openDDL_identifier_structure *structure){
         bool no_error = true;
         //Check the property (has to have only one, param)
         if (structure->get_number_properties() == 1){
@@ -910,7 +924,10 @@ namespace octet
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief This will obtain all the info from a Texture structure
-      /// @param  name  This is a pointer to char, it will return here the value of the Texture
+      /// @param  texture_url  This is a pointer to char, it will return here the url of the Texture
+      /// @param  size_url  This is a pointer to char, it will return here the size of the url of the Texture
+      /// @param  index  This will return the index of the structure (this has to come with a value of 0, default value)
+      /// @param  type  This will return the type of the parameter contained in this structure
       /// @param  structure This is the structure to be analized, it has to be Texture.
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
@@ -1065,7 +1082,7 @@ namespace octet
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief This will obtain all the info from a ObjectRef structure
-      /// @param  name  This is a pointer to char, it will return here the value of the ObjectRef
+      /// @param  object_ref  This is a pointer to char, it will return here the value of the ObjectRef
       /// @param  structure This is the structure to be analized, it has to be ObjectRef.
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
@@ -1091,7 +1108,8 @@ namespace octet
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief This will obtain all the info from a MaterialRef structure
-      /// @param  name  This is a pointer to char, it will return here the value of the MaterialRef
+      /// @param  material_ref  This is a pointer to char, it will return here the value of the MaterialRef
+      /// @param  index  This will return the index of the material (this has to come with a value of 0, default value)
       /// @param  structure This is the structure to be analized, it has to be MaterialRef.
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
@@ -1136,7 +1154,8 @@ namespace octet
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief This will obtain all the info from a Transform structure
-      /// @param  name  This is a pointer to char, it will return here the value of the Transform
+      /// @param  ref  This is an atom (equivalent to a string) representing the reference of the transform (name in openDDL)
+      /// @param  transformMatrix This is an array of matrixes, it will return here the content of this transform
       /// @param  object_only  This is a boolean saying if this is going to be applied only to one object
       /// @param  structure This is the structure to be analized, it has to be Transform.
       /// @return True if everything went well, false if there was some problem
@@ -1182,8 +1201,8 @@ namespace octet
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief This will obtain all the info from a Translation structure
-      /// @param  name  This is a pointer to char, it will return here the value of the Translation
-      /// @param  coordinates  This represent which coordinate is used in the transform. (3 = all of them)
+      /// @param  ref  This is an atom (equivalent to a string) representing the reference of the transform (name in openDDL)
+      /// @param  transformMatrix This is a matrix, it will return here the content of this transform
       /// @param  object_only  This is a boolean saying if this is going to be applied only to one object
       /// @param  structure This is the structure to be analized, it has to be Translation.
       /// @return True if everything went well, false if there was some problem
@@ -1257,8 +1276,8 @@ namespace octet
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief This will obtain all the info from a Translation structure
-      /// @param  name  This is a pointer to char, it will return here the value of the Translation
-      /// @param  coordinates  This represent which coordinate is used in the transform. (3 = all of them, 4 = quaternion)
+      /// @param  ref  This is an atom (equivalent to a string) representing the reference of the transform (name in openDDL)
+      /// @param  transformMatrix This is a matrix, it will return here the content of this transform
       /// @param  object_only  This is a boolean saying if this is going to be applied only to one object
       /// @param  structure This is the structure to be analized, it has to be Translation.
       /// @return True if everything went well, false if there was some problem
@@ -1386,8 +1405,8 @@ namespace octet
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief This will obtain all the info from a Translation structure
-      /// @param  name  This is a pointer to char, it will return here the value of the Translation
-      /// @param  coordinates  This represent which coordinate is used in the transform. (3 = all of them)
+      /// @param  ref  This is an atom (equivalent to a string) representing the reference of the transform (name in openDDL)
+      /// @param  transformMatrix This is a matrix, it will return here the content of this transform
       /// @param  object_only  This is a boolean saying if this is going to be applied only to one object
       /// @param  structure This is the structure to be analized, it has to be Translation.
       /// @return True if everything went well, false if there was some problem
@@ -1463,8 +1482,8 @@ namespace octet
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief This will obtain all the info from a Node structure
-      /// @param  dict This is the resource where everything needs to be stored.
       /// @param  structure This is the structure to be analized, it has to be Node.
+      /// @param  father This is the father scene_node. By default  NULL
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
       bool openGEX_Node(openDDL_identifier_structure *structure, scene_node *father = NULL){
@@ -1589,7 +1608,6 @@ namespace octet
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief This will obtain all the info from a BoneNode structure
-      /// @param  dict This is the resource where everything needs to be stored.
       /// @param  structure This is the structure to be analized, it has to be Node.
       /// @param  father This is the father scene_node. By default  NULL
       /// @return True if everything went well, false if there was some problem
@@ -1707,8 +1725,10 @@ namespace octet
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief This will obtain all the info from a VertexArray structure
-      /// @param  dict This is the resource where everything needs to be stored.
+      /// @param  vertices This will be an array (with a pointer) of vertices (return!)
+      /// @param  num_vertexes This will be the size of the array of vertices (return!)
       /// @param  structure This is the structure to be analized, it has to be Node.
+      /// @param  father This is the father scene_node. By default  NULL
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
       bool openGEX_VertexArray(mesh::vertex *&vertices, int &num_vertexes, openDDL_identifier_structure *structure, scene_node *father = NULL){
@@ -1902,8 +1922,11 @@ namespace octet
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief This will obtain all the info from a IndexArray structure
-      /// @param  dict This is the resource where everything needs to be stored.
+      /// @param  indices This will be an array (with a pointer) of indices (return!)
+      /// @param  num_indices This will be the size of the array of indices (return!)
+      /// @param  material_index This will contain the index of the material that will be used (return!)
       /// @param  structure This is the structure to be analized, it has to be Node.
+      /// @param  father This is the father scene_node. By default  NULL
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
       bool openGEX_IndexArray(uint32_t *&indices, int &num_indices, unsigned int &material_index, openDDL_identifier_structure *structure, scene_node *father = NULL){
@@ -1992,7 +2015,8 @@ namespace octet
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief This will obtain all the info from a BoneRefArray structure
-      /// @param  dict This is the resource where everything needs to be stored.
+      /// @param  ref_array This is an array of atoms_
+      /// @param  structure This is the structure to be analized, it has to be Node.
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
       bool openGEX_BoneRefArray(dynarray<atom_t> &ref_array, openDDL_identifier_structure *structure){
@@ -2022,8 +2046,10 @@ namespace octet
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief This will obtain all the info from a Skeleton structure
-      /// @param  dict This is the resource where everything needs to be stored.
+      /// @param  bone_array This is an array of atoms_ of the bones
+      /// @param  matrixTransforms This is an array of matrixes for each bone
       /// @param  structure This is the structure to be analized, it has to be Node.
+      /// @param  instance  This is an atom (equivalente to string! but cheaper!) with the name of the mesh_instance that contains the mesh
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
       bool openGEX_Skeleton(dynarray<atom_t> &bone_array , dynarray<mat4t> &matrixTransforms, openDDL_identifier_structure *structure, atom_t instance){
@@ -2060,7 +2086,7 @@ namespace octet
             }
             else{
               no_error = false;
-              printf("(((ERROR-> The structure Skeleton can only contain one single structure of BoneRefArray!)))\n");
+              printf("(((ERROR-> The structure Skeleton can only contain one single structure of Transform!)))\n");
             }
             break;
           default:
@@ -2079,8 +2105,9 @@ namespace octet
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief This will obtain all the info from a Skin structure
-      /// @param  dict This is the resource where everything needs to be stored.
+      /// @param  skin_skeleton This is a special structure with both the references to a octet::skin and octet::skeleton
       /// @param  structure This is the structure to be analized, it has to be Node.
+      /// @param  instance  This is an atom (equivalente to string! but cheaper!) with the name of the mesh_instance that contains the mesh
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
       bool openGEX_Skin(ref_skin_skeleton &skin_skeleton, openDDL_identifier_structure *structure, atom_t instance){
@@ -2199,13 +2226,12 @@ namespace octet
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief This will obtain all the info from a Mesh structure
-      /// @param  dict This is the resource where everything needs to be stored.
+      /// @param  objectRef This is the name of the object that contains this mesh!
       /// @param  lod Level of detail (it has to be different for any mesh in a same GeometryObject
       /// @param  structure This is the structure to be analized, it has to be Node.
-      /// @param  instance  This is an atom (equivalente to string! but cheaper!) with the name of the mesh_instance that contains the mesh
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_Mesh(char * objectRef, int &lod, openDDL_identifier_structure *structure, atom_t instance){
+      bool openGEX_Mesh(char * objectRef, int &lod, openDDL_identifier_structure *structure){
         bool no_error = true;
         int tempID;
         uint16_t valuePrimitive = GL_TRIANGLES;
@@ -2320,7 +2346,7 @@ namespace octet
           case 28://Skin
             if (numSkin == 0){
               ++numSkin;
-              if (check_skin_skeleton) no_error = openGEX_Skin(skin_skeleton, substructure, instance);
+              if (check_skin_skeleton) no_error = openGEX_Skin(skin_skeleton, substructure, app_utils::get_atom(objectRef));
             }
             else{
               no_error = false;
@@ -2414,8 +2440,7 @@ namespace octet
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief This will obtain all the info from a Material structure
-      /// @param  dict This is the resource where everything needs to be stored.
-      /// @param  structure This is the structure to be analized, it has to be Node.
+      /// @param  structure This is the structure to be analized, it has to be Material.
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
       bool openGEX_Material(openDDL_identifier_structure *structure){
@@ -2506,7 +2531,6 @@ namespace octet
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief This will obtain all the info from a GeometryNode structure
-      /// @param  dict This is the resource where everything needs to be stored.
       /// @param  structure This is the structure to be analized, it has to be GeometryNode.
       /// @param  father This is the father scene_node. By default  NULL
       /// @return True if everything went well, false if there was some problem
@@ -2728,7 +2752,6 @@ namespace octet
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief This will obtain all the info from a GeometryObject structure
-      /// @param  dict This is the resource where everything needs to be stored.
       /// @param  structure This is the structure to be analized, it has to be GeometryNode.
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
@@ -2778,7 +2801,7 @@ namespace octet
           tempID = substructure->get_identifierID();
           if (tempID == 18){//Mesh
             lod[i] = 0;
-            no_error = openGEX_Mesh(name, lod[i], substructure, app_utils::get_atom(name));
+            no_error = openGEX_Mesh(name, lod[i], substructure);
           }
           else{
             no_error = false;
@@ -2864,6 +2887,7 @@ namespace octet
     public:
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief Constructor of lexer
+      ///   This function will only call to the initializers of openDDL process and openGEX process
       ////////////////////////////////////////////////////////////////////////////////
       openGEX_lexer(){
         init_ddl();
@@ -2872,11 +2896,15 @@ namespace octet
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief This function will analize all the data obtained by the openDDL lexer process
+      /// @param  new_dict This is a pointer to the dictionary of resources, this will be a return outcome of the openDDL lexer process
+      /// @param  skin_skeleton This is just a boolean that determines if we want to obtain the skin_skeleton or not
+      /// @param  animation This is just a boolean that determines if we want to obtain the animation or not
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_data(resource_dict *new_dict, bool skin_skeleton){
+      bool openGEX_data(resource_dict *new_dict, bool animation, bool skin_skeleton){
         dict = new_dict;
         check_skin_skeleton = skin_skeleton;
+        check_animation = animation;
         bool no_error = true;
         int numStructures = openDDL_file.size();
         openDDL_structure * topLevelStructure;

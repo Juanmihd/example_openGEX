@@ -8,6 +8,13 @@
 ///         for the hexadecimal representation of that symbol in UTF8
 ///         if there is nothing regarding that number, that mean that it's an hexadecimal
 ///         in case of doubt just check the number "before" the comment
+/// 
+///   ToDo: I've learned that Strings are slow, I'd like to try to change them with char* or atom_t types. 
+///           There are some ocurrencies of strings in the code, it would be nice to make this improvement
+///   ToDo: I'd like to try and optimize the get_XXX_literal, it can be done better
+///   ToDo: Some parts of the openGEX lexer process are "order" dependent. After checking the current exporters in openGEX, it seems that the generated code it has always a 
+///           proper order, but, giving a look to the specification, the importer should be able to read the structures properly without mattering the order of the files. 
+///           this could be helped improving the openDDL_lexer and changing some small parts of these code (check some ToDo comments in the code)
 ////////////////////////////////////////////////////////////////////////////////
 
 #ifndef OPENDDL_LEXER_INCLUDED
@@ -250,6 +257,8 @@ namespace octet
         return symbols_.contains(character.c_str());
       }
 
+
+      //Here start some functions to get_literals!
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief  This function will check if it's a bool-literal and return it's value (will check if there is any problem)
       /// @param  value   it returns the value of the boolean

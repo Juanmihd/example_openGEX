@@ -55,9 +55,9 @@ namespace octet {
       /// @param skin_skeleton is a constant pointer to a character (it will be the address of the file to open)
       /// @return It will return true if everything went well and false if there was some problems while reading the file
       ////////////////////////////////////////////////////////////////////////////////
-      bool process_resources(resource_dict *dict, bool skin_skeleton = false){
+      bool process_resources(resource_dict *dict, bool animation, bool skin_skeleton = false){
         printf("And now start the openGEX process...\n");
-        if (!lexer.openGEX_data(dict, skin_skeleton)){
+        if (!lexer.openGEX_data(dict, animation, skin_skeleton)){
           printf("Error loading the openGEX file (openGEX process)!\n");
           return false;
         }
