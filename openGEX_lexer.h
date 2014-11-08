@@ -678,8 +678,6 @@ namespace octet
                 current_transform = list_ref[i_ref];
               }
             }
-            if (current_transform.type == _ROTATE)
-              printf("!");
             //Check substructures (Time & Value)
             if (structure->get_number_substructures() != 2){ //It has to have 2 substructures. Error otherwise
               no_error = false;
@@ -721,7 +719,6 @@ namespace octet
                   break;
                 }
               }
-              printf("!!");
               //Post process current Track before getting the next Track
               /*animation *new_animation = new animation();
               new_animation->add_channel(father, father->get_sid(), app_utils::get_atom("transform"), app_utils::get_atom("matrix[1]"),values_time[0],values_value[0][0]);
