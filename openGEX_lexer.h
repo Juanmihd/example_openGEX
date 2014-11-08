@@ -37,7 +37,7 @@ namespace octet
       };
       enum TYPE_TRANSFORM { _TRANSFORM = 0, _TRANSLATE = 1, _ROTATE = 2, _SCALE = 3, _MORPH = 4};
       enum SUBTYPE_TRANSFORM { GEX_X = 0, GEX_Y = 1, GEX_Z = 2, GEX_AXIS = 3, GEX_QUATERNION = 4, GEX_XYZ = 5};
-      enum { DEBUGDATA = 0, DEBUGSTRUCTURE = 0, DEBUGOPENGEX = 0 };
+      enum { DEBUGDATA = 0, DEBUGSTRUCTURE = 0, DEBUGOPENGEX = 0, MAX_BONE_COUNT = 8 };
 
   ////////////////////////////////////////////////////////////////////////////////
   /// @brief This class is the openGEX lexer, it will read the array of characters and get tokes
@@ -53,12 +53,23 @@ namespace octet
       };
 
       ////////////////////////////////////////////////////////////////////////////////
+      /// @brief This struct contains a couple of int and float, with the index and weight of the bone
+      ////////////////////////////////////////////////////////////////////////////////
+      struct index_weight{
+        int index;
+        float weight;
+      };
+
+      ////////////////////////////////////////////////////////////////////////////////
       /// @brief This struct contains a couple of references to skin and skeleton
       ////////////////////////////////////////////////////////////////////////////////
       struct ref_skin_skeleton{
         skin *ref_skin;
         skeleton *ref_skeleton;
+        dynarray<dynarray<index_weight>> boneIndexWeigthArray;
+        int maxCount;
       };
+
 
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief This struct contains a couple of index of the material and a reference to a mesh
@@ -2213,16 +2224,21 @@ namespace octet
         dynarray<mat4t> transformMatrixes;
         dynarray<atom_t> bone_array;
         dynarray<mat4t> bindToModel;
+        dynarray<int> boneCountArray;
+        dynarray<int> boneIndexArray;
+        dynarray<int> boneWeightArray;
         if (transformMatrixes.size() < 1)
           transformMatrixes.resize(1);
         //Get ready the skin and skeleton...
         skin_skeleton.ref_skin = new skin();
-        skin_skeleton.ref_skeleton = new skeleton();
+        skin_skeleton.ref_skeleton = new skeleton(); 
+        skin_skeleton.maxCount = 0;
         //Now check all the substructures
         for (int i = 0; i < num_substructures; ++i){
           ref_transform current_ref;
           current_ref.ref = atom_;
-          openDDL_identifier_structure * substructure = (openDDL_identifier_structure *) structure->get_substructure(i);
+          openDDL_identifier_structure *substructure = (openDDL_identifier_structure *) structure->get_substructure(i);
+          openDDL_data_list * data_list_array;
           //Check the type of the substructure
           switch (substructure->get_identifierID()){
           case 32: //Transform
@@ -2251,6 +2267,13 @@ namespace octet
           case 2:  //BoneCountArray
             if (!contains_bone_count){
               contains_bone_count = true;
+              data_list_array = ((openDDL_data_type_structure*)substructure->get_substructure(0))->get_data_list(0);
+              int size_data_list_array = data_list_array->data_list.size();
+              for (int i = 0; i < size_data_list_array; ++i){
+                int value = data_list_array->data_list[i]->value.integer_;
+                boneCountArray.push_back(value);
+                if (value>skin_skeleton.maxCount) skin_skeleton.maxCount = value;
+              }
             }
             else{
               no_error = false;
@@ -2260,6 +2283,12 @@ namespace octet
           case 3:  //BoneIndexArray
             if (!contains_bone_index){
               contains_bone_index = true;
+              data_list_array = ((openDDL_data_type_structure*)substructure->get_substructure(0))->get_data_list(0);
+              int size_data_list_array = data_list_array->data_list.size();
+              for (int i = 0; i < size_data_list_array; ++i){
+                int value = data_list_array->data_list[i]->value.integer_;
+                boneIndexArray.push_back(value);
+              }
             }
             else{
               no_error = false;
@@ -2269,6 +2298,12 @@ namespace octet
           case 6:  //BoneWeightArray
             if (!contains_bone_weight){
               contains_bone_weight = true;
+              data_list_array = ((openDDL_data_type_structure*)substructure->get_substructure(0))->get_data_list(0);
+              int size_data_list_array = data_list_array->data_list.size();
+              for (int i = 0; i < size_data_list_array; ++i){
+                float value = data_list_array->data_list[i]->value.float_;
+                boneWeightArray.push_back(value);
+              }
             }
             else{
               no_error = false;
@@ -2287,6 +2322,26 @@ namespace octet
           printf("(((ERROR!! The structure Skin is missing some of their substructures!)))\n");
         }
         else{ //It contains all that it needs, so, check it!
+          //First of all process the boneWeight and boneIndex
+          int size_count = boneCountArray.size();
+          skin_skeleton.boneIndexWeigthArray.resize(size_count);
+          int realIndex = 0;
+          for (int i = 0; i < size_count; ++i){
+            int current_count = boneCountArray[i];
+            skin_skeleton.boneIndexWeigthArray[i].resize(skin_skeleton.maxCount);
+            int i_bone = 0;
+            while (i_bone < current_count){
+              skin_skeleton.boneIndexWeigthArray[i][i_bone].index = boneIndexArray[realIndex];
+              skin_skeleton.boneIndexWeigthArray[i][i_bone].weight = boneCountArray[realIndex];
+              ++realIndex;
+              ++i_bone;
+            }
+            while (i_bone < skin_skeleton.maxCount){
+              skin_skeleton.boneIndexWeigthArray[i][i_bone].index = 1;
+              skin_skeleton.boneIndexWeigthArray[i][i_bone].weight = 0;
+              ++i_bone;
+            }
+          }
           //Set the skin with the given transform (identity if it has no transform!)
           skin_skeleton.ref_skin->set_bindToModel(transformMatrixes[0].transpose4x4());
           //Post process everything!
@@ -2468,14 +2523,33 @@ namespace octet
               current_mesh->add_attribute(attribute_pos, 3, GL_FLOAT, 0);
               current_mesh->add_attribute(attribute_normal, 3, GL_FLOAT, 12);
               current_mesh->add_attribute(attribute_uv, 2, GL_FLOAT, 24);
+              /*
+              if (skin_skeleton.ref_skin != NULL){
+                current_mesh->add_attribute(attribute_blendindices, 4, GL_INT, 32);
+                current_mesh->add_attribute(attribute_blendweight, 4, GL_FLOAT, 48);
+              }
+              */
               current_mesh->set_params(32, num_indices[index_i], num_vertexes, valuePrimitive, GL_UNSIGNED_INT);
               gl_resource::wolock vl(current_mesh->get_vertices());
               gl_resource::wolock il(current_mesh->get_indices());
               uint32_t *idx = il.u32();
               mesh::vertex *vtx = (mesh::vertex *)vl.f32();
-              for (int i = 0; i < num_vertexes; ++i){
-                vtx[i] = vertices[i];
-              }
+              /*if (skin_skeleton.ref_skin != NULL){
+                for (int i = 0; i < num_vertexes; ++i){
+                  vertices[i].blendindices[0] = skin_skeleton.boneIndexWeigthArray[i][0].index;
+                  vertices[i].blendindices[1] = skin_skeleton.boneIndexWeigthArray[i][1].index;
+                  vertices[i].blendindices[2] = skin_skeleton.boneIndexWeigthArray[i][2].index;
+                  vertices[i].blendindices[3] = skin_skeleton.boneIndexWeigthArray[i][3].index;
+                  vertices[i].blendweight[0] = skin_skeleton.boneIndexWeigthArray[i][0].weight;
+                  vertices[i].blendweight[1] = skin_skeleton.boneIndexWeigthArray[i][1].weight;
+                  vertices[i].blendweight[2] = skin_skeleton.boneIndexWeigthArray[i][2].weight;
+                  vertices[i].blendweight[3] = skin_skeleton.boneIndexWeigthArray[i][3].weight;
+                  vtx[i] = vertices[i];
+                }
+              }*/
+                for (int i = 0; i < num_vertexes; ++i){
+                  vtx[i] = vertices[i];
+                }
               for (int i = 0; i < num_indices[index_i]; ++i){
                 idx[i] = indices[index_i][i];
               }

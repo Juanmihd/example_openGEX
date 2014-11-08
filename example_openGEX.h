@@ -29,7 +29,7 @@ namespace octet {
       }
 
       //This is to call the process. The true and true means that it's taking into account animations (first true) and skin_skeleton (second true)
-      if (!openGEXLoader.process_resources(&dict,true,true)){
+      if (!openGEXLoader.process_resources(&dict,true,false)){
         printf("It did not work!!");
       }
 
