@@ -9,7 +9,7 @@ namespace octet {
   class example_openGEX : public app {
     // scene for drawing duck
     ref<visual_scene> app_scene;
-    openGEX_loader openGEXLoader;
+    openGEX_loader::openGEX_loader openGEXLoader;
 
     //Camera stuff!
     mouse_ball camera;
