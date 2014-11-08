@@ -594,7 +594,7 @@ namespace octet
       /// @param  father This is the scene_node of the item that posses this animation.
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_Animation(openDDL_identifier_structure *structure, scene_node * father){
+      bool openGEX_Animation(dynarray<atom_t> list_ref, openDDL_identifier_structure *structure, scene_node * father){
         bool no_error = false;
         //Initialize variables
         int clip = 0;
@@ -625,6 +625,8 @@ namespace octet
         unsigned int num_substructures = structure->get_number_substructures();
         for (unsigned int i = 0; i < num_substructures; ++i){
           openDDL_identifier_structure *substructure = (openDDL_identifier_structure *)structure->get_substructure(i);
+
+          //TRACK STRUCTURE!
           if (substructure->get_identifierID() == 31){//Track
             //This are the curves from each of the substructures. By default, "linear"
             atom_t curve_time = app_utils::get_atom("linear");
@@ -640,8 +642,10 @@ namespace octet
                 no_error = false;
                 printf("(((ERROR--> The Track structure can have only target property)))\n");
               }
-              else{ //as is a target property, get the reference of it
+              else{ 
+                //as is a target property, get the reference of it
                 char *reference = current_property->literal.value.ref_;
+
                 //Check substructures (Time & Value)
                 if (substructure->get_number_substructures() != 2){ //It has to have 2 substructures. Error otherwise
                   no_error = false;
@@ -683,7 +687,10 @@ namespace octet
                     }
                   }
                   //Post process current Track before getting the next Track
+                  animation *new_animation = new animation();
+                  new_animation->add_channel(father, father->get_sid(), app_utils::get_atom("transform"), app_utils::get_atom("matrix[1]"),values_time[0],values_value[0][0]);
 
+                  animation_instance *new_animation_instance;
                 }
               }
             }
@@ -939,11 +946,13 @@ namespace octet
         bool string_founded = false;
         bool object_only = false;
         dynarray<mat4t> transformMatrixes;
+        dynarray<atom_t> list_ref;
         if (transformMatrixes.size() < 1)
           transformMatrixes.resize(1);
         mat4t nodeToParent;
         nodeToParent.loadIdentity();
         for (counter_substructure = 0; counter_substructure < number_substructures && !string_founded; ++counter_substructure){
+          atom_t current_ref;
           openDDL_structure *substructure = structure->get_substructure(counter_substructure);
           if (substructure->get_type_structure() == DATA_TYPE_TYPE){
             openDDL_data_list *data_list = ((openDDL_data_type_structure *)substructure)->get_data_list(0);
@@ -955,24 +964,40 @@ namespace octet
             switch (tempID){
               //Get Transforms (may not have)
             case 32://Transform
-              no_error = openGEX_Transform(transformMatrixes, object_only, (openDDL_identifier_structure *)substructure);
+              current_ref = atom_;
+              no_error = openGEX_Transform(current_ref, transformMatrixes, object_only, (openDDL_identifier_structure *)substructure);
               nodeToParent.multMatrix(transformMatrixes[0]);
+              if (current_ref != atom_){
+                list_ref.push_back(current_ref);
+              }
               break;
             case 33://Translation
-              no_error = openGEX_Translate(transformMatrixes[0], object_only, (openDDL_identifier_structure *)substructure);
+              current_ref = atom_;
+              no_error = openGEX_Translate(current_ref, transformMatrixes[0], object_only, (openDDL_identifier_structure *)substructure);
               nodeToParent.multMatrix(transformMatrixes[0]);
+              if (current_ref != atom_){
+                list_ref.push_back(current_ref);
+              }
               break;
             case 25://Rotation
-              no_error = openGEX_Rotate(transformMatrixes[0], object_only, (openDDL_identifier_structure *)substructure);
+              current_ref = atom_;
+              no_error = openGEX_Rotate(current_ref, transformMatrixes[0], object_only, (openDDL_identifier_structure *)substructure);
               nodeToParent.multMatrix(transformMatrixes[0]);
+              if (current_ref != atom_){
+                list_ref.push_back(current_ref);
+              }
               break;
             case 26://Scale
-              no_error = openGEX_Scale(transformMatrixes[0], object_only, (openDDL_identifier_structure *)substructure);
+              current_ref = atom_;
+              no_error = openGEX_Scale(current_ref, transformMatrixes[0], object_only, (openDDL_identifier_structure *)substructure);
               nodeToParent.multMatrix(transformMatrixes[0]);
+              if (current_ref != atom_){
+                list_ref.push_back(current_ref);
+              }
               break;
               //Get Animation
             case 0://Animation
-              //IGNORE ANIMATIONS FOR NOW!!!! TO DO!
+            //IGNORE ANIMATIONS FOR NOW!!!! TO DO!
               break;
             default:
               printf("(((ERROR!! The structure Texture has an invalid substructure!)))\n");
@@ -986,27 +1011,43 @@ namespace octet
           }
         }
         for (; counter_substructure < number_substructures; ++counter_substructure){
+          atom_t current_ref;
           openDDL_identifier_structure *substructure = (openDDL_identifier_structure *)structure->get_substructure(counter_substructure);
           int tempID = (substructure)->get_identifierID();
           switch (tempID){
             //Get Transforms (may not have)
           case 32://Transform
-            no_error = openGEX_Transform(transformMatrixes, object_only, substructure);
+            current_ref = atom_;
+            no_error = openGEX_Transform(current_ref, transformMatrixes, object_only, (openDDL_identifier_structure *)substructure);
             nodeToParent.multMatrix(transformMatrixes[0]);
+            if (current_ref != atom_){
+              list_ref.push_back(current_ref);
+            }
             break;
           case 33://Translation
-            no_error = openGEX_Translate(transformMatrixes[0], object_only, substructure);
+            current_ref = atom_;
+            no_error = openGEX_Translate(current_ref, transformMatrixes[0], object_only, (openDDL_identifier_structure *)substructure);
             nodeToParent.multMatrix(transformMatrixes[0]);
+            if (current_ref != atom_){
+              list_ref.push_back(current_ref);
+            }
             break;
           case 25://Rotation
-            no_error = openGEX_Rotate(transformMatrixes[0], object_only, substructure);
+            current_ref = atom_;
+            no_error = openGEX_Rotate(current_ref, transformMatrixes[0], object_only, (openDDL_identifier_structure *)substructure);
             nodeToParent.multMatrix(transformMatrixes[0]);
+            if (current_ref != atom_){
+              list_ref.push_back(current_ref);
+            }
             break;
           case 26://Scale
-            no_error = openGEX_Scale(transformMatrixes[0], object_only, substructure);
+            current_ref = atom_;
+            no_error = openGEX_Scale(current_ref, transformMatrixes[0], object_only, (openDDL_identifier_structure *)substructure);
             nodeToParent.multMatrix(transformMatrixes[0]);
+            if (current_ref != atom_){
+              list_ref.push_back(current_ref);
+            }
             break;
-            //Get Animation
           case 0://Animation
             //IGNORE ANIMATIONS FOR NOW!!!! TO DO!
             break;
@@ -1097,9 +1138,12 @@ namespace octet
       /// @param  structure This is the structure to be analized, it has to be Transform.
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_Transform(dynarray<mat4t> &transformMatrix, bool &object_only, openDDL_identifier_structure *structure){
+      bool openGEX_Transform(atom_t &ref, dynarray<mat4t> &transformMatrix, bool &object_only, openDDL_identifier_structure *structure){
         bool no_error = true;
         //Check that the structure is correct!
+        char * name = structure->get_name();
+        if (name != NULL)
+          ref = app_utils::get_atom(name);
         //Get the value of the properties!
         if (structure->get_number_properties() > 1){
           no_error = false;
@@ -1141,10 +1185,13 @@ namespace octet
       /// @param  structure This is the structure to be analized, it has to be Translation.
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_Translate(mat4t &transformMatrix, bool &object_only, openDDL_identifier_structure *structure){
+      bool openGEX_Translate(atom_t &ref, mat4t &transformMatrix, bool &object_only, openDDL_identifier_structure *structure){
         bool no_error = true;
         int coordinates = 3;
         //Check that the structure is correct!
+        char * name = structure->get_name();
+        if (name != NULL)
+          ref = app_utils::get_atom(name);
         //Get the value of the properties!
         int numProperties = structure->get_number_properties();
         if (numProperties > 2){
@@ -1213,10 +1260,13 @@ namespace octet
       /// @param  structure This is the structure to be analized, it has to be Translation.
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_Rotate(mat4t &transformMatrix, bool &object_only, openDDL_identifier_structure *structure){
+      bool openGEX_Rotate(atom_t &ref, mat4t &transformMatrix, bool &object_only, openDDL_identifier_structure *structure){
         bool no_error = true;
         int coordinates = 3;
         //Check that the structure is correct!
+        char * name = structure->get_name();
+        if (name != NULL)
+          ref = app_utils::get_atom(name);
         //Get the value of the properties!
         int numProperties = structure->get_number_properties();
         if (numProperties > 2){
@@ -1339,10 +1389,13 @@ namespace octet
       /// @param  structure This is the structure to be analized, it has to be Translation.
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_Scale(mat4t &transformMatrix, bool &object_only, openDDL_identifier_structure *structure){
+      bool openGEX_Scale(atom_t &ref, mat4t &transformMatrix, bool &object_only, openDDL_identifier_structure *structure){
         bool no_error = true;
         int coordinates = 3;
         //Check that the structure is correct!
+        char * name = structure->get_name();
+        if (name != NULL)
+          ref = app_utils::get_atom(name);
         //Get the value of the properties!
         int numProperties = structure->get_number_properties();
         if (numProperties > 2){
@@ -1438,6 +1491,7 @@ namespace octet
         mat4t nodeToParent;
         nodeToParent.loadIdentity(); //and initialize it to identity!
         //This is to get some info from the substructures
+        dynarray<atom_t> list_ref;
         dynarray<mat4t> transformMatrixes;
         if (transformMatrixes.size() < 1)
           transformMatrixes.resize(1);
@@ -1449,6 +1503,7 @@ namespace octet
         bool object_only = false;
         //Check all the substructures
         for (int i = 0; i < numSubstructures; ++i){
+          atom_t current_ref = atom_;
           openDDL_identifier_structure *substructure = (openDDL_identifier_structure *)structure->get_substructure(i);
           tempID = substructure->get_identifierID();
           switch (tempID){
@@ -1464,20 +1519,32 @@ namespace octet
             break;
             //Get Transforms (may not have)
           case 32://Transform
-            no_error = openGEX_Transform(transformMatrixes, object_only, substructure);
+            no_error = openGEX_Transform(current_ref, transformMatrixes, object_only, substructure);
             nodeToParent.multMatrix(transformMatrixes[0]);
+            if (current_ref != atom_){
+              list_ref.push_back(current_ref);
+            }
             break;
           case 33://Translation
-            no_error = openGEX_Translate(transformMatrixes[0], object_only, substructure);
+            no_error = openGEX_Translate(current_ref, transformMatrixes[0], object_only, substructure);
             nodeToParent.multMatrix(transformMatrixes[0]);
+            if (current_ref != atom_){
+              list_ref.push_back(current_ref);
+            }
             break;
           case 25://Rotation
-            no_error = openGEX_Rotate(transformMatrixes[0], object_only, substructure);
+            no_error = openGEX_Rotate(current_ref, transformMatrixes[0], object_only, substructure);
             nodeToParent.multMatrix(transformMatrixes[0]);
+            if (current_ref != atom_){
+              list_ref.push_back(current_ref);
+            }
             break;
           case 26://Scale
-            no_error = openGEX_Scale(transformMatrixes[0], object_only, substructure);
+            no_error = openGEX_Scale(current_ref, transformMatrixes[0], object_only, substructure);
             nodeToParent.multMatrix(transformMatrixes[0]);
+            if (current_ref != atom_){
+              list_ref.push_back(current_ref);
+            }
             break;
             //Get Animation
           case 0://Animation
@@ -1554,7 +1621,9 @@ namespace octet
         dynarray<mat4t> transformMatrixes;
         if (transformMatrixes.size() < 1)
           transformMatrixes.resize(1);
+        atom_t structure_ref;
         dynarray<uint32_t> mat_index;
+        dynarray<atom_t> list_ref;
         mat_index.resize(10);
         int num_mat_index = 0;
         char * nameNode = NULL;
@@ -1577,24 +1646,28 @@ namespace octet
             break;
             //Get Transforms (may not have)
           case 32://Transform
-            no_error = openGEX_Transform(transformMatrixes, object_only, substructure);
+            structure_ref = atom_;
+            no_error = openGEX_Transform(structure_ref, transformMatrixes, object_only, substructure);
             nodeToParent.multMatrix(transformMatrixes[0]);
             break;
           case 33://Translation
-            no_error = openGEX_Translate(transformMatrixes[0], object_only, substructure);
+            structure_ref = atom_;
+            no_error = openGEX_Translate(structure_ref, transformMatrixes[0], object_only, substructure);
             nodeToParent.multMatrix(transformMatrixes[0]);
             break;
           case 25://Rotation
-            no_error = openGEX_Rotate(transformMatrixes[0], object_only, substructure);
+            structure_ref = atom_;
+            no_error = openGEX_Rotate(structure_ref, transformMatrixes[0], object_only, substructure);
             nodeToParent.multMatrix(transformMatrixes[0]);
             break;
           case 26://Scale
-            no_error = openGEX_Scale(transformMatrixes[0], object_only, substructure);
+            structure_ref = atom_;
+            no_error = openGEX_Scale(structure_ref, transformMatrixes[0], object_only, substructure);
             nodeToParent.multMatrix(transformMatrixes[0]);
             break;
             //Get Animation
           case 0://Animation
-            //IGNORE ANIMATIONS FOR NOW!!!! TO DO!
+            //no_error = openGEX_Animation(list_ref, substructure, node);
             break;
             //Get Nodes (children)
           case 4://BoneNode
@@ -1963,6 +2036,7 @@ namespace octet
         bool object_only = false;
         int number_substructures = structure->get_number_substructures();
         for (int i = 0; i < number_substructures; ++i){
+          atom_t current_ref = atom_;
           openDDL_identifier_structure *substructure = (openDDL_identifier_structure *)structure->get_substructure(i);
           int tempID = substructure->get_identifierID();
           switch (tempID){
@@ -1979,7 +2053,7 @@ namespace octet
           case 32: //Transform
             if (!contains_transform){
               contains_transform = true;
-              no_error = openGEX_Transform(matrixTransforms, object_only, substructure);
+              no_error = openGEX_Transform(current_ref, matrixTransforms, object_only, substructure);
             }
             else{
               no_error = false;
@@ -2034,13 +2108,14 @@ namespace octet
         skin_skeleton.ref_skeleton = new skeleton();
         //Now check all the substructures
         for (int i = 0; i < num_substructures; ++i){
+          atom_t current_ref = atom_;
           openDDL_identifier_structure * substructure = (openDDL_identifier_structure *) structure->get_substructure(i);
           //Check the type of the substructure
           switch (substructure->get_identifierID()){
           case 32: //Transform
             if (!contains_transform){
               contains_transform = true;
-              no_error = openGEX_Transform(transformMatrixes, object_only, substructure);
+              no_error = openGEX_Transform(current_ref, transformMatrixes, object_only, substructure);
             }
             else{
               no_error = false;
@@ -2504,6 +2579,7 @@ namespace octet
         dynarray<mat4t> transformMatrixes;
         if (transformMatrixes.size() < 1)
           transformMatrixes.resize(1);
+        dynarray<atom_t> list_ref;
         float *values = NULL;
         int numValues;
         unsigned int mat_index;
@@ -2516,6 +2592,7 @@ namespace octet
 
         //Check all the substructures
         for (int i = 0; i < numSubstructures; ++i){
+          atom_t current_ref = atom_;
           openDDL_identifier_structure *substructure = (openDDL_identifier_structure *)structure->get_substructure(i);
           tempID = substructure->get_identifierID();
           switch (tempID){
@@ -2576,20 +2653,32 @@ namespace octet
             break;
           //Get Transforms (may not have)
           case 32://Transform
-            no_error = openGEX_Transform(transformMatrixes, object_only, substructure);
+            no_error = openGEX_Transform(current_ref, transformMatrixes, object_only, substructure);
             nodeToParent.multMatrix(transformMatrixes[0]);
+            if (current_ref != NULL){
+              list_ref.push_back(current_ref);
+            }
             break;
           case 33://Translation
-            no_error = openGEX_Translate(transformMatrixes[0], object_only, substructure);
+            no_error = openGEX_Translate(current_ref, transformMatrixes[0], object_only, substructure);
             nodeToParent.multMatrix(transformMatrixes[0]);
+            if (current_ref != NULL){
+              list_ref.push_back(current_ref);
+            }
             break;
           case 25://Rotation
-            no_error = openGEX_Rotate(transformMatrixes[0], object_only, substructure);
+            no_error = openGEX_Rotate(current_ref, transformMatrixes[0], object_only, substructure);
             nodeToParent.multMatrix(transformMatrixes[0]);
+            if (current_ref != NULL){
+              list_ref.push_back(current_ref);
+            }
             break;
           case 26://Scale
-            no_error = openGEX_Scale(transformMatrixes[0], object_only, substructure);
+            no_error = openGEX_Scale(current_ref, transformMatrixes[0], object_only, substructure);
             nodeToParent.multMatrix(transformMatrixes[0]);
+            if (current_ref != NULL){
+              list_ref.push_back(current_ref);
+            }
             break;
           //Get Animation
           case 0://Animation
