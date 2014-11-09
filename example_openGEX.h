@@ -24,7 +24,7 @@ namespace octet {
 
       resource_dict dict;
 
-      if (!openGEXLoader.load_file("assets/openGEX/cubeGEX.txt")){
+      if (!openGEXLoader.load_file("assets/openGEX/cubeGEX_2.txt")){
         printf("It did not work!!");
       }
 

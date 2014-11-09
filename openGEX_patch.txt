@@ -1,0 +1,44 @@
+diff --git a/octet/src/octet.h b/octet/src/octet.h
+index 969ec29..26634a5 100644
+--- a/octet/src/octet.h
++++ b/octet/src/octet.h
+@@ -147,6 +147,8 @@
+ 
+   // asset loaders
+   #include "loaders/collada_builder.h"
++  // asset importer for openGEX (by Juanmihd)
++  #include "loaders/openGEX_loader.h"
+ 
+   // forward references
+   #include "resources/resources.inl"
+diff --git a/octet/src/scene/scene_node.h b/octet/src/scene/scene_node.h
+index a4234ab..b7a3aec 100644
+--- a/octet/src/scene/scene_node.h
++++ b/octet/src/scene/scene_node.h
+@@ -156,6 +156,11 @@ namespace octet { namespace scene {
+       return sid;
+     }
+ 
++    /// Set the identifying sid
++    void set_sid(atom_t value){
++      sid = value;
++    }
++
+     /// recursively fetch all child nodes
+     void get_all_child_nodes(dynarray<scene_node*> &nodes, dynarray<int> &parents) {
+       dynarray<scene_node*> stack;
+diff --git a/octet/src/scene/skin.h b/octet/src/scene/skin.h
+index df9755e..421a79c 100644
+--- a/octet/src/scene/skin.h
++++ b/octet/src/scene/skin.h
+@@ -28,6 +28,10 @@ namespace octet { namespace scene {
+       this->modelToBind = modelToBind;
+     }
+ 
++    void set_bindToModel(const mat4t &modelToBind) {
++      this->modelToBind = modelToBind;
++    }
++
+     void visit(visitor &v) {
+       v.visit(modelToBind, atom_modelToBind);
+       v.visit(bindToModel, atom_bindToModel);
