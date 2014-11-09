@@ -2542,6 +2542,8 @@ namespace octet
                 //Check if it's been obtained already or not
                 if (ref_materials[current_ref_material]){
                   current_material = ref_materials[current_ref_material];
+                  if (current_material == NULL)
+                    add_later_material = true;
                 }
                 else{ //It's NULL!
                   add_later_material = true;
@@ -2555,7 +2557,7 @@ namespace octet
                   current_mesh_instance = new mesh_instance(info_current_object->node, current_mesh, current_material, skin_skeleton.ref_skeleton);
                 }
                 if (add_later_material){
-                  current_material = new material();
+                  current_material = NULL;
                   ref_materials[current_ref_material] = current_material;
                   ref_materials_inv[current_ref_material].push_back(current_mesh_instance);
                 }
