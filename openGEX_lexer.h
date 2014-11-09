@@ -201,25 +201,6 @@ namespace octet
         }
       }
 
-    public:
-      ////////////////////////////////////////////////////////////////////////////////
-      /// @brief This function prints properly a mesh::vertex!
-      /// @param  value The vertex to be printed
-      ////////////////////////////////////////////////////////////////////////////////
-      void print_vertex(mesh::vertex vertex, int print=0){
-        if (print == 0){//print position
-          printf("X: %f, Y: %f, Z: %f \n", vertex.pos.v[0], vertex.pos.v[1], vertex.pos.v[2]);
-        }
-        else if (print == 1){//print normals
-          printf("X: %f, Y: %f, Z: %f \n", vertex.normal.v[0], vertex.normal.v[1], vertex.normal.v[2]);
-        }
-        else{//print uv
-
-        }
-      }
-
-    private:
-
       //Aux function
       char get_char_from_int(int number){
         return number + 48;
