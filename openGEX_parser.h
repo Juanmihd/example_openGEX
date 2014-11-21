@@ -872,9 +872,10 @@ namespace octet
                   get_translate_matrix(new_transform, current_transform, &values_value[0][0][i]);
                   break;
                 case _ROTATE:
-                  get_rotate_matrix(new_transform, current_transform, )
+                  get_rotate_matrix(new_transform, current_transform, &values_value[0][0][i]);
                   break;
                 case _SCALE:
+                  get_scale_matrix(new_transform, current_transform, &values_value[0][0][i]);
                   break;
                 }
                 final_transform.multMatrix(new_transform);
