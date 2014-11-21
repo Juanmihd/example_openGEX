@@ -25,7 +25,7 @@ namespace octet {
       rotate= false;
       resource_dict dict;
 
-      if (!openGEXLoader.load_file("assets/openGEX/zombie.txt")){
+      if (!openGEXLoader.load_file("assets/openGEX/anicube.txt")){
         printf("Error loading or reading the openGEX file!!\n");
       }
 

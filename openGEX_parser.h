@@ -71,7 +71,6 @@ namespace octet
         int maxCount;
       };
 
-
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief This struct contains a couple of index of the material and a reference to a mesh
       ////////////////////////////////////////////////////////////////////////////////
@@ -91,6 +90,16 @@ namespace octet
         dynarray<index_mesh> index_and_meshes;
       };
 
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief This struct contains the info required by a camera_instance to be created
+      ////////////////////////////////////////////////////////////////////////////////
+      struct info_camera_instance : public resource{
+        ref<camera_instance> ref_instance;
+        ref<scene_node> node;
+        atom_t name;
+        dynarray<int> index;
+      };
+
       typedef gex_ident::gex_ident_enum gex_ident_list;
       //This will be used to handle the references to meshes and materials (and more will be probably added)
       dictionary<dynarray<ref<info_mesh_instance>>> info_meshes_from_objectRef;  //This contains all the info required for a mesh_instance, knowing the mesh
@@ -98,6 +107,8 @@ namespace octet
       dictionary<ref<material>> ref_materials;      
       //from a materialRef (Material) gets which objectRef is using it
       dictionary<dynarray<ref<mesh_instance>>> ref_materials_inv;             
+      //This will be used to handle the references to cameras
+      dictionary<dynarray<ref<info_camera_instance>>> info_cameras_from_objectRef;  //This contains all the info required for a mesh_instance, knowing the mesh
 
       //This dictionary is indexed with the openDDL name, not the structure name! (CAUTION!!)
       dictionary<ref<scene_node>> dict_nodes;
@@ -881,6 +892,8 @@ namespace octet
                 final_transform.multMatrix(transformA);
                 switch (current_transform.type){
                 case _TRANSFORM:
+                  new_transform.loadIdentity();
+                  new_transform.init_transpose(values_value[0][i].data());
                   break;
                 case _TRANSLATE:
                   get_translate_matrix(new_transform, current_transform, values_value[0][i].data());
@@ -2657,41 +2670,67 @@ namespace octet
               //This is the material of this mesh
               material *current_material = 0;
               char *current_ref_material = info_current_object->ref_materials[material_indexes[index_i]];
-              if (current_ref_material == "_DE_FA_UL_T"){}
-                //Check if it's been obtained already or not
-              if (ref_materials[current_ref_material]){
-                current_material = ref_materials[current_ref_material];
-                if (current_material == NULL)
-                  add_later_material = true;
-              }
-              else{ //It's NULL!
-                add_later_material = true;
-              }
-              //Now, finally, create the mesh_instance!
-              //If there is no skeleton
-              if (skin_skeleton.ref_skeleton == NULL)
-                current_mesh_instance = new mesh_instance(info_current_object->node, current_mesh, current_material);
-              else{
-                //current_mesh_instance = new mesh_instance(info_current_object->node, current_mesh, current_material);
-                current_mesh_instance = new mesh_instance(info_current_object->node, current_mesh, current_material, skin_skeleton.ref_skeleton);
-              }
-              if (add_later_material){
-                current_material = NULL;
-                ref_materials[current_ref_material] = current_material;
-                ref_materials_inv[current_ref_material].push_back(current_mesh_instance);
-              }
-              const char *name = app_utils::get_atom_name(info_current_object->name);
-              char *new_name = new char[20];
-              if (index_i > 0){
-                new_name[0] = get_char_from_int(index_i);
-                for (int i = 1; i < 20 && *name != '/0'; ++i){
-                  new_name[i] = *name;
-                  ++name;
+              //If there is no material, add the default material
+              if (current_ref_material == "_DE_FA_UL_T"){
+                current_material = new material(vec4(0.5, 0, 0));
+                //Now, finally, create the mesh_instance!
+                //If there is no skeleton
+                if (skin_skeleton.ref_skeleton == NULL)
+                  current_mesh_instance = new mesh_instance(info_current_object->node, current_mesh, current_material);
+                else{
+                  //current_mesh_instance = new mesh_instance(info_current_object->node, current_mesh, current_material);
+                  current_mesh_instance = new mesh_instance(info_current_object->node, current_mesh, current_material, skin_skeleton.ref_skeleton);
                 }
-                dict->set_resource(new_name, current_mesh_instance);
-              }
-              else{
+                const char *name = app_utils::get_atom_name(info_current_object->name);
+                char *new_name = new char[20];
+                if (index_i > 0){
+                  new_name[0] = get_char_from_int(index_i);
+                  for (int i = 1; i < 20 && *name != '/0'; ++i){
+                    new_name[i] = *name;
+                    ++name;
+                  }
+                  dict->set_resource(new_name, current_mesh_instance);
+                }
+                else{
                   dict->set_resource(name, current_mesh_instance);
+                }
+              }
+              else{//if there is a material, is more complex, so add the references if it has not been already obtained
+                  //Check if it's been obtained already or not
+                if (ref_materials[current_ref_material]){
+                  current_material = ref_materials[current_ref_material];
+                  if (current_material == NULL)
+                    add_later_material = true;
+                }
+                else{ //It's NULL!
+                  add_later_material = true;
+                }
+                //Now, finally, create the mesh_instance!
+                //If there is no skeleton
+                if (skin_skeleton.ref_skeleton == NULL)
+                  current_mesh_instance = new mesh_instance(info_current_object->node, current_mesh, current_material);
+                else{
+                  //current_mesh_instance = new mesh_instance(info_current_object->node, current_mesh, current_material);
+                  current_mesh_instance = new mesh_instance(info_current_object->node, current_mesh, current_material, skin_skeleton.ref_skeleton);
+                }
+                if (add_later_material){
+                  current_material = NULL;
+                  ref_materials[current_ref_material] = current_material;
+                  ref_materials_inv[current_ref_material].push_back(current_mesh_instance);
+                }
+                const char *name = app_utils::get_atom_name(info_current_object->name);
+                char *new_name = new char[20];
+                if (index_i > 0){
+                  new_name[0] = get_char_from_int(index_i);
+                  for (int i = 1; i < 20 && *name != '/0'; ++i){
+                    new_name[i] = *name;
+                    ++name;
+                  }
+                  dict->set_resource(new_name, current_mesh_instance);
+                }
+                else{
+                    dict->set_resource(name, current_mesh_instance);
+                }
               }
             }
           }
@@ -3063,6 +3102,191 @@ namespace octet
             printf("(((ERROR: The structure GeometricObject can only have as substructure a Mesh)))\n");
           }
         }
+
+        return no_error;
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief This will obtain all the info from a CameraNode structure
+      /// @param  structure This is the structure to be analized, it has to be CameraNode.
+      /// @param  father This is the father scene_node. By default  NULL
+      /// @return True if everything went well, false if there was some problem
+      ///   Note: This function will check the properties of the structure
+      ///   And it will check for the referencies. It will prepare to build the node
+      ///   assigning a pointer to a mesh that it will be created later
+      ///   GeometryObject will contain the node to the mesh!
+      ////////////////////////////////////////////////////////////////////////////////
+      bool openGEX_CameraNode(openDDL_identifier_structure *structure, scene_node *father = NULL){
+        int tempID;
+        bool no_error = true;
+        ref<info_camera_instance> info_current_instance = new info_camera_instance;
+        camera_instance * current_camera_instance;
+        current_camera_instance = new camera_instance;
+        //Creating new node
+        scene_node *node;
+        node = new scene_node();
+        //Assign that to the current info
+        //Obtain the name of the structure
+        char * name = structure->get_name();
+        node->set_sid(app_utils::get_atom(name));
+        info_current_instance->node = node;
+        //If it's not a Top-Level class, add it to his father
+        if (father != NULL){
+          father->add_child(node);
+        }
+        //Camera node has no properties
+        //Check substructures
+        int numSubstructures = structure->get_number_substructures();
+        //Some variables to check the quantity of some substructures
+        int numNames = 0; //0 or 1
+        int numObjectRef = 0; //It has to be 1!!
+        //Creating matrix of transforms
+        mat4t nodeToParent;
+        nodeToParent.loadIdentity(); //and initialize it to identity!
+        //This is to get some info from the substructures
+        dynarray<mat4t> transformMatrixes;
+        if (transformMatrixes.size() < 1)
+          transformMatrixes.resize(1);
+        dynarray<ref_transform> list_ref;
+        float *values = NULL;
+        int numValues;
+        unsigned int mat_index;
+        int num_mat_index = 0;
+        char * nameNode = NULL;
+        int sizeName = 0;
+        bool object_only = false;
+        char * object_ref = NULL;
+        char * ref_material = NULL;
+
+        //Check all the substructures
+        for (int i = 0; i < numSubstructures; ++i){
+          ref_transform current_ref;
+          current_ref.ref = atom_;
+          openDDL_identifier_structure *substructure = (openDDL_identifier_structure *)structure->get_substructure(i);
+          tempID = substructure->get_identifierID();
+          switch (tempID){
+            //Get Name (may not have)
+          case 21://Name
+            if (numNames == 0){
+              ++numNames;
+              no_error = openGEX_Name(nameNode, sizeName, substructure);
+              info_current_instance->name = app_utils::get_atom(nameNode);
+            }
+            else{
+              printf("(((ERROR: It has more than one Morph, it can only have one (or none)!!!)))\n");
+            }
+            break;
+            //Get ObjectRef (geometryObject) (only 1)
+          case 23://ObjectRef
+            if (numObjectRef == 0){
+              ++numObjectRef;
+              no_error = openGEX_ObjectRef(object_ref, substructure);
+              if (!info_cameras_from_objectRef.contains(object_ref))
+                info_cameras_from_objectRef[object_ref];
+              else{
+                //Think what will do here TODO
+              }
+            }
+            else{
+              printf("(((ERROR: It has more than one Morph, it can only have one (or none)!!!)))\n");
+            }
+            break;
+            //Get Transforms (may not have)
+          case 32://Transform
+            no_error = openGEX_Transform(current_ref, transformMatrixes, object_only, substructure);
+            nodeToParent.multMatrix(transformMatrixes[0]);
+            list_ref.push_back(current_ref);
+            break;
+          case 33://Translation
+            no_error = openGEX_Translate(current_ref, transformMatrixes[0], object_only, substructure);
+            nodeToParent.multMatrix(transformMatrixes[0]);
+            list_ref.push_back(current_ref);
+            break;
+          case 25://Rotation
+            no_error = openGEX_Rotate(current_ref, transformMatrixes[0], object_only, substructure);
+            nodeToParent.multMatrix(transformMatrixes[0]);
+            list_ref.push_back(current_ref);
+            break;
+          case 26://Scale
+            no_error = openGEX_Scale(current_ref, transformMatrixes[0], object_only, substructure);
+            nodeToParent.multMatrix(transformMatrixes[0]);
+            list_ref.push_back(current_ref);
+            break;
+            //Get Animation
+          case 0://Animation
+            if (check_animation)
+              no_error = openGEX_Animation(list_ref, substructure, node);
+            break;
+            //Get Nodes (children)
+          case 4://BoneNode
+            no_error = openGEX_BoneNode(substructure, node);
+            break;
+          case 7://CameraNode
+            no_error = openGEX_CameraNode(substructure, node);
+            break;
+          case 10://GeometryNode
+            no_error = openGEX_GeometryNode(substructure, node);
+            break;
+          case 14://LightNode
+            //IGNORE LIGHTS FOR NOW!!!! TO DO!
+            break;
+          case 22://Nodes
+            no_error = openGEX_Node(substructure, node);
+            break;
+          }
+        }
+        //Sum up after reading all substructures
+        if (numObjectRef != 1){
+          printf("(((ERROR!! The GeometricNode structure has to have one ObjectRef!)))\n");
+          no_error = false;
+        }
+        else{
+          if (numNames == 0){ //it has no name, so get the structure name
+            if (DEBUGOPENGEX) printf("As it has no name, assign the structure name \n");
+            nameNode = name;
+          }
+          // We are working with transpose matrix in octet!!!
+          node->access_nodeToParent().multMatrix(nodeToParent.transpose4x4());
+          //Add the id for the animations
+          node->set_sid(app_utils::get_atom(nameNode));
+          info_cameras_from_objectRef[object_ref].push_back(info_current_instance);
+        }
+        return no_error;
+      }
+      
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief This will obtain all the info from a CameraObject structure
+      /// @param  structure This is the structure to be analized, it has to be CameraObject.
+      /// @return True if everything went well, false if there was some problem
+      ////////////////////////////////////////////////////////////////////////////////
+      bool openGEX_CameraObject(openDDL_identifier_structure *structure){
+        int tempID;
+        bool no_error = true;
+        //Creating matrix of transforms
+        mat4t nodeToParent;
+        nodeToParent.loadIdentity(); //and initialize it to identity!
+        //Obtain the name of the structure
+        char * name = structure->get_name();
+        //Ignore the properties
+        //Check substructures
+        int numSubstructures = structure->get_number_substructures();
+        //Check all the substructures (all of them has to be of Param type)
+        dynarray<float> param_value;
+        param_value.resize(numSubstructures);
+        dynarray<GEX_PARAM> param_type;
+        param_type.resize(numSubstructures);
+        for (int i = 0; i < numSubstructures && no_error; ++i){
+          openDDL_identifier_structure *substructure = (openDDL_identifier_structure *)structure->get_substructure(i);
+          tempID = substructure->get_identifierID();
+          if (tempID == 24){//Param
+            no_error = openGEX_Param(param_value[i], param_type[i], substructure);
+          }
+          else{
+            no_error = false;
+            printf("(((ERROR: The structure CameraObject can only have Param substructures!)))\n");
+          }
+        }
+        //Process all information (creating a mesh!)
 
         return no_error;
       }
