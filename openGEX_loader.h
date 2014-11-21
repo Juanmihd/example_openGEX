@@ -8,7 +8,7 @@
 #ifndef OPENGEX_LOADER_INCLUDED
 #define OPENGEX_LOADER_INCLUDED
 
-#include "openGEX_lexer.h"
+#include "openGEX_parser.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief This class is the openGEX loader. 
@@ -31,7 +31,7 @@ namespace octet
         dynarray<uint8_t> buffer;
       public:
         /// This is the lexer that decodes each block of text from the buffer
-        openGEX_lexer lexer;
+        openGEX_parser lexer;
         /// Constructor of the openGEX_loader class
         openGEX_loader(){
         }

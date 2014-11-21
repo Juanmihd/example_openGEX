@@ -220,7 +220,7 @@
     <ClInclude Include="openDDL_structures.h" />
     <ClInclude Include="openDDL_tokens.h" />
     <ClInclude Include="openGEX_identifiers.h" />
-    <ClInclude Include="openGEX_lexer.h" />
+    <ClInclude Include="openGEX_parser.h" />
     <ClInclude Include="openGEX_loader.h" />
   </ItemGroup>
   <ItemGroup>

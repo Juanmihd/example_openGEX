@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////////////////
-/// @file openGEX_lexer.h
+/// @file openGEX_parser.h
 /// @author Juanmi Huertas Delgado
 /// @brief This is the lexer to load the files of OpenGEX
 ///
@@ -10,8 +10,8 @@
 ///           this could be helped improving the openDDL_lexer and changing some small parts of these code (check some ToDo comments in the code)
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifndef OPENGEX_LEXER_INCLUDED
-#define OPENGEX_LEXER_INCLUDED
+#ifndef openGEX_parser_INCLUDED
+#define openGEX_parser_INCLUDED
 
 #include "openDDL_lexer.h"
 #include "openGEX_identifiers.h"
@@ -42,7 +42,7 @@ namespace octet
   ////////////////////////////////////////////////////////////////////////////////
   /// @brief This class is the openGEX lexer, it will read the array of characters and get tokes
   ////////////////////////////////////////////////////////////////////////////////
-      class openGEX_lexer : public openDDL_lexer{
+      class openGEX_parser : public openDDL_lexer{
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief This struct contains a couple of references to transforms, and the type
       ////////////////////////////////////////////////////////////////////////////////
@@ -50,6 +50,7 @@ namespace octet
         atom_t ref;
         TYPE_TRANSFORM type;
         SUBTYPE_TRANSFORM subtype;
+        mat4t matrix;
       };
 
       ////////////////////////////////////////////////////////////////////////////////
@@ -205,7 +206,132 @@ namespace octet
       char get_char_from_int(int number){
         return number + 48;
       }
-     
+
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief This is an aux function to obtain the transfor Matrix of a rotation with given values and a type
+      /// @param  transformMatrix This is a matrix, it will return here the content of this transform
+      /// @param  ref  This is an ref_transform with an atom (equivalent to a string) representing the reference of the transform (name in openDDL)
+      /// @param  coordinates This is the coordinated being used
+      /// @param  value_list This is the list of values
+      /// @return True if everything went well, false if there was some problem
+      ////////////////////////////////////////////////////////////////////////////////
+      bool get_translate_matrix(mat4t &transformMatrix, ref_transform ref, float *value_list){
+        //Obtain the matrix from this values
+        transformMatrix.loadIdentity();
+        if (ref.subtype == GEX_XYZ){
+          for (int i = 0; i < 3; ++i){
+            transformMatrix[i][3] = value_list[i];
+          }
+        }
+        else{
+          //If it's only one coordinate, change that one with the value in the structure
+          int coordinates = ref.subtype == GEX_X? 0 : ref.subtype == GEX_Y? 1 : 2;
+          transformMatrix[coordinates][3] = value_list[0];
+        }
+        return true;
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief This is an aux function to obtain the transfor Matrix of a rotation with given values and a type
+      /// @param  transformMatrix This is a matrix, it will return here the content of this transform
+      /// @param  ref  This is an ref_transform with an atom (equivalent to a string) representing the reference of the transform (name in openDDL)
+      /// @param  value_list This is the list of values
+      /// @return True if everything went well, false if there was some problem
+      ////////////////////////////////////////////////////////////////////////////////
+      bool get_rotate_matrix(mat4t &transformMatrix, ref_transform ref, float *value_list){
+        transformMatrix.loadIdentity();
+        if (ref.subtype == GEX_QUATERNION){ //Quaternion!
+          vec4 values;
+          //Obtain the values from the substructures (float[16]) that will be converted into a mat4t!!!
+          for (int i = 0; i < 4; ++i){
+            values[i] = value_list[i];
+          }
+          //Obtain the matrix from this values
+          quat quaternion(values);
+          transformMatrix = mat4t(quaternion);
+          return true;
+        }
+        else if (ref.subtype == GEX_AXIS){
+          //If it's axis, change that one with the value in the structure
+          float x, y, z;
+          float angle;
+          //Obtain the values from the substructures (float[16]) that will be converted into a mat4t!!!
+          angle = value_list[0];
+          x = value_list[1];
+          y = value_list[2];
+          z = value_list[3];
+          //Obtain the matrix from this values
+          float cosAngle = cosf(angle * (3.14159265f / 180));
+          float sinAngle = sinf(angle * (3.14159265f / 180));
+          transformMatrix = mat4t(
+            vec4(x*x*(1 - cosAngle) + cosAngle, x*y*(1 - cosAngle) + z*sinAngle, x*z*(1 - cosAngle) - y*sinAngle, 0.0f),
+            vec4(x*y*(1 - cosAngle) - z*sinAngle, y*y*(1 - cosAngle) + cosAngle, y*z*(1 - cosAngle) + x*sinAngle, 0.0f),
+            vec4(x*z*(1 - cosAngle) + y*sinAngle, y*z*(1 - cosAngle) - x*sinAngle, z*z*(1 - cosAngle) + cosAngle, 0.0f),
+            vec4(0.0f, 0.0f, 0.0f, 1.0f)
+            );
+        }
+        else {
+          //If it's only one coordinate, change that one with the value in the structure
+          float angle;
+          angle = value_list[0];
+          //Obtain the matrix from this values
+          float cosAngle = cosf(angle);
+          float sinAngle = sinf(angle);
+          switch (ref.subtype){
+          case GEX_X: //x
+            transformMatrix = mat4t(
+              vec4(1.0f, 0.0f, 0.0f, 0.0f),
+              vec4(0.0f, cosAngle, -sinAngle, 0.0f),
+              vec4(0.0f, sinAngle, cosAngle, 0.0f),
+              vec4(0.0f, 0.0f, 0.0f, 1.0f)
+              );
+            break;
+          case GEX_Y: //y
+            transformMatrix = mat4t(
+              vec4(cosAngle, 0.0f, sinAngle, 0.0f),
+              vec4(0.0f, 1.0f, 0.0f, 0.0f),
+              vec4(-sinAngle, 0.0f, cosAngle, 0.0f),
+              vec4(0.0f, 0.0f, 0.0f, 1.0f)
+              );
+            break;
+          case GEX_Z: //z
+            transformMatrix = mat4t(
+              vec4(cosAngle, -sinAngle, 0.0f, 0.0f),
+              vec4(sinAngle, cosAngle, 0.0f, 0.0f),
+              vec4(0.0f, 0.0f, 1.0f, 0.0f),
+              vec4(0.0f, 0.0f, 0.0f, 1.0f)
+              );
+            break;
+          }
+        }
+      }
+
+      ////////////////////////////////////////////////////////////////////////////////
+      /// @brief This is an aux function to obtain the transfor Matrix of a rotation with given values and a type
+      /// @param  transformMatrix This is a matrix, it will return here the content of this transform
+      /// @param  ref  This is an ref_transform with an atom (equivalent to a string) representing the reference of the transform (name in openDDL)
+      /// @param  coordinates This is the coordinated being used
+      /// @param  value_list This is the list of values
+      /// @return True if everything went well, false if there was some problem
+      ////////////////////////////////////////////////////////////////////////////////
+      bool get_scale_matrix(mat4t &transformMatrix, ref_transform ref, float *value){
+        if (ref.subtype == GEX_XYZ){
+          //Obtain the matrix from this values
+          transformMatrix.loadIdentity();
+          for (int i = 0; i < 3; ++i){
+            transformMatrix[i][i] = value[i];
+          }
+        }
+        else{
+          //If it's only one coordinate, change that one with the value in the structure
+          //Obtain the matrix from this values
+          int coordinates = ref.subtype == GEX_X ? 0 : ref.subtype == GEX_Y ? 1 : 2;
+          transformMatrix.loadIdentity();
+          transformMatrix[coordinates][coordinates] = value[0];
+        }
+        return true;
+      }
+      
       ////////////////////////////////////////////////////////////////////////////////
       /// @brief This function prints properly a openDDL_data_literal!
       /// @param  value The literal to be printed
@@ -644,6 +770,7 @@ namespace octet
       ////////////////////////////////////////////////////////////////////////////////
       bool openGEX_Track(dynarray<ref_transform> list_ref, openDDL_identifier_structure *structure, scene_node * father){
         bool no_error = true;
+        dynarray<mat4t> new_transforms;
         //This are the curves from each of the substructures. By default, "linear"
         atom_t curve_time = app_utils::get_atom("linear");
         atom_t curve_value = curve_time;
@@ -712,9 +839,53 @@ namespace octet
                 }
               }
               //Post process current Track before getting the next Track
-              /*animation *new_animation = new animation();
-              new_animation->add_channel(father, father->get_sid(), app_utils::get_atom("transform"), app_utils::get_atom("matrix[1]"),values_time[0],values_value[0][0]);
-              */
+              //Obtain all the new transform matrices from the list of "list-ref" and changing only the current transform affected by this track
+              printf("I have %i list\n", list_ref.size());
+              int num_transforms = list_ref.size();
+              int i_transform;
+              bool stop = false;
+              mat4t transformA, transformB, new_transform, final_transform;
+              transformA.loadIdentity();
+              transformB.loadIdentity();
+              for (i_transform = 0; i_transform < num_transforms && !stop; ++i_transform){
+                if (list_ref[i_transform].ref == atom_)
+                  transformA.multMatrix(list_ref[i_transform].matrix);
+                else
+                  stop = true;
+              }
+              ++i_transform;
+              for (; i_transform < num_transforms; ++i_transform){
+                transformB.multMatrix(list_ref[i_transform].matrix);
+              }
+              //The current transform is current_transform
+              animation *new_animation = new animation();
+              dynarray<float> final_values;
+              int size_animation = values_time[0].size();
+              final_values.reserve(16 * size_animation);
+              for (int i = 0; i < size_animation; ++i){
+                final_transform.loadIdentity();
+                final_transform.multMatrix(transformA);
+                switch (current_transform.type){
+                case _TRANSFORM:
+                  break;
+                case _TRANSLATE:
+                  get_translate_matrix(new_transform, current_transform, &values_value[0][0][i]);
+                  break;
+                case _ROTATE:
+                  get_rotate_matrix(new_transform, current_transform, )
+                  break;
+                case _SCALE:
+                  break;
+                }
+                final_transform.multMatrix(new_transform);
+                final_transform.multMatrix(transformB);
+                for (int j = 0; j < 16; ++j){
+                  final_values.push_back(final_transform.get()[j]);
+                }
+              }
+              new_animation->add_channel(father, father->get_sid(), atom_transform, app_utils::get_atom("pos_x"),values_time[0],final_values);
+              animation_instance *new_instance = new animation_instance(new_animation, father);
+              dict->set_resource(app_utils::get_atom_name(current_transform.ref), new_instance);
             }
           }
         }
@@ -1213,6 +1384,8 @@ namespace octet
         char * name = structure->get_name();
         if (name != NULL)
           ref.ref = app_utils::get_atom(name);
+        else
+          ref.ref = atom_;
         ref.type = _TRANSFORM;
         //Get the value of the properties!
         if (structure->get_number_properties() > 1){
@@ -1244,6 +1417,7 @@ namespace octet
             transformMatrix[i].init_transpose(values);
           }
         }
+        ref.matrix = transformMatrix[0];
         return no_error;
       }
 
@@ -1262,6 +1436,8 @@ namespace octet
         char * name = structure->get_name();
         if (name != NULL)
           ref.ref = app_utils::get_atom(name);
+        else
+          ref.ref = atom_;
         ref.type = _TRANSLATE;
         //Get the value of the properties!
         int numProperties = structure->get_number_properties();
@@ -1293,7 +1469,6 @@ namespace octet
                   break;
                 }
               else{
-                coordinates = 3;
                 ref.subtype = GEX_XYZ;
               }
             }
@@ -1309,21 +1484,16 @@ namespace octet
           no_error = false;
         }
         else{
-          //Obtain the matrix from this values
-          transformMatrix.loadIdentity();
-          if (coordinates == 3){
-            //Obtain the values from the substructures (float[16]) that will be converted into a mat4t!!!
-            openDDL_data_list * data_list_values = ((openDDL_data_type_structure *)structure->get_substructure(0))->get_data_list(0);
-            for (int i = 0; i < 3; ++i){
-              transformMatrix[i][3] = data_list_values->data_list[i]->value.float_;
-            }
+          dynarray<float> value_list;
+          value_list.resize(3);
+          //Obtain the values from the substructures (float[16]) that will be converted into a mat4t!!!
+          openDDL_data_list * data_list_values = ((openDDL_data_type_structure *)structure->get_substructure(0))->get_data_list(0);
+          for (int i = 0; i < data_list_values->data_list.size(); ++i){
+            value_list[i] = data_list_values->data_list[i]->value.float_;
           }
-          else{
-            //If it's only one coordinate, change that one with the value in the structure
-            openDDL_data_list * data_list_values = ((openDDL_data_type_structure *)structure->get_substructure(0))->get_data_list(0);
-            transformMatrix[coordinates][3] = data_list_values->data_list[0]->value.float_;
-          }
+          no_error = get_translate_matrix(transformMatrix, ref, value_list.data());
         }
+        ref.matrix = transformMatrix;
         return no_error;
       }
 
@@ -1342,7 +1512,10 @@ namespace octet
         char * name = structure->get_name();
         if (name != NULL)
           ref.ref = app_utils::get_atom(name);
+        else
+          ref.ref = atom_;
         ref.type = _ROTATE;
+        ref.subtype = GEX_AXIS;
         //Get the value of the properties!
         int numProperties = structure->get_number_properties();
         if (numProperties > 2){
@@ -1360,27 +1533,20 @@ namespace octet
               if (current_property->literal.size_string_ == 1){
                 switch (current_property->literal.value.string_[0]){
                 case 'x':
-                  coordinates = 0;
                   ref.subtype = GEX_X;
                   break;
                 case 'y':
-                  coordinates = 1;
                   ref.subtype = GEX_Y;
                   break;
                 case 'z':
-                  coordinates = 2;
                   ref.subtype = GEX_Z;
                   break;
                 }
               }
-              else if (current_property->literal.size_string_ == 4){
-                coordinates = 3;
+              else if (current_property->literal.size_string_ == 4)
                 ref.subtype = GEX_AXIS;
-              }
-              else{
-                coordinates = 4;
+              else
                 ref.subtype = GEX_QUATERNION;
-              }
             }
             else{
               printf("(((ERROR: This cannot be a property of this structure!)))\n");
@@ -1394,73 +1560,16 @@ namespace octet
           no_error = false;
         }
         else{
-          if (coordinates == 4){ //Quaternion!
-            vec4 values;
-            //Obtain the values from the substructures (float[16]) that will be converted into a mat4t!!!
-            openDDL_data_list * data_list_values = ((openDDL_data_type_structure *)structure->get_substructure(0))->get_data_list(0);
-            for (int i = 0; i < 4; ++i){
-              values[i] = data_list_values->data_list[i]->value.float_;
-            }
-            //Obtain the matrix from this values
-            quat quaternion(values);
-            transformMatrix = mat4t (quaternion);
+          openDDL_data_list * data_list_values = ((openDDL_data_type_structure *)structure->get_substructure(0))->get_data_list(0);
+          dynarray<float> value_list;
+          int size_list = data_list_values->data_list.size();
+          value_list.reserve(size_list);
+          for (int i = 0; i < size_list; ++i){
+            value_list[i] = data_list_values->data_list[i]->value.float_;
           }
-          else if (coordinates == 3){
-            //If it's axis, change that one with the value in the structure
-            float x,y,z;
-            float angle;
-            //Obtain the values from the substructures (float[16]) that will be converted into a mat4t!!!
-            openDDL_data_list * data_list_values = ((openDDL_data_type_structure *)structure->get_substructure(0))->get_data_list(0);
-            angle = data_list_values->data_list[0]->value.float_;
-            x = data_list_values->data_list[1]->value.float_;
-            y = data_list_values->data_list[2]->value.float_;
-            z = data_list_values->data_list[3]->value.float_;
-            //Obtain the matrix from this values
-            float cosAngle = cosf(angle * (3.14159265f / 180));
-            float sinAngle = sinf(angle * (3.14159265f / 180));
-            transformMatrix = mat4t (
-              vec4(x*x*(1 - cosAngle) + cosAngle,   x*y*(1 - cosAngle) + z*sinAngle, x*z*(1 - cosAngle) - y*sinAngle, 0.0f),
-              vec4(x*y*(1 - cosAngle) - z*sinAngle, y*y*(1 - cosAngle) + cosAngle,   y*z*(1 - cosAngle) + x*sinAngle, 0.0f),
-              vec4(x*z*(1 - cosAngle) + y*sinAngle, y*z*(1 - cosAngle) - x*sinAngle, z*z*(1 - cosAngle) + cosAngle,   0.0f),
-              vec4(                           0.0f,                            0.0f,                          0.0f,   1.0f)
-              );
-          }
-          else {
-            //If it's only one coordinate, change that one with the value in the structure
-            float angle;
-            openDDL_data_list * data_list_values = ((openDDL_data_type_structure *)structure->get_substructure(0))->get_data_list(0);
-            angle = data_list_values->data_list[0]->value.float_;
-            //Obtain the matrix from this values
-            float cosAngle = cosf(angle * (3.14159265f / 180));
-            float sinAngle = sinf(angle * (3.14159265f / 180));
-            switch (coordinates){
-            case 0: //x
-              transformMatrix = mat4t(
-                vec4(1.0f,      0.0f,      0.0f, 0.0f),
-                vec4(0.0f,  cosAngle, -sinAngle, 0.0f),
-                vec4(0.0f, sinAngle,  -cosAngle, 0.0f),
-                vec4(0.0f,      0.0f,      0.0f, 1.0f)
-                );
-              break;
-            case 1: //y
-              transformMatrix = mat4t(
-                vec4( cosAngle, 0.0f, sinAngle, 0.0f),
-                vec4(     0.0f, 1.0f,     0.0f, 0.0f),
-                vec4(-sinAngle, 0.0f, cosAngle, 0.0f),
-                vec4(     0.0f, 0.0f,     0.0f, 1.0f)
-                );
-              break;
-            case 2: //z
-              transformMatrix = mat4t(
-                vec4(cosAngle, -sinAngle, 0.0f, 0.0f),
-                vec4(sinAngle,  cosAngle, 0.0f, 0.0f),
-                vec4(    0.0f,      0.0f, 0.0f, 0.0f),
-                vec4(    0.0f,      0.0f, 0.0f, 1.0f)
-                );
-              break;
-            }
-          }
+          no_error = get_rotate_matrix(transformMatrix, ref, value_list.data());
         }
+        ref.matrix = transformMatrix;
         return no_error;
       }
 
@@ -1479,6 +1588,8 @@ namespace octet
         char * name = structure->get_name();
         if (name != NULL)
           ref.ref = app_utils::get_atom(name);
+        else
+          ref.ref = atom_;
         ref.type = _SCALE;
         //Get the value of the properties!
         int numProperties = structure->get_number_properties();
@@ -1510,7 +1621,6 @@ namespace octet
                   break;
               }
               else{
-                coordinates = 3;
                 ref.subtype = GEX_XYZ;
               }
             }
@@ -1526,23 +1636,17 @@ namespace octet
           no_error = false;
         }
         else{
-          if (coordinates == 3){
-            //Obtain the matrix from this values
-            transformMatrix.loadIdentity();
-            //Obtain the values from the substructures (float[16]) that will be converted into a mat4t!!!
-            openDDL_data_list * data_list_values = ((openDDL_data_type_structure *)structure->get_substructure(0))->get_data_list(0);
-            for (int i = 0; i < 3; ++i){
-              transformMatrix[i][i] = data_list_values->data_list[i]->value.float_;
-            }
+          //Obtain the values from the substructures (float¡) that will be converted into a mat4t!!!
+          openDDL_data_list * data_list_values = ((openDDL_data_type_structure *)structure->get_substructure(0))->get_data_list(0);
+          dynarray<float> value_list;
+          int size_list = data_list_values->data_list.size();
+          value_list.reserve(size_list);
+          for (int i = 0; i < size_list; ++i){
+            value_list[i] = data_list_values->data_list[i]->value.float_;
           }
-          else{
-            //If it's only one coordinate, change that one with the value in the structure
-            //Obtain the matrix from this values
-            transformMatrix.loadIdentity();
-            openDDL_data_list * data_list_values = ((openDDL_data_type_structure *)structure->get_substructure(0))->get_data_list(0);
-            transformMatrix[coordinates][coordinates] = data_list_values->data_list[0]->value.float_;
-          }
+          no_error = get_scale_matrix(transformMatrix, ref, value_list.data());
         }
+        ref.matrix = transformMatrix;
         return no_error;
       }
 
@@ -1610,30 +1714,22 @@ namespace octet
           case 32://Transform
             no_error = openGEX_Transform(current_ref, transformMatrixes, object_only, substructure);
             nodeToParent.multMatrix(transformMatrixes[0]);
-            if (current_ref.ref != atom_){
-              list_ref.push_back(current_ref);
-            }
+            list_ref.push_back(current_ref);
             break;
           case 33://Translation
             no_error = openGEX_Translate(current_ref, transformMatrixes[0], object_only, substructure);
             nodeToParent.multMatrix(transformMatrixes[0]);
-            if (current_ref.ref != atom_){
-              list_ref.push_back(current_ref);
-            }
+            list_ref.push_back(current_ref);
             break;
           case 25://Rotation
             no_error = openGEX_Rotate(current_ref, transformMatrixes[0], object_only, substructure);
             nodeToParent.multMatrix(transformMatrixes[0]);
-            if (current_ref.ref != atom_){
-              list_ref.push_back(current_ref);
-            }
+            list_ref.push_back(current_ref);
             break;
           case 26://Scale
             no_error = openGEX_Scale(current_ref, transformMatrixes[0], object_only, substructure);
             nodeToParent.multMatrix(transformMatrixes[0]);
-            if (current_ref.ref != atom_){
-              list_ref.push_back(current_ref);
-            }
+            list_ref.push_back(current_ref);
             break;
             //Get Animation
           case 0://Animation
@@ -1737,30 +1833,27 @@ namespace octet
           case 32://Transform
             no_error = openGEX_Transform(structure_ref, transformMatrixes, object_only, substructure);
             nodeToParent.multMatrix(transformMatrixes[0]);
-            if (structure_ref.ref != atom_)
-              list_ref.push_back(structure_ref);
+            list_ref.push_back(structure_ref);
             break;
           case 33://Translation
             no_error = openGEX_Translate(structure_ref, transformMatrixes[0], object_only, substructure);
             nodeToParent.multMatrix(transformMatrixes[0]);
-            if (structure_ref.ref != atom_)
-              list_ref.push_back(structure_ref);
+            list_ref.push_back(structure_ref);
             break;
           case 25://Rotation
             no_error = openGEX_Rotate(structure_ref, transformMatrixes[0], object_only, substructure);
             nodeToParent.multMatrix(transformMatrixes[0]);
-            if (structure_ref.ref != atom_)
-              list_ref.push_back(structure_ref);
+            list_ref.push_back(structure_ref);
             break;
           case 26://Scale
             no_error = openGEX_Scale(structure_ref, transformMatrixes[0], object_only, substructure);
             nodeToParent.multMatrix(transformMatrixes[0]);
-            if (structure_ref.ref != atom_)
-              list_ref.push_back(structure_ref);
+            list_ref.push_back(structure_ref);
             break;
             //Get Animation
           case 0://Animation
-            no_error = openGEX_Animation(list_ref, substructure, node);
+            if (check_animation)
+              no_error = openGEX_Animation(list_ref, substructure, node);
             break;
             //Get Nodes (children)
           case 4://BoneNode
@@ -1803,13 +1896,13 @@ namespace octet
       /// @param  father This is the father scene_node. By default  NULL
       /// @return True if everything went well, false if there was some problem
       ////////////////////////////////////////////////////////////////////////////////
-      bool openGEX_VertexArray(mesh::vertex *&vertices, int &num_vertexes, openDDL_identifier_structure *structure, scene_node *father = NULL){
+      bool openGEX_VertexArray(mesh::vertex *&vertices, int &num_vertexes, int &current_attrib, openDDL_identifier_structure *structure, scene_node *father = NULL){
         bool no_error = true;
         //Get the value of the properties!
         char * attrib_value = NULL;
         int attrib_size = 0;
         int morph_index = 0;
-        int current_attrib = 0;
+        current_attrib = 0;
         bool secondary_position = false;
         int numProperties = structure->get_number_properties();
         if (numProperties > 2){
@@ -2437,6 +2530,9 @@ namespace octet
           }
         }
         //Check substructures (VertexArray (1 or more), IndexArray (0 or 1), Skin (0 or 1))
+        bool position = false;
+        bool normal = false;
+        bool texcoord = false;
         int numSubstructures = structure->get_number_substructures();
         int numVertexArray = 0;
         int numIndexArray = 0;
@@ -2456,7 +2552,21 @@ namespace octet
           switch (tempID){
           case 35://VertexArray
             ++numVertexArray;
-            no_error = openGEX_VertexArray(vertices, num_vertexes, substructure);
+            int current_attrib;
+            //This will translate those words to the following values:
+            // position = 0, normal = 1, texcoord = 2, tangent = 3, bitangent = 4, color = 5
+            no_error = openGEX_VertexArray(vertices, num_vertexes, current_attrib, substructure);
+            switch (current_attrib){
+            case 0:
+              position = true;
+              break;
+            case 1:
+              normal = true;
+              break;
+            case 2:
+              texcoord = true;
+              break;
+            }
             break;
           case 12://IndexArray
             indices.push_back(NULL);
@@ -2515,22 +2625,16 @@ namespace octet
               gl_resource::wolock il(current_mesh->get_indices());
               uint32_t *idx = il.u32();
               mesh::vertex *vtx = (mesh::vertex *)vl.f32();
-              /*if (skin_skeleton.ref_skin != NULL){
-                for (int i = 0; i < num_vertexes; ++i){
-                  vertices[i].blendindices[0] = skin_skeleton.boneIndexWeigthArray[i][0].index;
-                  vertices[i].blendindices[1] = skin_skeleton.boneIndexWeigthArray[i][1].index;
-                  vertices[i].blendindices[2] = skin_skeleton.boneIndexWeigthArray[i][2].index;
-                  vertices[i].blendindices[3] = skin_skeleton.boneIndexWeigthArray[i][3].index;
-                  vertices[i].blendweight[0] = skin_skeleton.boneIndexWeigthArray[i][0].weight;
-                  vertices[i].blendweight[1] = skin_skeleton.boneIndexWeigthArray[i][1].weight;
-                  vertices[i].blendweight[2] = skin_skeleton.boneIndexWeigthArray[i][2].weight;
-                  vertices[i].blendweight[3] = skin_skeleton.boneIndexWeigthArray[i][3].weight;
-                  vtx[i] = vertices[i];
-                }
-              }*/
+              if (texcoord)
                 for (int i = 0; i < num_vertexes; ++i){
                   vtx[i] = vertices[i];
                 }
+              else
+                for (int i = 0; i < num_vertexes; ++i){
+                  vtx[i] = vertices[i];
+                  vtx[i].uv = vec2(0,1);
+                }
+
               for (int i = 0; i < num_indices[index_i]; ++i){
                 idx[i] = indices[index_i][i];
               }
@@ -2538,42 +2642,41 @@ namespace octet
               //This is the material of this mesh
               material *current_material = 0;
               char *current_ref_material = info_current_object->ref_materials[material_indexes[index_i]];
-              if (current_ref_material != "_DE_FA_UL_T"){
+              if (current_ref_material == "_DE_FA_UL_T"){}
                 //Check if it's been obtained already or not
-                if (ref_materials[current_ref_material]){
-                  current_material = ref_materials[current_ref_material];
-                  if (current_material == NULL)
-                    add_later_material = true;
-                }
-                else{ //It's NULL!
+              if (ref_materials[current_ref_material]){
+                current_material = ref_materials[current_ref_material];
+                if (current_material == NULL)
                   add_later_material = true;
+              }
+              else{ //It's NULL!
+                add_later_material = true;
+              }
+              //Now, finally, create the mesh_instance!
+              //If there is no skeleton
+              if (skin_skeleton.ref_skeleton == NULL)
+                current_mesh_instance = new mesh_instance(info_current_object->node, current_mesh, current_material);
+              else{
+                //current_mesh_instance = new mesh_instance(info_current_object->node, current_mesh, current_material);
+                current_mesh_instance = new mesh_instance(info_current_object->node, current_mesh, current_material, skin_skeleton.ref_skeleton);
+              }
+              if (add_later_material){
+                current_material = NULL;
+                ref_materials[current_ref_material] = current_material;
+                ref_materials_inv[current_ref_material].push_back(current_mesh_instance);
+              }
+              const char *name = app_utils::get_atom_name(info_current_object->name);
+              char *new_name = new char[20];
+              if (index_i > 0){
+                new_name[0] = get_char_from_int(index_i);
+                for (int i = 1; i < 20 && *name != '/0'; ++i){
+                  new_name[i] = *name;
+                  ++name;
                 }
-                //Now, finally, create the mesh_instance!
-                //If there is no skeleton
-                if (skin_skeleton.ref_skeleton == NULL)
-                  current_mesh_instance = new mesh_instance(info_current_object->node, current_mesh, current_material);
-                else{
-                  //current_mesh_instance = new mesh_instance(info_current_object->node, current_mesh, current_material);
-                  current_mesh_instance = new mesh_instance(info_current_object->node, current_mesh, current_material, skin_skeleton.ref_skeleton);
-                }
-                if (add_later_material){
-                  current_material = NULL;
-                  ref_materials[current_ref_material] = current_material;
-                  ref_materials_inv[current_ref_material].push_back(current_mesh_instance);
-                }
-                const char *name = app_utils::get_atom_name(info_current_object->name);
-                char *new_name = new char[20];
-                if (index_i > 0){
-                  new_name[0] = get_char_from_int(index_i);
-                  for (int i = 1; i < 20 && *name != '/0'; ++i){
-                    new_name[i] = *name;
-                    ++name;
-                  }
-                  dict->set_resource(new_name, current_mesh_instance);
-                }
-                else{
-                    dict->set_resource(name, current_mesh_instance);
-                }
+                dict->set_resource(new_name, current_mesh_instance);
+              }
+              else{
+                  dict->set_resource(name, current_mesh_instance);
               }
             }
           }
@@ -2826,34 +2929,27 @@ namespace octet
           case 32://Transform
             no_error = openGEX_Transform(current_ref, transformMatrixes, object_only, substructure);
             nodeToParent.multMatrix(transformMatrixes[0]);
-            if (current_ref.ref != atom_){
-              list_ref.push_back(current_ref);
-            }
+            list_ref.push_back(current_ref);
             break;
           case 33://Translation
             no_error = openGEX_Translate(current_ref, transformMatrixes[0], object_only, substructure);
             nodeToParent.multMatrix(transformMatrixes[0]);
-            if (current_ref.ref != atom_){
-              list_ref.push_back(current_ref);
-            }
+            list_ref.push_back(current_ref);
             break;
           case 25://Rotation
             no_error = openGEX_Rotate(current_ref, transformMatrixes[0], object_only, substructure);
             nodeToParent.multMatrix(transformMatrixes[0]);
-            if (current_ref.ref != atom_){
-              list_ref.push_back(current_ref);
-            }
+            list_ref.push_back(current_ref);
             break;
           case 26://Scale
             no_error = openGEX_Scale(current_ref, transformMatrixes[0], object_only, substructure);
             nodeToParent.multMatrix(transformMatrixes[0]);
-            if (current_ref.ref != atom_){
-              list_ref.push_back(current_ref);
-            }
+            list_ref.push_back(current_ref);
             break;
           //Get Animation
           case 0://Animation
-            //IGNORE ANIMATIONS FOR NOW!!!! TO DO!
+            if (check_animation)
+              no_error = openGEX_Animation(list_ref, substructure, node);
             break;
           //Get Nodes (children)
           case 4://BoneNode
@@ -3033,7 +3129,7 @@ namespace octet
       /// @brief Constructor of lexer
       ///   This function will only call to the initializers of openDDL process and openGEX process
       ////////////////////////////////////////////////////////////////////////////////
-      openGEX_lexer(){
+      openGEX_parser(){
         init_ddl();
         init_gex();
       }

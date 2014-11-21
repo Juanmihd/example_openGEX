@@ -10,7 +10,8 @@ namespace octet {
     // scene for drawing duck
     ref<visual_scene> app_scene;
     openGEX_loader::openGEX_loader openGEXLoader;
-
+    int num_meshes;
+    bool rotate;
     //Camera stuff!
     mouse_ball camera;
   public:
@@ -21,33 +22,43 @@ namespace octet {
     /// this is called once OpenGL is initialized
     void app_init() {
       app_scene = new visual_scene();
-
+      rotate= false;
       resource_dict dict;
 
-      if (!openGEXLoader.load_file("assets/openGEX/cubeGEX_2.txt")){
-        printf("It did not work!!");
+      if (!openGEXLoader.load_file("assets/openGEX/zombie.txt")){
+        printf("Error loading or reading the openGEX file!!\n");
       }
 
       //This is to call the process. The true and true means that it's taking into account animations (first true) and skin_skeleton (second true)
-      if (!openGEXLoader.process_resources(&dict,true,false)){
-        printf("It did not work!!");
+      else if (!openGEXLoader.process_resources(&dict, false, false)){
+        printf("Error processing the openGEX file (openGEX_parser).\n");
       }
 
       dynarray<resource*> mesh_instances;
+      dynarray<resource*> animations;
       dynarray<resource*> materials;
       dict.find_all(mesh_instances, atom_mesh_instance);
-      printf("I've found %i instances!\n", mesh_instances.size());
+      printf("I've found %i mesh instances!\n", mesh_instances.size());
+      dict.find_all(animations, atom_animation_instance);
+      printf("I've found %i animations!\n", animations.size());
       dict.find_all(materials, atom_material);
       printf("I've found %i materials!\n", materials.size());
 
-      unsigned int mesh_instances_size = mesh_instances.size();
-      if (mesh_instances_size) {
-        for (unsigned int i = 0; i < mesh_instances_size; ++i){
+
+      num_meshes = mesh_instances.size();
+      int num_animations = animations.size();
+      if (num_meshes) {
+        for (unsigned int i = 0; i < num_meshes; ++i){
           mesh_instance * current_instance = mesh_instances[i]->get_mesh_instance();
           //print_mat4t(current_instance->get_node()->get_nodeToParent());
           printf("%s?\n", app_utils::get_atom_name(current_instance->get_node()->get_sid()));
           app_scene->add_child(current_instance->get_node());
           app_scene->add_mesh_instance(current_instance);
+        }
+        
+        for (int i = 0; i < num_animations; ++i){
+          animation_instance * current_animation = animations[i]->get_animation_instance();
+          app_scene->add_animation_instance(current_animation);
         }
         
         scene_node *light_node = new scene_node();
@@ -84,6 +95,12 @@ namespace octet {
       else if (is_key_down('E')){
         app_scene->get_camera_instance(0)->get_node()->access_nodeToParent().translate(0, 0, 2.5);
       }
+      else if (is_key_down('R')){
+          rotate = true;
+      }
+      else{
+        rotate = false;
+      }
     }
 
     /// this is called to draw the world
@@ -91,7 +108,7 @@ namespace octet {
 
       int vx = 0, vy = 0;
       get_viewport_size(vx, vy);
-      app_scene->begin_render(vx, vy);
+      app_scene->begin_render(vx, vy, vec4(1.0f, 1.0f, 1.0f, 1.0f));
 
       //Move the camera with the mouse
       camera.update(app_scene->get_camera_instance(0)->get_node()->access_nodeToParent());
@@ -104,6 +121,12 @@ namespace octet {
       
       // Updating the screen with the keyboard
       keyboard();
+      if (rotate)
+        for (int i = 0; i < num_meshes; ++i){
+          scene_node *node = app_scene->get_mesh_instance(i)->get_node();
+            node->rotate(1, vec3(1, 0, 0));
+            node->rotate(1, vec3(0, 1, 0));
+        }
     }
   };
 }

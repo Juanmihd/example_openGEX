@@ -29,7 +29,7 @@ namespace octet
     namespace openGEX_loader
     {
   ////////////////////////////////////////////////////////////////////////////////
-  /// @brief This class is the openGEX lexer, it will read the array of characters and get tokes
+  /// @brief This class is the openGEX lexer, it will read the array of characters and get tokens
   ////////////////////////////////////////////////////////////////////////////////
       class openDDL_lexer : public ddl_token{
         enum { MIN_RESERVING_DATA_LIST = 10, DEBUGGINGDDL = 0, DEBUGGINGDDLMORE = 0, DEBUGGING = 0, DEBUGGINGMORE = 0 };
@@ -70,8 +70,8 @@ namespace octet
 
         ////////////////////////////////////////////////////////////////////////////////
         /// @brief  This function will add an types to the dictionary
-        /// @param  id  , stands for the name of the type
-        /// @param  tok , stands forthe token of the type
+        /// @param  id   stands for the name of the type
+        /// @param  tok  stands for the token of the type
         ////////////////////////////////////////////////////////////////////////////////
         void add_type(const char *id, int tok){
           types_[id] = tok;
@@ -116,7 +116,7 @@ namespace octet
 
         ////////////////////////////////////////////////////////////////////////////////
         /// @brief Jumps the char "pos" positions
-        /// @param  pos , stands for the number of characters that need to jump
+        /// @param  pos  stands for the number of characters that need to jump
         ///     This function will be useful when "jumpin" some characters that have already been readed
         ///     Be aware that it does not check if it has passed the end of the file!!!!
         ////////////////////////////////////////////////////////////////////////////////
@@ -367,7 +367,7 @@ namespace octet
         ///   ToDo: Check this line: "value = value * 16 + ( ( *src - ( *src < 'A' ? '0' : 'A'-10 ) ) & 15 );"
         ////////////////////////////////////////////////////////////////////////////////
         bool get_float_literal(float &value, char *word, int size){
-          int decimal = 1; //This will be use to check how many decimals
+          int decimal = 0; //This will be use to check how many decimals
           int initial_i = 0; //This will be used to "jump" the firs character if there is a sign (+, -)
           int pos_negative = 1; //This will be used to determine if it's positive or negative
           int pow = 10; //This will be use to always track which kind of power we are aplying
@@ -431,7 +431,7 @@ namespace octet
             //this will read the left part of the dot 
             for (i = initial_i; i < size && decimal == -1 && exponential == 1; ++i){
               if (word[i] == 0x2e) //2e = .
-                decimal = 1;
+                decimal = 0;
               else if (word[i] == 0x45 || word[i] == 0x65) //45 = E, 65 = e
                 exponential = 0;
               else if (word[i] >= 48 && word[i] <= 57)
@@ -445,17 +445,17 @@ namespace octet
             //this part will read decimals (right part of dot)
             if (decimal != -1)
               for (; i < size && exponential == 1; ++i){
-              if (word[i] == 0x45 || word[i] == 0x65) //45 = E, 65 = e
-                exponential = 0;
-              else{
-                decimal *= 10;
-                if (word[i] >= 48 && word[i] <= 57)
-                  value = value * 10 + (word[i] - 48);
+                if (word[i] == 0x45 || word[i] == 0x65) //45 = E, 65 = e
+                  exponential = 0;
                 else{
-                  printf("It's not a correct digit!\n");
-                  return false; //ERROR!
+                  ++decimal;
+                  if (word[i] >= 48 && word[i] <= 57)
+                    value = value * 10 + (word[i] - 48);
+                  else{
+                    printf("It's not a correct digit!\n");
+                    return false; //ERROR!
+                  }
                 }
-              }
               }
             //------CHECKING exponential part of the DECIMAL NUMBER
             //this part will understand exponentials (if there is any)
@@ -476,12 +476,15 @@ namespace octet
               }
             }
 
-            //If decimal arrived here as -1, it's not decimal, so make decimal == 1; if it's different to -1, its a decimal, so keep decimal value
-            decimal = decimal == -1 ? 1 : decimal;
           }
 
+          //If decimal arrived here as -1, it's not decimal, so make decimal == 1; if it's different to -1, its a decimal, so keep decimal value
+          decimal = decimal == -1 ? 0 : decimal;
           //Now construct the number knowing value, pos_negative, decimal, pow, exponential!
-          value = value*pos_negative / decimal;
+          value = value*pos_negative;
+          for (int i = 0; i < decimal; ++i){
+            value = value / 10;
+          }
           if (exponential != 1){
             float mult_exponential = 1;
             for (int i = 0; i < exponential; ++i){
@@ -1582,6 +1585,8 @@ namespace octet
           buffer = file;
           currentChar = &buffer[0];
           bufferSize = buffer.size();
+          if (bufferSize < 5)
+            no_error = false;
           // It's starting to process all the array of characters starting with the first
           // Will do this until the end of the file
           while (!is_end_file() && no_error){
