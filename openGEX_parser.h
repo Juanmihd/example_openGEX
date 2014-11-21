@@ -744,16 +744,30 @@ namespace octet
             atom_t kind_value = app_utils::get_atom("value");
             openDDL_data_type_structure *values_substructure = (openDDL_data_type_structure *)key_substructure->get_substructure(0);
             int number_lists = values_substructure->get_number_lists();
-            values[i_key].resize(number_lists);
-            //Obtain each of the data_lists
-            for (int i_data_list = 0; i_data_list < number_lists; ++i_data_list){
-              openDDL_data_list *data_list = values_substructure->get_data_list(i_data_list);
+            //if there is only one list, it's a data_list, so divide that data_list into different data_array_lists with one value each
+            if (number_lists != 1){
+              //Obtain each of the data_lists
+              values[i_key].resize(number_lists);
+              for (int i_data_list = 0; i_data_list < number_lists; ++i_data_list){
+                openDDL_data_list *data_list = values_substructure->get_data_list(i_data_list);
+                unsigned int data_list_size = data_list->data_list.size();
+                //obtain all the data inside the data list
+                values[i_key][i_data_list].resize(data_list_size);
+                for (unsigned int i = 0; i < data_list_size; ++i){
+                  float value_temp = data_list->data_list[i]->value.float_;
+                  values[i_key][i_data_list][i] = value_temp;
+                }
+              }
+            }
+            else{//if the final list is just one, avoid 
+              //Obtain each of the data_lists
+              openDDL_data_list *data_list = values_substructure->get_data_list(0);
               unsigned int data_list_size = data_list->data_list.size();
-              //obtain all the data inside the data list
-              values[i_key][i_data_list].resize(data_list_size);
+              values[i_key].resize(data_list_size);
               for (unsigned int i = 0; i < data_list_size; ++i){
+                values[i_key][i].resize(1);
                 float value_temp = data_list->data_list[i]->value.float_;
-                values[i_key][i_data_list][i] = value_temp;
+                values[i_key][i][0] = value_temp;
               }
             }
           }
@@ -869,13 +883,13 @@ namespace octet
                 case _TRANSFORM:
                   break;
                 case _TRANSLATE:
-                  get_translate_matrix(new_transform, current_transform, &values_value[0][0][i]);
+                  get_translate_matrix(new_transform, current_transform, values_value[0][i].data());
                   break;
                 case _ROTATE:
-                  get_rotate_matrix(new_transform, current_transform, &values_value[0][0][i]);
+                  get_rotate_matrix(new_transform, current_transform, values_value[0][i].data());
                   break;
                 case _SCALE:
-                  get_scale_matrix(new_transform, current_transform, &values_value[0][0][i]);
+                  get_scale_matrix(new_transform, current_transform, values_value[0][i].data());
                   break;
                 }
                 final_transform.multMatrix(new_transform);
