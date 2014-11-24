@@ -2642,13 +2642,8 @@ namespace octet
               current_mesh->add_attribute(attribute_pos, 3, GL_FLOAT, 0);
               current_mesh->add_attribute(attribute_normal, 3, GL_FLOAT, 12);
               current_mesh->add_attribute(attribute_uv, 2, GL_FLOAT, 24);
-              /*
-              if (skin_skeleton.ref_skin != NULL){
-                current_mesh->add_attribute(attribute_blendindices, 4, GL_INT, 32);
-                current_mesh->add_attribute(attribute_blendweight, 4, GL_FLOAT, 48);
-              }
-              */
-              current_mesh->set_params(32, num_indices[index_i], num_vertexes, valuePrimitive, GL_UNSIGNED_INT);
+              //Now fill it with the info that we have (if we don't have some info, add it manually)
+              current_mesh->set_params(sizeof(mesh::vertex), num_indices[index_i], num_vertexes, valuePrimitive, GL_UNSIGNED_INT);
               gl_resource::wolock vl(current_mesh->get_vertices());
               gl_resource::wolock il(current_mesh->get_indices());
               uint32_t *idx = il.u32();
@@ -2660,9 +2655,8 @@ namespace octet
               else
                 for (int i = 0; i < num_vertexes; ++i){
                   vtx[i] = vertices[i];
-                  vtx[i].uv = vec2(0,1);
+                  vtx[i].uv = vec2(0, 1);
                 }
-
               for (int i = 0; i < num_indices[index_i]; ++i){
                 idx[i] = indices[index_i][i];
               }
